@@ -2,10 +2,16 @@ import { COLORS } from "../config.js";
 import { Utils } from "../utils.js";
 import { state, spawnParticles } from "../state.js";
 
-const dangerCol = () => state.analysis?.dna?.palette?.danger || COLORS.pink;
+const dangerCol = () => state.analysis?.dna?.palette?.danger || "#FF1E6E";
+const palePink = "#FFC2DC";
+
+// JSAB signature: pure white flash for the first 55ms of an impact
+function isWhiteFlash(age, leadTime) {
+  return age >= leadTime && (age - leadTime) < 0.055;
+}
 
 export const AttackFactory = {
-  laser(x1, y1, x2, y2, width = 26, leadTime = 0.45, activeTime = 0.28) {
+  laser(x1, y1, x2, y2, width = 30, leadTime = 0.45, activeTime = 0.28) {
     return {
       type: "laser", x1, y1, x2, y2, width, leadTime, activeTime,
       age: 0, dead: false, impacted: false,
@@ -13,7 +19,7 @@ export const AttackFactory = {
         this.age += dt;
         if (!this.impacted && this.age >= this.leadTime) {
           this.impacted = true;
-          state.shake = Math.max(state.shake, 6);
+          state.shake = Math.max(state.shake, 7);
         }
         if (this.age >= this.leadTime + this.activeTime) this.dead = true;
       },
@@ -33,26 +39,38 @@ export const AttackFactory = {
         return this.isActive() && Utils.pointToSegmentDist(px, py, this.x1, this.y1, this.x2, this.y2) < (this.width * 0.44 + r);
       },
       draw(ctx) {
+        ctx.save();
+        ctx.lineCap = "butt";
         if (!this.isActive()) {
-          Utils.drawTelegraphLine(ctx, this.x1, this.y1, this.x2, this.y2, this.age / this.leadTime);
+          // JSAB Full-width translucent pink telegraph + shrinking white center line
+          const p = Utils.clamp(this.age / this.leadTime, 0, 1);
+          ctx.strokeStyle = `rgba(255, 30, 110, ${0.14 + p * 0.22})`;
+          ctx.lineWidth = this.width;
+          ctx.beginPath(); ctx.moveTo(this.x1, this.y1); ctx.lineTo(this.x2, this.y2); ctx.stroke();
+
+          ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 + p * 0.6})`;
+          ctx.lineWidth = Math.max(1.5, (1 - p) * 6);
+          ctx.beginPath(); ctx.moveTo(this.x1, this.y1); ctx.lineTo(this.x2, this.y2); ctx.stroke();
         } else {
           const t = (this.age - this.leadTime) / this.activeTime;
-          const w = this.width * (1 - t * 0.45);
-          Utils.withGlow(ctx, dangerCol(), 22, () => {
-            ctx.strokeStyle = dangerCol();
-            ctx.lineWidth = w;
-            ctx.lineCap = "round";
-            ctx.beginPath(); ctx.moveTo(this.x1, this.y1); ctx.lineTo(this.x2, this.y2); ctx.stroke();
+          const w = this.width * (1 - t * 0.55);
+          const flash = isWhiteFlash(this.age, this.leadTime);
+          ctx.strokeStyle = flash ? COLORS.white : dangerCol();
+          ctx.lineWidth = w;
+          ctx.beginPath(); ctx.moveTo(this.x1, this.y1); ctx.lineTo(this.x2, this.y2); ctx.stroke();
+
+          if (!flash && w > 10) {
             ctx.strokeStyle = COLORS.white;
-            ctx.lineWidth = w * 0.35;
+            ctx.lineWidth = w * 0.22;
             ctx.stroke();
-          });
+          }
         }
+        ctx.restore();
       }
     };
   },
 
-  rotatingBeam(cx, cy, startAngle, angVel, length, width = 22, leadTime = 0.5, activeTime = 1.6) {
+  rotatingBeam(cx, cy, startAngle, angVel, length, width = 24, leadTime = 0.5, activeTime = 1.6) {
     return {
       type: "rotatingBeam", cx, cy, angle: startAngle, angVel, length, width, leadTime, activeTime,
       age: 0, dead: false,
@@ -79,19 +97,18 @@ export const AttackFactory = {
       },
       draw(ctx) {
         const end = this._endPt(this.angle);
+        ctx.save();
         if (!this.isActive()) {
-          Utils.drawTelegraphLine(ctx, this.cx, this.cy, end.x, end.y, this.age / this.leadTime);
+          const p = this.age / this.leadTime;
+          ctx.strokeStyle = `rgba(255, 30, 110, ${0.15 + p * 0.25})`;
+          ctx.lineWidth = this.width;
+          ctx.beginPath(); ctx.moveTo(this.cx, this.cy); ctx.lineTo(end.x, end.y); ctx.stroke();
         } else {
-          Utils.withGlow(ctx, dangerCol(), 20, () => {
-            ctx.strokeStyle = dangerCol();
-            ctx.lineWidth = this.width;
-            ctx.lineCap = "round";
-            ctx.beginPath(); ctx.moveTo(this.cx, this.cy); ctx.lineTo(end.x, end.y); ctx.stroke();
-            ctx.strokeStyle = COLORS.white;
-            ctx.lineWidth = this.width * 0.3;
-            ctx.stroke();
-          });
+          ctx.strokeStyle = isWhiteFlash(this.age, this.leadTime) ? COLORS.white : dangerCol();
+          ctx.lineWidth = this.width;
+          ctx.beginPath(); ctx.moveTo(this.cx, this.cy); ctx.lineTo(end.x, end.y); ctx.stroke();
         }
+        ctx.restore();
       }
     };
   },
@@ -116,22 +133,21 @@ export const AttackFactory = {
         return this.isActive() && px + r > this.x && px - r < this.x + this.w && py + r > this.y && py - r < this.y + this.h;
       },
       draw(ctx) {
+        ctx.save();
         if (!this.isActive()) {
           const p = this.age / this.leadTime;
-          ctx.save();
-          ctx.strokeStyle = `rgba(255, 31, 113, ${0.35 + p * 0.65})`;
-          ctx.fillStyle = `rgba(255, 31, 113, ${0.06 + p * 0.16})`;
+          ctx.fillStyle = `rgba(255, 30, 110, ${0.08 + p * 0.18})`;
+          ctx.strokeStyle = `rgba(255, 30, 110, ${0.4 + p * 0.5})`;
           ctx.lineWidth = 2;
-          ctx.fillRect(this.x + 2, this.y + 2, this.w - 4, this.h - 4);
-          ctx.strokeRect(this.x + 2, this.y + 2, this.w - 4, this.h - 4);
-          ctx.restore();
+          ctx.fillRect(this.x + 3, this.y + 3, this.w - 6, this.h - 6);
+          ctx.strokeRect(this.x + 3, this.y + 3, this.w - 6, this.h - 6);
         } else {
           const a = 1 - (this.age - this.leadTime) / this.activeTime;
-          Utils.withGlow(ctx, dangerCol(), 18, () => {
-            ctx.fillStyle = `rgba(255, 31, 113, ${a * 0.9})`;
-            ctx.fillRect(this.x + 2, this.y + 2, this.w - 4, this.h - 4);
-          });
+          ctx.fillStyle = isWhiteFlash(this.age, this.leadTime) ? COLORS.white : dangerCol();
+          ctx.globalAlpha = a;
+          ctx.fillRect(this.x + 3, this.y + 3, this.w - 6, this.h - 6);
         }
+        ctx.restore();
       }
     };
   },
@@ -144,15 +160,16 @@ export const AttackFactory = {
         this.age += dt;
         if (!this.impacted && this.age >= this.leadTime) {
           this.impacted = true;
-          state.shake = Math.max(state.shake, 11);
+          state.shake = Math.max(state.shake, 12);
         }
         if (this.age >= this.leadTime + this.activeTime) this.dead = true;
       },
       isActive() { return this.age >= this.leadTime; },
       _rect(W, H) {
+        // Explosive snap-out easing
         const p = this.isActive()
-          ? 1 - Math.pow((this.age - this.leadTime) / this.activeTime, 2) * 0.2
-          : Math.pow(this.age / this.leadTime, 3) * 0.15;
+          ? 1 - Math.pow((this.age - this.leadTime) / this.activeTime, 3) * 0.25
+          : Math.pow(this.age / this.leadTime, 4) * 0.12;
         const d = this.depth * p;
         if (this.side === "left") return { x: 0, y: 0, w: d, h: H };
         if (this.side === "right") return { x: W - d, y: 0, w: d, h: H };
@@ -175,21 +192,17 @@ export const AttackFactory = {
       },
       draw(ctx, W, H) {
         const rc = this._rect(W, H);
+        ctx.save();
         if (!this.isActive()) {
-          ctx.save();
-          ctx.strokeStyle = "rgba(255, 31, 113, 0.55)";
-          ctx.setLineDash([10, 8]);
-          ctx.lineWidth = 2;
-          if (this.side === "left") ctx.strokeRect(0, 0, this.depth, H);
-          else if (this.side === "right") ctx.strokeRect(W - this.depth, 0, this.depth, H);
-          else if (this.side === "top") ctx.strokeRect(0, 0, W, this.depth);
-          else ctx.strokeRect(0, H - this.depth, W, this.depth);
-          ctx.restore();
+          ctx.fillStyle = "rgba(255, 30, 110, 0.14)";
+          if (this.side === "left") ctx.fillRect(0, 0, this.depth, H);
+          else if (this.side === "right") ctx.fillRect(W - this.depth, 0, this.depth, H);
+          else if (this.side === "top") ctx.fillRect(0, 0, W, this.depth);
+          else ctx.fillRect(0, H - this.depth, W, this.depth);
         }
-        Utils.withGlow(ctx, dangerCol(), 20, () => {
-          ctx.fillStyle = dangerCol();
-          ctx.fillRect(rc.x, rc.y, rc.w, rc.h);
-        });
+        ctx.fillStyle = isWhiteFlash(this.age, this.leadTime) ? COLORS.white : dangerCol();
+        ctx.fillRect(rc.x, rc.y, rc.w, rc.h);
+        ctx.restore();
       }
     };
   },
@@ -202,9 +215,9 @@ export const AttackFactory = {
         this.age += dt;
         if (!this.impacted && this.age >= this.leadTime) {
           this.impacted = true;
-          state.shake = Math.max(state.shake, 13);
-          spawnParticles(this.x, this.y, dangerCol(), 22, 120, 380);
-          state.entities.push(AttackFactory.shockwave(this.x, this.y, 440, 460, 18));
+          state.shake = Math.max(state.shake, 14);
+          spawnParticles(this.x, this.y, dangerCol(), 20, 120, 380);
+          state.entities.push(AttackFactory.shockwave(this.x, this.y, 460, 480, 18));
         }
         if (this.age >= this.leadTime + 0.25) this.dead = true;
       },
@@ -221,27 +234,22 @@ export const AttackFactory = {
         ctx.save();
         ctx.translate(this.x, this.y);
         if (!this.impacted) {
-          ctx.strokeStyle = `rgba(255, 31, 113, ${0.35 + p * 0.65})`;
+          ctx.fillStyle = `rgba(255, 30, 110, ${0.12 + p * 0.2})`;
+          ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = dangerCol();
           ctx.lineWidth = 3;
-          ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.stroke();
-          const scale = 1.8 - p * 0.8;
-          ctx.scale(scale, scale);
-          ctx.fillStyle = `rgba(255, 31, 113, ${0.25 + p * 0.5})`;
-          Utils.drawPolygon(ctx, 0, 0, 5, this.radius * 0.65, p * 0.4);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(0, 0, this.radius * (1.4 - p * 0.4), 0, Math.PI * 2); ctx.stroke();
         } else {
-          Utils.withGlow(ctx, dangerCol(), 24, () => {
-            ctx.fillStyle = dangerCol();
-            Utils.drawPolygon(ctx, 0, 0, 5, this.radius * 0.85, 0.4);
-            ctx.fill();
-          });
+          ctx.fillStyle = isWhiteFlash(this.age, this.leadTime) ? COLORS.white : dangerCol();
+          Utils.drawPolygon(ctx, 0, 0, 5, this.radius * 0.88, 0.4);
+          ctx.fill();
         }
         ctx.restore();
       }
     };
   },
 
-  lycanthropySpike(x, baseY, maxH, width = 34, leadTime = 0.5, activeTime = 0.45) {
+  lycanthropySpike(x, baseY, maxH, width = 38, leadTime = 0.5, activeTime = 0.45) {
     return {
       type: "lycanthropySpike", x, baseY, maxH, width, leadTime, activeTime,
       age: 0, dead: false,
@@ -253,7 +261,7 @@ export const AttackFactory = {
       _curH() {
         if (!this.isActive()) return this.maxH * 0.08;
         const t = (this.age - this.leadTime) / this.activeTime;
-        return this.maxH * (t < 0.25 ? t / 0.25 : 1 - (t - 0.25) / 0.75);
+        return this.maxH * (t < 0.2 ? t / 0.2 : 1 - (t - 0.2) / 0.8);
       },
       getDanger(px, py) {
         if (Math.abs(px - this.x) < this.width * 0.85 && py > this.baseY - this.maxH - 25) {
@@ -268,32 +276,34 @@ export const AttackFactory = {
       },
       draw(ctx) {
         const h = this._curH();
+        ctx.save();
         if (!this.isActive()) {
-          Utils.drawTelegraphLine(ctx, this.x, this.baseY, this.x, this.baseY - this.maxH, this.age / this.leadTime);
+          ctx.fillStyle = "rgba(255, 30, 110, 0.16)";
+          ctx.fillRect(this.x - this.width / 2, this.baseY - this.maxH, this.width, this.maxH);
         }
-        Utils.withGlow(ctx, dangerCol(), 16, () => {
-          ctx.fillStyle = dangerCol();
-          ctx.beginPath();
-          ctx.moveTo(this.x - this.width / 2, this.baseY);
-          ctx.lineTo(this.x, this.baseY - h);
-          ctx.lineTo(this.x + this.width / 2, this.baseY);
-          ctx.closePath();
-          ctx.fill();
-        });
+        ctx.fillStyle = isWhiteFlash(this.age, this.leadTime) ? COLORS.white : dangerCol();
+        ctx.beginPath();
+        ctx.moveTo(this.x - this.width / 2, this.baseY);
+        ctx.lineTo(this.x, this.baseY - h);
+        ctx.lineTo(this.x + this.width / 2, this.baseY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
       }
     };
   },
 
+  // JSAB Stepped White->PalePink->HotPink Serpent/Meteor (like reference Twitter.jfif)
   barracudaSerpent(y, dir, speed = 520, amp = 75, freq = 6) {
     return {
       type: "barracudaSerpent", x: dir === 1 ? -60 : state.width + 60, baseY: y, y, dir, speed, amp, freq,
-      age: 0, r: 20, dead: false, history: [],
+      age: 0, r: 22, dead: false, history: [],
       update(dt, W) {
         this.age += dt;
         this.x += this.dir * this.speed * dt;
         this.y = this.baseY + Math.sin(this.age * this.freq) * this.amp;
         this.history.unshift({ x: this.x, y: this.y });
-        if (this.history.length > 9) this.history.pop();
+        if (this.history.length > 12) this.history.pop();
         if ((this.dir === 1 && this.x > W + 160) || (this.dir === -1 && this.x < -160)) this.dead = true;
       },
       getDanger(px, py, tAhead) {
@@ -310,20 +320,29 @@ export const AttackFactory = {
         return false;
       },
       draw(ctx) {
-        Utils.withGlow(ctx, dangerCol(), 14, () => {
-          for (let i = this.history.length - 1; i >= 0; i--) {
-            const pt = this.history[i];
-            const rad = this.r * (1 - i * 0.08);
-            ctx.fillStyle = i === 0 ? COLORS.white : dangerCol();
-            Utils.drawPolygon(ctx, pt.x, pt.y, 3, rad, this.dir === 1 ? 0 : Math.PI);
-            ctx.fill();
-          }
-        });
+        // Stepped crisp circles: tail pale pink -> white -> spiky hot-pink head
+        for (let i = this.history.length - 1; i >= 1; i--) {
+          const pt = this.history[i];
+          const rad = this.r * (1 - i * 0.055);
+          ctx.fillStyle = i <= 2 ? COLORS.white : (i <= 6 ? palePink : dangerCol());
+          ctx.beginPath(); ctx.arc(pt.x, pt.y, rad, 0, Math.PI * 2); ctx.fill();
+        }
+        // Spiky JSAB head
+        ctx.fillStyle = dangerCol();
+        ctx.beginPath();
+        for (let i = 0; i < 16; i++) {
+          const rad = i % 2 === 0 ? this.r * 1.2 : this.r * 0.92;
+          const a = (Math.PI * i) / 8 + this.age * 4;
+          const px = this.x + Math.cos(a) * rad;
+          const py = this.y + Math.sin(a) * rad;
+          if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath(); ctx.fill();
       }
     };
   },
 
-  pulseBomb(x, y, maxR = 85, leadTime = 0.55, bulletCount = 10, spiral = 0) {
+  pulseBomb(x, y, maxR = 85, leadTime = 0.55, bulletCount = 12, spiral = 0) {
     return {
       type: "pulseBomb", x, y, maxR, leadTime, bulletCount, spiral,
       age: 0, dead: false,
@@ -331,11 +350,11 @@ export const AttackFactory = {
         this.age += dt;
         if (this.age >= this.leadTime) {
           this.dead = true;
-          spawnParticles(this.x, this.y, dangerCol(), 14, 90, 290);
+          spawnParticles(this.x, this.y, COLORS.white, 10, 90, 260);
           for (let i = 0; i < this.bulletCount; i++) {
             const ang = (Math.PI * 2 * i) / this.bulletCount + this.spiral;
-            const spd = 260 + (i % 2) * 55;
-            state.entities.push(AttackFactory.bullet(this.x, this.y, Math.cos(ang) * spd, Math.sin(ang) * spd, 8, i % 2 === 0 ? "diamond" : "circle"));
+            const spd = 280;
+            state.entities.push(AttackFactory.bullet(this.x, this.y, Math.cos(ang) * spd, Math.sin(ang) * spd, 7, "circle"));
           }
         }
       },
@@ -348,20 +367,34 @@ export const AttackFactory = {
       draw(ctx) {
         const p = Utils.clamp(this.age / this.leadTime, 0, 1);
         ctx.save();
-        ctx.strokeStyle = `rgba(255, 31, 113, ${0.4 + p * 0.6})`;
-        ctx.lineWidth = 3;
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.maxR * p, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = dangerCol();
-        ctx.beginPath(); ctx.arc(this.x, this.y, 10 + p * 14, 0, Math.PI * 2); ctx.fill();
+        // Expanding crisp dotted ring telegraph (like Twitter.jfif)
+        ctx.fillStyle = p > 0.85 ? COLORS.white : dangerCol();
+        for (let i = 0; i < 10; i++) {
+          const a = (Math.PI * 2 * i) / 10 + p;
+          ctx.beginPath();
+          ctx.arc(this.x + Math.cos(a) * this.maxR * p, this.y + Math.sin(a) * this.maxR * p, 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // Spiky bomb core
+        ctx.beginPath();
+        const r = 12 + p * 14;
+        for (let i = 0; i < 16; i++) {
+          const rad = i % 2 === 0 ? r * 1.22 : r * 0.9;
+          const a = (Math.PI * i) / 8 + p * 2;
+          if (i === 0) ctx.moveTo(this.x + Math.cos(a) * rad, this.y + Math.sin(a) * rad);
+          else ctx.lineTo(this.x + Math.cos(a) * rad, this.y + Math.sin(a) * rad);
+        }
+        ctx.closePath(); ctx.fill();
         ctx.restore();
       }
     };
   },
 
-  shockwave(x, y, speed = 440, maxR = 950, thickness = 22) {
+  shockwave(x, y, speed = 460, maxR = 950, thickness = 20) {
     return {
-      type: "shockwave", x, y, speed, maxR, thickness, r: 22, dead: false,
+      type: "shockwave", x, y, speed, maxR, thickness, r: 22, age: 0, dead: false,
       update(dt) {
+        this.age += dt;
         this.r += this.speed * dt;
         if (this.r >= this.maxR) this.dead = true;
       },
@@ -375,12 +408,13 @@ export const AttackFactory = {
         return Math.abs(Math.hypot(px - this.x, py - this.y) - this.r) < (this.thickness * 0.45 + pr);
       },
       draw(ctx) {
-        const alpha = Utils.clamp(1 - this.r / this.maxR, 0.1, 1);
-        Utils.withGlow(ctx, dangerCol(), 18, () => {
-          ctx.strokeStyle = `rgba(255, 31, 113, ${alpha})`;
-          ctx.lineWidth = this.thickness * alpha;
-          ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.stroke();
-        });
+        const alpha = Utils.clamp(1 - this.r / this.maxR, 0.15, 1);
+        ctx.save();
+        ctx.strokeStyle = this.age < 0.055 ? COLORS.white : dangerCol();
+        ctx.globalAlpha = alpha;
+        ctx.lineWidth = this.thickness * alpha;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.stroke();
+        ctx.restore();
       }
     };
   },
@@ -408,33 +442,32 @@ export const AttackFactory = {
         return Math.abs((this.axis === "x" ? px : py) - this.pos) < (this.thickness * 0.5 + r);
       },
       draw(ctx, W, H) {
-        Utils.withGlow(ctx, COLORS.pink, 16, () => {
-          ctx.fillStyle = COLORS.pink;
-          if (this.axis === "x") {
-            if (this.gapCenter !== null) {
-              const gTop = this.gapCenter - this.gapSize * 0.5;
-              const gBot = this.gapCenter + this.gapSize * 0.5;
-              ctx.fillRect(this.pos - this.thickness / 2, 0, this.thickness, Math.max(0, gTop));
-              ctx.fillRect(this.pos - this.thickness / 2, gBot, this.thickness, Math.max(0, H - gBot));
-            } else ctx.fillRect(this.pos - this.thickness / 2, 0, this.thickness, H);
-          } else {
-            if (this.gapCenter !== null) {
-              const gL = this.gapCenter - this.gapSize * 0.5;
-              const gR = this.gapCenter + this.gapSize * 0.5;
-              ctx.fillRect(0, this.pos - this.thickness / 2, Math.max(0, gL), this.thickness);
-              ctx.fillRect(gR, this.pos - this.thickness / 2, Math.max(0, W - gR), this.thickness);
-            } else ctx.fillRect(0, this.pos - this.thickness / 2, W, this.thickness);
-          }
-        });
+        ctx.fillStyle = dangerCol();
+        if (this.axis === "x") {
+          if (this.gapCenter !== null) {
+            const gTop = this.gapCenter - this.gapSize * 0.5;
+            const gBot = this.gapCenter + this.gapSize * 0.5;
+            ctx.fillRect(this.pos - this.thickness / 2, 0, this.thickness, Math.max(0, gTop));
+            ctx.fillRect(this.pos - this.thickness / 2, gBot, this.thickness, Math.max(0, H - gBot));
+          } else ctx.fillRect(this.pos - this.thickness / 2, 0, this.thickness, H);
+        } else {
+          if (this.gapCenter !== null) {
+            const gL = this.gapCenter - this.gapSize * 0.5;
+            const gR = this.gapCenter + this.gapSize * 0.5;
+            ctx.fillRect(0, this.pos - this.thickness / 2, Math.max(0, gL), this.thickness);
+            ctx.fillRect(gR, this.pos - this.thickness / 2, Math.max(0, W - gR), this.thickness);
+          } else ctx.fillRect(0, this.pos - this.thickness / 2, W, this.thickness);
+        }
       }
     };
   },
 
-  sawblade(x, y, vx, vy, r = 24, life = 4.5) {
+  // Crisp JSAB Sawblade with hexagonal hole (from Enemy Shapes reference)
+  sawblade(x, y, vx, vy, r = 26, life = 4.5) {
     return {
       type: "sawblade", x, y, vx, vy, r, life, age: 0, rot: 0, dead: false,
       update(dt, W, H) {
-        this.age += dt; this.rot += dt * 10;
+        this.age += dt; this.rot += dt * 11;
         this.x += this.vx * dt; this.y += this.vy * dt;
         if (this.x < this.r || this.x > W - this.r) this.vx *= -1;
         if (this.y < this.r || this.y > H - this.r) this.vy *= -1;
@@ -448,20 +481,19 @@ export const AttackFactory = {
       checkCollision(px, py, pr) { return Math.hypot(px - this.x, py - this.y) < (this.r * 0.85 + pr); },
       draw(ctx) {
         ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rot);
-        Utils.withGlow(ctx, COLORS.pink, 14, () => {
-          ctx.fillStyle = COLORS.pink;
-          ctx.beginPath();
-          const teeth = 10;
-          for (let i = 0; i < teeth * 2; i++) {
-            const rad = i % 2 === 0 ? this.r : this.r * 0.6;
-            const a = (Math.PI * i) / teeth;
-            if (i === 0) ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad);
-            else ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
-          }
-          ctx.closePath(); ctx.fill();
-          ctx.fillStyle = COLORS.bg;
-          ctx.beginPath(); ctx.arc(0, 0, this.r * 0.28, 0, Math.PI * 2); ctx.fill();
-        });
+        ctx.fillStyle = this.age < 0.06 ? COLORS.white : dangerCol();
+        ctx.beginPath();
+        const teeth = 10;
+        for (let i = 0; i < teeth * 2; i++) {
+          const rad = i % 2 === 0 ? this.r * 1.15 : this.r * 0.72;
+          const a = (Math.PI * i) / teeth + (i % 2 === 0 ? 0.14 : 0);
+          if (i === 0) ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad);
+          else ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
+        }
+        ctx.closePath(); ctx.fill();
+        ctx.fillStyle = "#040D14";
+        Utils.drawPolygon(ctx, 0, 0, 6, this.r * 0.34, 0);
+        ctx.fill();
         ctx.restore();
       }
     };
@@ -469,8 +501,9 @@ export const AttackFactory = {
 
   bullet(x, y, vx, vy, r = 8, shape = "circle", gravity = 0) {
     return {
-      type: "bullet", x, y, vx, vy, r, shape, gravity, dead: false, rot: Math.atan2(vy, vx),
+      type: "bullet", x, y, vx, vy, r, shape, gravity, age: 0, dead: false, rot: Math.atan2(vy, vx),
       update(dt, W, H) {
+        this.age += dt;
         this.vy += this.gravity * dt;
         this.x += this.vx * dt; this.y += this.vy * dt;
         this.rot = Math.atan2(this.vy, this.vx);
@@ -485,15 +518,11 @@ export const AttackFactory = {
       },
       checkCollision(px, py, pr) { return Math.hypot(px - this.x, py - this.y) < (this.r * 0.85 + pr); },
       draw(ctx) {
-        Utils.withGlow(ctx, COLORS.pink, 10, () => {
-          ctx.fillStyle = COLORS.pink;
-          if (this.shape === "diamond") Utils.drawPolygon(ctx, this.x, this.y, 4, this.r * 1.25, this.rot);
-          else if (this.shape === "triangle") Utils.drawPolygon(ctx, this.x, this.y, 3, this.r * 1.3, this.rot);
-          else { ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); }
-          ctx.fill();
-          ctx.fillStyle = COLORS.white;
-          ctx.beginPath(); ctx.arc(this.x, this.y, this.r * 0.38, 0, Math.PI * 2); ctx.fill();
-        });
+        ctx.fillStyle = this.age < 0.05 ? COLORS.white : dangerCol();
+        if (this.shape === "diamond") Utils.drawPolygon(ctx, this.x, this.y, 4, this.r * 1.25, this.rot);
+        else if (this.shape === "triangle") Utils.drawPolygon(ctx, this.x, this.y, 3, this.r * 1.35, this.rot);
+        else { ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); }
+        ctx.fill();
       }
     };
   }

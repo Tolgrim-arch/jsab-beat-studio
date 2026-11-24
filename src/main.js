@@ -1,10 +1,10 @@
 import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
-import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=6";
-import { buildChoreographySchedule, spawnSetpieceEvent } from "./combat/choreography.js?v=6";
-import { updateCyanAI } from "./combat/cyanAI.js?v=6";
-import { renderFrame, drawTimeline } from "./render/renderer.js?v=6";
+import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=7";
+import { buildChoreographySchedule, spawnSetpieceEvent } from "./combat/choreography.js?v=7";
+import { updateCyanAI } from "./combat/cyanAI.js?v=7";
+import { renderFrame, drawTimeline } from "./render/renderer.js?v=7";
 
 const dom = {
   canvas: document.getElementById("gameCanvas"),
