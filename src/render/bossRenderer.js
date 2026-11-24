@@ -51,7 +51,20 @@ export function drawProceduralBoss(ctx) {
   }
 
   ctx.save();
-  ctx.translate(b.x, b.y);
+  const jx = b.jitter ? (Math.random() - 0.5) * b.jitter : 0;
+  const jy = b.jitter ? (Math.random() - 0.5) * b.jitter : 0;
+  ctx.translate(b.x + jx, b.y + jy);
+  ctx.rotate(b.tilt || 0);
+  ctx.scale(b.scaleX || 1, b.scaleY || 1);
+
+  // Close-Call Annoyed '!' pop when Cyan dashes right past the boss!
+  if (b.annoyedTimer > 0) {
+    ctx.save();
+    ctx.fillStyle = COLORS.white;
+    ctx.font = "900 28px Orbitron, sans-serif";
+    ctx.fillText("!", b.r * 1.15, -b.r * 0.95);
+    ctx.restore();
+  }
 
   // Detached floating pink triangles around boss (like Annihilate reference!)
   if (bossCfg.shape === "titan" || state.phase >= 3) {

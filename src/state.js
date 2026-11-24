@@ -33,6 +33,11 @@ export const state = {
     targetX: 640, targetY: 200,
     baseR: 54, r: 54, rot: 0,
     pulse: 0, mouthOpen: 0,
+    mood: "smug",
+    scaleX: 1, scaleY: 1,
+    tilt: 0, jitter: 0,
+    blinkTimer: 2.5, isBlinking: false,
+    annoyedTimer: 0, lookaheadCharge: 0,
     trail: [],
     leftHand: { x: 440, y: 220 },
     rightHand: { x: 840, y: 220 }

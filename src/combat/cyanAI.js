@@ -58,6 +58,9 @@ export function updateCyanAI(dt) {
     c.squash = 1.45;
     c.dashDirX = bestX;
     c.dashDirY = bestY;
+    if (Math.hypot(c.x - state.blixer.x, c.y - state.blixer.y) < 260) {
+      state.blixer.annoyedTimer = 0.55;
+    }
     spawnParticles(c.x, c.y, COLORS.cyan, 10, 80, 220);
     return;
   }

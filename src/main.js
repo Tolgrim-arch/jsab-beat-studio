@@ -339,15 +339,65 @@ function updateSimulation(dt) {
 
   const b = state.blixer;
   const pInfo = PHASES[state.phase - 1];
-  b.rot += dt * (1.1 + state.phase * 0.55);
-  b.pulse = Math.max(0, b.pulse - dt * 4.0);
-  b.mouthOpen = Utils.lerp(b.mouthOpen, mid * 1.1, dt * 18);
-  b.r = b.baseR * pInfo.scale * (1 + bass * 0.28 + b.pulse * 0.22);
 
-  // Aggressive JSAB Snap-Dash toward target position
+  // 1. 0.8s Audio Lookahead for Anticipation before Drops!
+  let currentSecType = "VERSE";
+  if (state.analysis && !state.liveAnalyser) {
+    const idx = Utils.clamp(Math.floor(t * state.analysis.fps), 0, state.analysis.frames.length - 1);
+    const futIdx = Utils.clamp(idx + Math.floor(0.8 * state.analysis.fps), 0, state.analysis.frames.length - 1);
+    const curRms = state.analysis.frames[idx].rms;
+    const futureRms = state.analysis.frames[futIdx].rms;
+    const isDropComing = (futureRms - curRms) > 0.32;
+    b.lookaheadCharge = Utils.lerp(b.lookaheadCharge || 0, isDropComing ? 1 : 0, dt * 6);
+
+    const sec = state.analysis.sections.find(s => t >= s.start && t < s.end);
+    if (sec) currentSecType = sec.type;
+  } else {
+    b.lookaheadCharge = Utils.lerp(b.lookaheadCharge || 0, 0, dt * 6);
+  }
+
+  // 2. Emotional Mood State Machine
+  if (b.lookaheadCharge > 0.4 || currentSecType === "BUILDUP") b.mood = "tense";
+  else if (currentSecType === "DROP" || bass > 0.65) b.mood = "frenzy";
+  else if (currentSecType === "BREAKDOWN" || currentSecType === "SILENCE") b.mood = "sad";
+  else b.mood = "smug";
+
+  // 3. Band-to-Body-Part Mapping
+  b.rot += dt * (0.9 + state.phase * 0.45 + high * 2.2);
+  b.jitter = (b.mood === "tense" ? 5.5 : 0) + b.lookaheadCharge * 7 + high * 2.5;
+  b.pulse = Math.max(0, b.pulse - dt * 4.2);
+  b.mouthOpen = Utils.lerp(b.mouthOpen, mid * 1.25 + (b.mood === "frenzy" ? 0.25 : 0), dt * 18);
+
+  if (b.lookaheadCharge > 0.45) {
+    b.scaleX = Utils.lerp(b.scaleX || 1, 1.22, dt * 8);
+    b.scaleY = Utils.lerp(b.scaleY || 1, 0.78, dt * 8);
+  } else if (bass > 0.68 || b.pulse > 0.85) {
+    b.scaleX = Utils.lerp(b.scaleX || 1, 1.26, dt * 20);
+    b.scaleY = Utils.lerp(b.scaleY || 1, 0.80, dt * 20);
+  } else {
+    b.scaleX = Utils.lerp(b.scaleX || 1, 1.0, dt * 11);
+    b.scaleY = Utils.lerp(b.scaleY || 1, 1.0, dt * 11);
+  }
+
+  const leanToCyan = Utils.clamp((state.cyan.x - b.x) / (W * 0.6), -1, 1) * 0.16;
+  const headbang = Math.sin(t * (state.analysis ? (state.analysis.bpm / 60) * Math.PI : 6.5)) * (b.mood === "frenzy" ? 0.14 : 0.06);
+  b.tilt = Utils.lerp(b.tilt || 0, leanToCyan + headbang, dt * 12);
+
+  if (b.annoyedTimer > 0) b.annoyedTimer -= dt;
+  b.blinkTimer = (b.blinkTimer ?? 2.5) - dt;
+  if (b.blinkTimer <= 0) {
+    b.isBlinking = !b.isBlinking;
+    b.blinkTimer = b.isBlinking ? 0.11 : (2.2 + Math.random() * 2.8);
+  }
+
+  b.r = b.baseR * pInfo.scale * (1 + bass * 0.22 + b.pulse * 0.18);
+
+  if (!b.trail) b.trail = [];
+  const tx = Number.isFinite(b.targetX) ? b.targetX : W * 0.5;
+  const ty = Number.isFinite(b.targetY) ? b.targetY : H * 0.26;
   const prevX = b.x, prevY = b.y;
-  b.x = Utils.lerp(b.x, b.targetX + Math.sin(t * 2.2) * 28, dt * 9.5);
-  b.y = Utils.lerp(b.y, b.targetY + Math.cos(t * 2.8) * 18, dt * 9.5);
+  b.x = Utils.lerp(b.x, tx + Math.sin(t * 2.2) * 26, dt * 9.5);
+  b.y = Utils.lerp(b.y, ty + Math.cos(t * 2.8) * 16, dt * 9.5);
 
   if (Math.hypot(b.x - prevX, b.y - prevY) > 4) {
     b.trail.push({ x: b.x, y: b.y, r: b.r, alpha: 0.55 });
@@ -356,10 +406,12 @@ function updateSimulation(dt) {
   for (const tr of b.trail) tr.alpha -= dt * 3.0;
   b.trail = b.trail.filter(tr => tr.alpha > 0);
 
-  b.leftHand.x = Utils.lerp(b.leftHand.x, b.x - b.r * 2.1 + Math.sin(t * 3) * 18, dt * 6);
-  b.leftHand.y = Utils.lerp(b.leftHand.y, b.y + 30 + Math.cos(t * 4) * 20, dt * 6);
-  b.rightHand.x = Utils.lerp(b.rightHand.x, b.x + b.r * 2.1 - Math.sin(t * 3) * 18, dt * 6);
-  b.rightHand.y = Utils.lerp(b.rightHand.y, b.y + 30 + Math.cos(t * 4) * 20, dt * 6);
+  const handSpread = b.mood === "tense" ? 1.55 : (b.mood === "frenzy" ? 2.45 : 2.05);
+  const handBounce = Math.sin(t * 6) * (b.mood === "frenzy" ? 32 : 16);
+  b.leftHand.x = Utils.lerp(b.leftHand.x, b.x - b.r * handSpread, dt * 8);
+  b.leftHand.y = Utils.lerp(b.leftHand.y, b.y + 24 + handBounce, dt * 8);
+  b.rightHand.x = Utils.lerp(b.rightHand.x, b.x + b.r * handSpread, dt * 8);
+  b.rightHand.y = Utils.lerp(b.rightHand.y, b.y + 24 - handBounce, dt * 8);
 
   for (const ent of state.entities) ent.update(dt, W, H);
   state.entities = state.entities.filter(e => !e.dead);
