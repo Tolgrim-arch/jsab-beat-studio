@@ -1,0 +1,77 @@
+export const state = {
+  aspect: "16:9",
+  width: 1280,
+  height: 720,
+  audioCtx: null,
+  audioBuffer: null,
+  sourceNode: null,
+  mediaDest: null,
+  isPlaying: false,
+  startTime: 0,
+  pauseOffset: 0,
+  currentTime: 0,
+  duration: 0,
+  trackTitle: "",
+  analysis: null,
+  schedule: [],
+  nextEventIdx: 0,
+  isRecording: false,
+  mediaRecorder: null,
+  recordedChunks: [],
+  showHud: true,
+
+  phase: 1,
+  activeSetpiece: "INTRO",
+  shake: 0,
+  zoomPunch: 0,
+  flashAlpha: 0,
+  bgPulse: 0,
+  entities: [],
+  particles: [],
+  blixer: {
+    x: 640, y: 200,
+    baseR: 52, r: 52, rot: 0,
+    pulse: 0, mouthOpen: 0,
+    leftHand: { x: 440, y: 220 },
+    rightHand: { x: 840, y: 220 }
+  },
+  cyan: {
+    x: 640, y: 520, vx: 0, vy: 0,
+    r: 12, rot: 0,
+    dashCooldown: 0, dashTimer: 0,
+    dashDirX: 0, dashDirY: 0,
+    trail: [], invuln: 0,
+    squash: 1
+  }
+};
+
+export function spawnParticles(x, y, color, count = 10, sMin = 60, sMax = 240) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = sMin + Math.random() * (sMax - sMin);
+    state.particles.push({
+      x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+      r: 2 + Math.random() * 3, color,
+      life: 0.4 + Math.random() * 0.35, maxLife: 0.75
+    });
+  }
+}
+
+export function resetWorldEntities() {
+  const W = state.width, H = state.height;
+  state.entities = [];
+  state.particles = [];
+  state.phase = 1;
+  state.shake = 0;
+  state.zoomPunch = 0;
+  state.flashAlpha = 0;
+  state.bgPulse = 0;
+  state.blixer.x = W * 0.5;
+  state.blixer.y = H * 0.26;
+  state.cyan.x = W * 0.5;
+  state.cyan.y = H * 0.72;
+  state.cyan.vx = 0;
+  state.cyan.vy = 0;
+  state.cyan.trail = [];
+  state.cyan.invuln = 0;
+}
