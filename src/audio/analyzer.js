@@ -1,6 +1,7 @@
 import { ARCHETYPES } from "../config.js";
 import { Utils } from "../utils.js";
 import { state } from "../state.js";
+import { generateSongDNA } from "./songDNA.js";
 
 export function ensureAudioContext() {
   if (!state.audioCtx) {
