@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio — Generador Musical Reactivo</title>
+  <title>JSAB Beat Studio v2 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -84,16 +84,17 @@
         <h1 class="font-display text-sm sm:text-base font-bold tracking-wider uppercase flex items-center gap-2">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">PERFECT NO-HIT AI</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">v2 • PRE-CUE SYNC</span>
         </h1>
       </div>
     </div>
 
-    <div class="flex items-center gap-2 sm:gap-3">
-      <button id="btnDemoTrack" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
-        <svg class="w-3.5 h-3.5 text-[#00F0FF]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
-        <span>Demo Boss</span>
-      </button>
+    <div class="flex items-center gap-2">
+      <div class="hidden sm:flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 rounded-lg p-1">
+        <button data-demo="titan" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-[#FF1F71]/25 hover:text-[#FF1F71] transition cursor-pointer">Demo: Annihilate</button>
+        <button data-demo="barracuda" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-[#00F0FF]/20 hover:text-[#00F0FF] transition cursor-pointer">Demo: Barracuda</button>
+        <button data-demo="closetome" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-purple-500/25 hover:text-purple-300 transition cursor-pointer">Demo: Close To Me</button>
+      </div>
 
       <label for="audioFileInput" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/50 text-[#00F0FF] transition flex items-center gap-1.5 cursor-pointer glow-cyan">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -106,17 +107,18 @@
   <!-- MAIN WORKSPACE -->
   <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
 
-    <!-- LEFT SIDEBAR: CONTROLS & TELEMETRY -->
-    <aside class="w-full lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-r border-slate-800/80 bg-[#0b0d1f] p-4 flex flex-col gap-4 overflow-y-auto shrink-0">
+    <!-- LEFT SIDEBAR -->
+    <aside class="w-full lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-r border-slate-800/80 bg-[#0b0d1f] p-4 flex flex-col gap-3.5 overflow-y-auto shrink-0">
 
-      <!-- Track Info Card -->
+      <!-- Track & Musical DNA -->
       <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Pista Activa</span>
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">ADN Musical</span>
           <span id="trackStatusBadge" class="text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">Sin Audio</span>
         </div>
-        <div id="trackNameDisplay" class="text-sm font-semibold text-white truncate mb-2">Carga un MP3, WAV, MP4 o usa Demo Boss</div>
-        <div class="grid grid-cols-3 gap-2 text-center">
+        <div id="trackNameDisplay" class="text-sm font-semibold text-white truncate mb-2.5">Carga MP3/WAV/MP4 o elige una Demo</div>
+
+        <div class="grid grid-cols-3 gap-2 text-center mb-2.5">
           <div class="rounded-lg bg-[#090b1a] p-2 border border-slate-800/70">
             <div class="text-[10px] text-slate-400 font-mono-tech">BPM</div>
             <div id="statBpm" class="text-sm font-bold text-[#00F0FF] font-mono-tech">--</div>
@@ -126,63 +128,60 @@
             <div id="statDuration" class="text-sm font-bold text-slate-200 font-mono-tech">0:00</div>
           </div>
           <div class="rounded-lg bg-[#090b1a] p-2 border border-slate-800/70">
-            <div class="text-[10px] text-slate-400 font-mono-tech">EVENTOS</div>
+            <div class="text-[10px] text-slate-400 font-mono-tech">SETPIECES</div>
             <div id="statEvents" class="text-sm font-bold text-[#FF1F71] font-mono-tech">0</div>
           </div>
         </div>
-        <!-- Song Fingerprint -->
-        <div id="songProfileBar" class="mt-2.5 pt-2.5 border-t border-slate-800/70 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
-          <span>ESTILO: <strong id="statStyle" class="text-slate-200">--</strong></span>
-          <span>SECCIÓN: <strong id="statSection" class="text-[#FFD166]">--</strong></span>
+
+        <div class="space-y-1 pt-2 border-t border-slate-800/70 text-[10px] font-mono-tech text-slate-400">
+          <div class="flex justify-between"><span>ARQUETIPO:</span><strong id="statArchetype" class="text-[#00F0FF]">--</strong></div>
+          <div class="flex justify-between"><span>SECCIÓN:</span><strong id="statSection" class="text-[#FFD166]">--</strong></div>
+          <div class="flex justify-between"><span>COREOGRAFÍA:</span><strong id="statSetpiece" class="text-[#FF1F71]">--</strong></div>
         </div>
       </div>
 
-      <!-- Format / Aspect Ratio Selector -->
+      <!-- Format Selector -->
       <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
-        <div class="flex items-center justify-between mb-2.5">
+        <div class="flex items-center justify-between mb-2">
           <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Formato de Video</span>
           <span id="resolutionLabel" class="text-[10px] font-mono-tech text-[#00F0FF]">1280×720</span>
         </div>
         <div class="grid grid-cols-3 gap-2">
-          <button data-aspect="16:9" class="aspect-btn active-aspect px-2 py-2 rounded-lg text-xs font-semibold border border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF] transition flex flex-col items-center gap-1 cursor-pointer">
-            <span class="w-6 h-3.5 border-2 border-current rounded-sm"></span>
-            <span>16:9 YT</span>
+          <button data-aspect="16:9" class="aspect-btn px-2 py-2 rounded-lg text-xs font-semibold border border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF] transition flex flex-col items-center gap-1 cursor-pointer">
+            <span class="w-6 h-3.5 border-2 border-current rounded-sm"></span><span>16:9 YT</span>
           </button>
           <button data-aspect="9:16" class="aspect-btn px-2 py-2 rounded-lg text-xs font-semibold border border-slate-700 bg-[#090b1a] text-slate-300 hover:border-slate-500 transition flex flex-col items-center gap-1 cursor-pointer">
-            <span class="w-3.5 h-6 border-2 border-current rounded-sm"></span>
-            <span>9:16 Shorts</span>
+            <span class="w-3.5 h-6 border-2 border-current rounded-sm"></span><span>9:16 Shorts</span>
           </button>
           <button data-aspect="1:1" class="aspect-btn px-2 py-2 rounded-lg text-xs font-semibold border border-slate-700 bg-[#090b1a] text-slate-300 hover:border-slate-500 transition flex flex-col items-center gap-1 cursor-pointer">
-            <span class="w-4.5 h-4.5 border-2 border-current rounded-sm"></span>
-            <span>1:1 Feed</span>
+            <span class="w-4 h-4 border-2 border-current rounded-sm"></span><span>1:1 Feed</span>
           </button>
         </div>
       </div>
 
-      <!-- Boss Phase & Live Telemetry -->
+      <!-- Boss Telemetry -->
       <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Estado de Blixer</span>
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Transformación Blixer</span>
           <span id="phaseBadge" class="text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">FASE 1</span>
         </div>
-        <div id="phaseName" class="text-xs font-display font-bold text-white mb-2.5">DESPERTAR CORRUPTO</div>
+        <div id="phaseName" class="text-xs font-display font-bold text-white mb-2.5">SEMILLA CORRUPTA</div>
 
-        <!-- Audio Bands -->
         <div class="space-y-1.5">
           <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-            <span class="w-12 text-slate-400">SUB-BASS</span>
+            <span class="w-12 text-slate-400">KICK</span>
             <div class="flex-1 h-1.5 bg-[#090b1a] rounded-full overflow-hidden">
               <div id="barBass" class="h-full bg-[#FF1F71] w-0 transition-all duration-75"></div>
             </div>
           </div>
           <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-            <span class="w-12 text-slate-400">MEDIOS</span>
+            <span class="w-12 text-slate-400">SNARE</span>
             <div class="flex-1 h-1.5 bg-[#090b1a] rounded-full overflow-hidden">
               <div id="barMid" class="h-full bg-[#FFD166] w-0 transition-all duration-75"></div>
             </div>
           </div>
           <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-            <span class="w-12 text-slate-400">AGUDOS</span>
+            <span class="w-12 text-slate-400">SYNTH</span>
             <div class="flex-1 h-1.5 bg-[#090b1a] rounded-full overflow-hidden">
               <div id="barHigh" class="h-full bg-[#00F0FF] w-0 transition-all duration-75"></div>
             </div>
@@ -190,11 +189,11 @@
         </div>
       </div>
 
-      <!-- Video Export & Settings -->
-      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5 space-y-3">
+      <!-- Export Video -->
+      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5 space-y-2.5">
         <div class="flex items-center justify-between">
           <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Exportar Video</span>
-          <span class="text-[10px] font-mono-tech text-slate-400">WebM / Audio Sync</span>
+          <span class="text-[10px] font-mono-tech text-slate-400">WebM 60fps</span>
         </div>
 
         <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
@@ -206,42 +205,36 @@
           <span id="recIcon" class="w-2.5 h-2.5 rounded-full bg-white"></span>
           <span id="recBtnText">Grabar Video Completo</span>
         </button>
-        <p id="recHint" class="text-[10px] text-slate-400 leading-relaxed">
-          Graba desde el inicio hasta el final de la canción con audio sincronizado y descarga automática.
-        </p>
       </div>
-
     </aside>
 
     <!-- CENTER STAGE & TIMELINE -->
     <section class="flex-1 flex flex-col min-w-0 bg-[#060714]">
-
-      <!-- Stage -->
       <div id="stageContainer" class="flex-1 p-3 sm:p-5 min-h-[320px]">
         <canvas id="gameCanvas" width="1280" height="720"></canvas>
 
-        <!-- Empty State Overlay -->
+        <!-- Empty Overlay -->
         <div id="emptyOverlay" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div class="bg-[#0c0e22]/90 backdrop-blur-md border border-slate-700/80 rounded-2xl p-6 max-w-md text-center shadow-2xl pointer-events-auto">
+          <div class="bg-[#0c0e22]/92 backdrop-blur-md border border-slate-700/80 rounded-2xl p-6 max-w-lg text-center shadow-2xl pointer-events-auto">
             <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#00F0FF]/15 border border-[#00F0FF]/40 flex items-center justify-center text-[#00F0FF]">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <h2 class="font-display text-base font-bold text-white mb-1.5">Listo para Sincronizar</h2>
+            <h2 class="font-display text-base font-bold text-white mb-1.5">JSAB Beat Studio v2 — Sincronización Real</h2>
             <p class="text-xs text-slate-300 mb-4 leading-relaxed">
-              Carga cualquier canción (MP3, WAV, MP4 audio) o prueba el <strong class="text-[#00F0FF]">Demo Boss</strong>. Blixer analizará el ritmo, secciones y energía para generar un combate único mientras Cian esquiva sin recibir daño.
+              Cada canción genera un <strong class="text-[#00F0FF]">ADN Musical</strong> distinto con bioma propio y coreografías de <strong class="text-[#FF1F71]">Barracuda, Close To Me, Lycanthropy y Annihilate</strong>. Todos los ataques se anticipan antes del beat e impactan en el golpe exacto.
             </p>
-            <div class="flex items-center justify-center gap-2">
-              <button id="overlayDemoBtn" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[#00F0FF] text-[#060714] hover:bg-[#33f3ff] transition cursor-pointer">
-                Probar Demo Boss
-              </button>
+            <div class="flex flex-wrap items-center justify-center gap-2">
+              <button data-demo="titan" class="demo-btn px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#FF1F71] text-white hover:bg-[#ff3881] transition cursor-pointer">Annihilate (Dubstep)</button>
+              <button data-demo="barracuda" class="demo-btn px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#00F0FF] text-[#060714] hover:bg-[#33f3ff] transition cursor-pointer">Barracuda (Speedcore)</button>
+              <button data-demo="closetome" class="demo-btn px-3.5 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-500 transition cursor-pointer">Close To Me (Synth)</button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Bottom Playback & Timeline Bar -->
+      <!-- Playback Bar -->
       <div class="border-t border-slate-800/80 bg-[#090b1d] px-4 py-3 shrink-0">
-        <div class="flex items-center gap-3 mb-2">
+        <div class="flex items-center gap-3">
           <button id="btnPlayPause" disabled class="w-9 h-9 rounded-lg bg-[#00F0FF] hover:bg-[#33f3ff] disabled:opacity-40 disabled:cursor-not-allowed text-[#060714] flex items-center justify-center transition shrink-0 cursor-pointer">
             <svg id="iconPlay" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             <svg id="iconPause" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
@@ -257,17 +250,14 @@
             <span id="timeTotal">0:00</span>
           </div>
 
-          <!-- Interactive Timeline Canvas -->
           <div class="flex-1 relative h-10 bg-[#060714] rounded-lg border border-slate-800 overflow-hidden cursor-pointer" id="timelineWrapper">
             <canvas id="timelineCanvas" class="w-full h-full block"></canvas>
           </div>
         </div>
       </div>
-
     </section>
   </main>
 
-  <!-- Toast Container -->
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <script>
@@ -275,7 +265,7 @@
       "use strict";
 
       // =========================================================================
-      // 1. CONSTANTS & CONFIGURATION
+      // 1. CONSTANTS, BIOMES & BOSS PHASES
       // =========================================================================
       const COLORS = {
         bg: "#060714",
@@ -294,19 +284,53 @@
       };
 
       const PHASES = [
-        { id: 1, name: "DESPERTAR CORRUPTO",   color: "#FF1F71", speedMul: 1.0,  scale: 1.0 },
-        { id: 2, name: "SOBRECARGA SÓNICA",    color: "#FF1F71", speedMul: 1.25, scale: 1.15 },
-        { id: 3, name: "ANIQUILACIÓN TOTAL",   color: "#FF0055", speedMul: 1.5,  scale: 1.32 },
-        { id: 4, name: "HIPERNOVA FINAL",      color: "#FF3377", speedMul: 1.75, scale: 1.48 }
+        { id: 1, name: "SEMILLA CORRUPTA",  speedMul: 1.0,  scale: 0.95 },
+        { id: 2, name: "OVERDRIVE",         speedMul: 1.18, scale: 1.12 },
+        { id: 3, name: "ANNIHILATE TITAN",  speedMul: 1.38, scale: 1.28 },
+        { id: 4, name: "HIPERNOVA FINAL",   speedMul: 1.55, scale: 1.42 }
       ];
 
+      const ARCHETYPES = {
+        TITAN_CRUSHER: {
+          id: "TITAN_CRUSHER",
+          label: "ANNIHILATE / TITAN",
+          bgStyle: "seismic",
+          bgTint: "#120411",
+          gridColor: "rgba(255, 31, 113, ",
+          setpieces: ["TWIN_HAND_SMASH", "HYDRAULIC_CRUSH", "DROP_EXPLOSION", "CHECKERBOARD_DANCE", "MEGA_MOUTH_BEAM"]
+        },
+        HYPER_BARRAGE: {
+          id: "HYPER_BARRAGE",
+          label: "BARRACUDA / HYPER",
+          bgStyle: "tunnel",
+          bgTint: "#06081a",
+          gridColor: "rgba(255, 45, 130, ",
+          setpieces: ["BARRACUDA_SWARM", "MANDALA_BLOOM", "SAWBLADE_GAUNTLET", "WAVE_CORRIDOR", "CLOCKWORK_LASERS"]
+        },
+        CLOCKWORK_SYNTH: {
+          id: "CLOCKWORK_SYNTH",
+          label: "CLOSE TO ME / SYNTH",
+          bgStyle: "perspective",
+          bgTint: "#0c061f",
+          gridColor: "rgba(180, 60, 255, ",
+          setpieces: ["CLOSE_TO_ME_ORBS", "CLOCKWORK_LASERS", "CHECKERBOARD_DANCE", "WAVE_CORRIDOR", "MANDALA_BLOOM"]
+        },
+        ABYSSAL_ECLIPSE: {
+          id: "ABYSSAL_ECLIPSE",
+          label: "LYCANTHROPY / ABYSS",
+          bgStyle: "vortex",
+          bgTint: "#090414",
+          gridColor: "rgba(255, 0, 90, ",
+          setpieces: ["LYCANTHROPY_VINES", "BUILDUP_LOCKON", "ORB_RAIN", "HYDRAULIC_CRUSH", "BREAKDOWN_PULSE"]
+        }
+      };
+
       // =========================================================================
-      // 2. MATH & DRAWING UTILITIES (DRY)
+      // 2. DRY UTILITIES
       // =========================================================================
       const Utils = {
         clamp: (v, min, max) => Math.max(min, Math.min(max, v)),
         lerp: (a, b, t) => a + (b - a) * t,
-        distSq: (x1, y1, x2, y2) => (x2 - x1) ** 2 + (y2 - y1) ** 2,
         pointToSegmentDist(px, py, x1, y1, x2, y2) {
           const dx = x2 - x1, dy = y2 - y1;
           const lenSq = dx * dx + dy * dy;
@@ -315,7 +339,7 @@
           return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
         },
         seededRandom(seed) {
-          let s = seed % 2147483647;
+          let s = Math.floor(Math.abs(seed)) % 2147483647;
           if (s <= 0) s += 2147483646;
           return () => (s = (s * 16807) % 2147483647) / 2147483647;
         },
@@ -331,19 +355,40 @@
           ctx.shadowBlur = blur;
           fn();
           ctx.restore();
+        },
+        drawPolygon(ctx, cx, cy, sides, r, rot = 0) {
+          ctx.beginPath();
+          for (let i = 0; i < sides; i++) {
+            const a = rot + (Math.PI * 2 * i) / sides;
+            const x = cx + Math.cos(a) * r;
+            const y = cy + Math.sin(a) * r;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.closePath();
+        },
+        drawTelegraphLine(ctx, x1, y1, x2, y2, progress) {
+          ctx.save();
+          ctx.strokeStyle = `rgba(255, 31, 113, ${0.22 + progress * 0.65})`;
+          ctx.lineWidth = 1.5 + progress * 3.5;
+          ctx.setLineDash([12, 10]);
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+          ctx.restore();
         }
       };
 
       // =========================================================================
-      // 3. DOM REFERENCES & UI HELPERS
+      // 3. DOM & TOASTS
       // =========================================================================
       const dom = {
         canvas: document.getElementById("gameCanvas"),
         timelineCanvas: document.getElementById("timelineCanvas"),
         timelineWrapper: document.getElementById("timelineWrapper"),
         audioInput: document.getElementById("audioFileInput"),
-        btnDemo: document.getElementById("btnDemoTrack"),
-        overlayDemoBtn: document.getElementById("overlayDemoBtn"),
+        demoBtns: document.querySelectorAll(".demo-btn"),
         emptyOverlay: document.getElementById("emptyOverlay"),
         btnPlayPause: document.getElementById("btnPlayPause"),
         btnRestart: document.getElementById("btnRestart"),
@@ -358,8 +403,9 @@
         statBpm: document.getElementById("statBpm"),
         statDuration: document.getElementById("statDuration"),
         statEvents: document.getElementById("statEvents"),
-        statStyle: document.getElementById("statStyle"),
+        statArchetype: document.getElementById("statArchetype"),
         statSection: document.getElementById("statSection"),
+        statSetpiece: document.getElementById("statSetpiece"),
         phaseBadge: document.getElementById("phaseBadge"),
         phaseName: document.getElementById("phaseName"),
         barBass: document.getElementById("barBass"),
@@ -408,41 +454,42 @@
         currentTime: 0,
         duration: 0,
         trackTitle: "",
-        analysis: null,     // { frames, fps, bpm, profile, sections, beats }
-        schedule: [],       // Choreography events
+        analysis: null,
+        schedule: [],
         nextEventIdx: 0,
         isRecording: false,
         mediaRecorder: null,
         recordedChunks: [],
         showHud: true,
 
-        // Live world
+        // World & Juice
         phase: 1,
+        activeSetpiece: "INTRO",
         shake: 0,
-        bgPulse: 0,
+        zoomPunch: 0,
         flashAlpha: 0,
-        vortexStrength: 0,
-        entities: [],       // Unified array of active attack instances
+        bgPulse: 0,
+        entities: [],
         particles: [],
-        ambientParticles: [],
         blixer: {
-          x: 640, y: 200, vx: 0, vy: 0,
-          baseR: 54, r: 54, rot: 0,
+          x: 640, y: 200,
+          baseR: 52, r: 52, rot: 0,
           pulse: 0, mouthOpen: 0,
-          dashTarget: null, dashTimer: 0,
-          movePattern: "orbit"
+          leftHand: { x: 440, y: 220, rot: -0.3 },
+          rightHand: { x: 840, y: 220, rot: 0.3 }
         },
         cyan: {
           x: 640, y: 520, vx: 0, vy: 0,
-          r: 13, rot: 0,
+          r: 12, rot: 0,
           dashCooldown: 0, dashTimer: 0,
           dashDirX: 0, dashDirY: 0,
-          trail: [], invuln: 0
+          trail: [], invuln: 0,
+          squash: 1
         }
       };
 
       // =========================================================================
-      // 5. AUDIO ENGINE & DEEP MUSICAL ANALYSIS
+      // 5. AUDIO ENGINE: 3 DISTINCT SYNTHETIC DEMOS + DEEP ANALYZER
       // =========================================================================
       function ensureAudioContext() {
         if (!state.audioCtx) {
@@ -450,69 +497,71 @@
           state.audioCtx = new AC();
           state.mediaDest = state.audioCtx.createMediaStreamDestination();
         }
-        if (state.audioCtx.state === "suspended") {
-          state.audioCtx.resume();
-        }
+        if (state.audioCtx.state === "suspended") state.audioCtx.resume();
         return state.audioCtx;
       }
 
-      function generateDemoBossTrack() {
+      function generateDemoTrack(presetKey) {
         const ac = ensureAudioContext();
-        const duration = 68;
+        const presets = {
+          titan:     { bpm: 128, duration: 56, bassWeight: 1.0, highWeight: 0.28, title: "Annihilate — Titan Crusher (128 BPM)" },
+          barracuda: { bpm: 168, duration: 52, bassWeight: 0.55, highWeight: 0.95, title: "Barracuda — Hyper Rush (168 BPM)" },
+          closetome: { bpm: 116, duration: 56, bassWeight: 0.65, highWeight: 0.65, title: "Close To Me — Clockwork Synth (116 BPM)" }
+        };
+        const cfg = presets[presetKey] || presets.titan;
         const sr = ac.sampleRate;
-        const len = Math.floor(sr * duration);
+        const len = Math.floor(sr * cfg.duration);
         const buffer = ac.createBuffer(2, len, sr);
         const L = buffer.getChannelData(0);
         const R = buffer.getChannelData(1);
 
-        const bpm = 142;
-        const beatDur = 60 / bpm;
-        let seed = 1337;
-        const noise = () => {
-          seed = (seed * 16807) % 2147483647;
-          return (seed / 1073741823.5) - 1;
-        };
+        const beatDur = 60 / cfg.bpm;
+        let seed = 4242;
+        const noise = () => ((seed = (seed * 16807) % 2147483647) / 1073741823.5) - 1;
 
         for (let i = 0; i < len; i++) {
           const t = i / sr;
+          const prog = t / cfg.duration;
           const beatPos = (t % beatDur) / beatDur;
           const barIdx = Math.floor(t / (beatDur * 4));
-          const isDrop = (t >= 13.5 && t < 34) || (t >= 44 && t < 62);
-          const isBuildup = (t >= 9 && t < 13.5) || (t >= 39 && t < 44);
 
-          // Kick
+          const isBuildup = (prog > 0.18 && prog <= 0.25) || (prog > 0.58 && prog <= 0.65);
+          const isDrop = (prog > 0.25 && prog <= 0.48) || (prog > 0.65 && prog <= 0.90);
+          const isBreak = (prog > 0.48 && prog <= 0.58);
+
+          // Kick (Sub-bass)
           let kick = 0;
-          if (t > 1.5 && t < 64) {
-            const kickEnv = Math.exp(-beatPos * 14);
-            const kickFreq = 50 + 110 * Math.exp(-beatPos * 26);
-            kick = Math.sin(2 * Math.PI * kickFreq * t) * kickEnv * (isDrop ? 0.95 : 0.65);
+          if (!isBreak && prog > 0.04 && prog < 0.95) {
+            const kickEnv = Math.exp(-beatPos * (isDrop ? 11 : 16));
+            const kFreq = 44 + 125 * Math.exp(-beatPos * 28);
+            kick = Math.sin(2 * Math.PI * kFreq * t) * kickEnv * (isDrop ? 1.0 : 0.65) * cfg.bassWeight;
           }
 
-          // Bassline
-          const bassNotes = [55, 55, 65.4, 73.4, 55, 55, 82.4, 73.4];
-          const noteFreq = bassNotes[barIdx % bassNotes.length];
-          const bassEnv = isDrop ? (0.5 + 0.5 * Math.sin(2 * Math.PI * (bpm / 60) * 2 * t)) : 0.35;
-          const bass = Math.tanh(Math.sin(2 * Math.PI * noteFreq * t) * 2.2) * bassEnv * (isDrop ? 0.55 : 0.25);
-
-          // Lead synth
-          const leadScale = [220, 261.6, 293.6, 329.6, 392, 440, 523.2];
-          const step = Math.floor(t / (beatDur / 2));
-          const leadFreq = leadScale[(step * 3 + barIdx) % leadScale.length] * (isDrop ? 2 : 1);
-          const leadEnv = Math.exp(-((t % (beatDur / 2)) / (beatDur / 2)) * 4.5);
-          const lead = (Math.sin(2 * Math.PI * leadFreq * t) + 0.4 * Math.sin(4 * Math.PI * leadFreq * t)) * leadEnv * (isDrop ? 0.32 : 0.16);
-
-          // Hi-hat / Snare
-          let perc = 0;
-          if (isDrop || isBuildup) {
-            const hatPos = (t % (beatDur / 2)) / (beatDur / 2);
-            perc = noise() * Math.exp(-hatPos * 22) * (isBuildup ? 0.35 : 0.22);
+          // Snare / Growl (Mids)
+          let mid = 0;
+          if (isDrop && (Math.floor(t / beatDur) % 2 === 1)) {
+            const snPos = beatPos;
+            mid = (Math.sin(2 * Math.PI * 185 * t) + noise() * 0.7) * Math.exp(-snPos * 14) * 0.45;
+          }
+          if (isBuildup) {
+            const accel = Math.floor(t / (beatDur / (prog > 0.62 ? 4 : 2)));
+            const subPos = (t % (beatDur / 2)) / (beatDur / 2);
+            mid += noise() * Math.exp(-subPos * 16) * 0.35 * ((accel % 2) + 0.5);
           }
 
-          const master = (kick + bass + lead + perc) * 0.65;
-          L[i] = Utils.clamp(master, -0.95, 0.95);
-          R[i] = Utils.clamp(master * 0.98 + lead * 0.05, -0.95, 0.95);
+          // Lead / Arp (Highs)
+          const scale = presetKey === "closetome" ? [261.6, 311.1, 392, 466.2, 523.2] : [220, 261.6, 329.6, 392, 440, 587.3];
+          const step = Math.floor(t / (beatDur / (presetKey === "barracuda" ? 4 : 2)));
+          const fLead = scale[(step * 3 + barIdx) % scale.length] * (isDrop ? 2 : 1);
+          const leadEnv = Math.exp(-((t % (beatDur / 2)) / (beatDur / 2)) * 4.0);
+          const lead = (Math.sin(2 * Math.PI * fLead * t) + 0.5 * Math.sin(4 * Math.PI * fLead * t)) * leadEnv * cfg.highWeight * (isDrop ? 0.38 : 0.22);
+
+          const mix = (kick + mid + lead) * 0.62;
+          L[i] = Utils.clamp(mix, -0.95, 0.95);
+          R[i] = Utils.clamp(mix * 0.97 + lead * 0.08, -0.95, 0.95);
         }
-        return buffer;
+
+        return { buffer, title: cfg.title };
       }
 
       function analyzeAudioBuffer(audioBuffer) {
@@ -525,12 +574,8 @@
         const hop = Math.floor(sr / fps);
 
         const frames = new Array(totalFrames);
-        let prevEnergy = 0;
-
-        // Simple 3-band IIR/filterbank approximation per frame
         let lp = 0, bp = 0;
-        const lpAlpha = 0.04;  // ~Sub-bass
-        const bpAlpha = 0.22;  // ~Mids
+        let prevBass = 0, prevMid = 0, prevHigh = 0;
 
         for (let f = 0; f < totalFrames; f++) {
           const start = f * hop;
@@ -540,8 +585,8 @@
 
           for (let i = start; i < end; i += 2) {
             const s = 0.5 * (ch0[i] + ch1[i]);
-            lp += lpAlpha * (s - lp);
-            bp += bpAlpha * (s - bp);
+            lp += 0.038 * (s - lp);
+            bp += 0.22 * (s - bp);
             const low = lp;
             const mid = bp - lp;
             const high = s - bp;
@@ -556,136 +601,134 @@
           const bass = Math.sqrt(bassSq / n);
           const mid = Math.sqrt(midSq / n);
           const high = Math.sqrt(highSq / n);
-          const onset = Math.max(0, rms - prevEnergy);
-          prevEnergy = rms * 0.7 + prevEnergy * 0.3;
 
-          frames[f] = { t: f / fps, rms, bass, mid, high, onset };
+          const kickOnset = Math.max(0, bass - prevBass);
+          const snareOnset = Math.max(0, mid - prevMid);
+          const highOnset = Math.max(0, high - prevHigh);
+
+          prevBass = bass * 0.65 + prevBass * 0.35;
+          prevMid = mid * 0.65 + prevMid * 0.35;
+          prevHigh = high * 0.65 + prevHigh * 0.35;
+
+          frames[f] = { t: f / fps, rms, bass, mid, high, kickOnset, snareOnset, highOnset, onset: kickOnset + snareOnset * 0.6 };
         }
 
-        // Normalize bands by 97th percentile
         const normBand = (key) => {
           const sorted = frames.map(fr => fr[key]).sort((a, b) => a - b);
           const p97 = sorted[Math.floor(sorted.length * 0.97)] || 0.001;
-          for (const fr of frames) fr[key] = Utils.clamp(fr[key] / p97, 0, 1.35);
+          for (const fr of frames) fr[key] = Utils.clamp(fr[key] / p97, 0, 1.4);
         };
-        ["rms", "bass", "mid", "high", "onset"].forEach(normBand);
+        ["rms", "bass", "mid", "high", "kickOnset", "snareOnset", "highOnset", "onset"].forEach(normBand);
 
-        // Beat & BPM detection via onset autocorrelation
+        // BPM via autocorrelation
         const onsets = frames.map(fr => fr.onset);
-        let bestLag = 15, bestCorr = -1;
-        const minLag = Math.floor(fps * 60 / 185); // 185 BPM
-        const maxLag = Math.floor(fps * 60 / 70);  // 70 BPM
+        let bestLag = 14, bestCorr = -1;
+        const minLag = Math.floor((fps * 60) / 185);
+        const maxLag = Math.floor((fps * 60) / 72);
         for (let lag = minLag; lag <= maxLag; lag++) {
           let corr = 0;
-          for (let i = 0; i < onsets.length - lag; i++) {
-            corr += onsets[i] * onsets[i + lag];
-          }
-          if (corr > bestCorr) {
-            bestCorr = corr;
-            bestLag = lag;
-          }
+          for (let i = 0; i < onsets.length - lag; i++) corr += onsets[i] * onsets[i + lag];
+          if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
         }
         const bpm = Math.round((60 * fps) / bestLag);
+        const beatDur = 60 / bpm;
 
-        // Extract beat timestamps
+        // Beat grid aligned to strongest onset phase
         const beats = [];
-        const beatStep = 60 / bpm;
-        let lastBeat = -1;
-        for (let f = 2; f < frames.length - 2; f++) {
-          const fr = frames[f];
-          if (fr.onset > 0.32 && fr.onset >= frames[f - 1].onset && fr.onset >= frames[f + 1].onset) {
-            if (fr.t - lastBeat >= beatStep * 0.45) {
-              beats.push({ t: fr.t, strength: Utils.clamp(fr.onset, 0.3, 1.2), bass: fr.bass, high: fr.high });
-              lastBeat = fr.t;
-            }
-          }
+        for (let t = 0.4; t < duration - 0.3; t += beatDur) {
+          const fIdx = Utils.clamp(Math.floor(t * fps), 0, frames.length - 1);
+          const fr = frames[fIdx];
+          beats.push({
+            t,
+            bass: fr.bass,
+            mid: fr.mid,
+            high: fr.high,
+            rms: fr.rms,
+            isKick: fr.kickOnset > 0.25 || fr.bass > 0.55,
+            isSnare: fr.snareOnset > 0.28
+          });
         }
 
-        // Compute Song Fingerprint (determines combat personality!)
+        // Musical DNA & Archetype Selection
         const avgBass = frames.reduce((s, f) => s + f.bass, 0) / frames.length;
         const avgHigh = frames.reduce((s, f) => s + f.high, 0) / frames.length;
         const avgRms = frames.reduce((s, f) => s + f.rms, 0) / frames.length;
 
-        let style = "EQUILIBRADO";
-        if (bpm >= 145 && avgBass > 0.45) style = "SPEEDCORE / BOSS RUSH";
-        else if (avgBass > avgHigh * 1.25) style = "HEAVY BASS / DUBSTEP";
-        else if (avgHigh > avgBass * 1.15) style = "BULLET HELL / SYNTH";
-        else if (bpm < 105) style = "ATMÓSFERA / PESADO";
+        let archetype = ARCHETYPES.CLOCKWORK_SYNTH;
+        if (bpm >= 140 && avgHigh >= avgBass * 0.7) archetype = ARCHETYPES.HYPER_BARRAGE;
+        else if (avgBass > avgHigh * 1.18) archetype = ARCHETYPES.TITAN_CRUSHER;
+        else if (bpm < 108) archetype = ARCHETYPES.ABYSSAL_ECLIPSE;
 
-        // Section segmentation (rolling 4-second energy)
-        const win = fps * 4;
+        // Section segmentation (every 4 bars)
+        const secWin = beatDur * 8;
         const sections = [];
-        for (let f = 0; f < frames.length; f += win) {
-          const slice = frames.slice(f, f + win);
-          const e = slice.reduce((s, x) => s + x.rms, 0) / slice.length;
-          const progress = f / frames.length;
-          let label = "VERSO";
-          if (progress < 0.12) label = "INTRO";
-          else if (progress > 0.88) label = "OUTRO";
-          else if (e > avgRms * 1.22) label = "DROP / CLÍMAX";
-          else if (e < avgRms * 0.72) label = "BREAKDOWN";
-          sections.push({ start: f / fps, end: (f + win) / fps, energy: e, label });
+        for (let s = 0; s < duration; s += secWin) {
+          const e = Math.min(duration, s + secWin);
+          const fStart = Math.floor(s * fps);
+          const fEnd = Math.min(frames.length, Math.floor(e * fps));
+          const slice = frames.slice(fStart, Math.max(fStart + 1, fEnd));
+          const energy = slice.reduce((acc, x) => acc + x.rms, 0) / slice.length;
+          const prevEnergy = sections.length > 0 ? sections[sections.length - 1].energy : energy;
+          const prog = s / duration;
+
+          let type = "VERSE";
+          if (prog < 0.1) type = "INTRO";
+          else if (prog > 0.88) type = "OUTRO";
+          else if (energy > avgRms * 1.18) type = "DROP";
+          else if (energy > prevEnergy * 1.12 && energy < avgRms * 1.18) type = "BUILDUP";
+          else if (energy < avgRms * 0.72) type = "BREAKDOWN";
+
+          sections.push({ start: s, end: e, energy, type });
         }
 
-        return {
-          frames, fps, bpm, beats, sections,
-          profile: { avgBass, avgHigh, avgRms, style }
-        };
+        return { frames, fps, bpm, beatDur, beats, sections, archetype, profile: { avgBass, avgHigh, avgRms } };
       }
 
       // =========================================================================
-      // 6. DRY ATTACK REGISTRY (ALL JSAB ATTACKS + UNIFIED INTERFACE)
+      // 6. DRY ATTACK REGISTRY (ALL ICONIC JSAB MECHANICS + PRE-CUEING)
       // =========================================================================
-      // Every entity has: update(dt, W, H), draw(ctx), getDanger(px, py, tAhead), checkCollision(px, py, r)
+      // Every entity uses age vs leadTime:
+      //   age < leadTime  -> TELEGRAPH (anticipation before beat)
+      //   age >= leadTime -> ACTIVE IMPACT (hits ON the exact beat!)
       const AttackFactory = {
-        laser(x1, y1, x2, y2, width = 26, warnTime = 0.55, activeTime = 0.35) {
+        laser(x1, y1, x2, y2, width = 26, leadTime = 0.45, activeTime = 0.28) {
           return {
-            type: "laser", x1, y1, x2, y2, width, warnTime, activeTime,
-            age: 0, dead: false,
+            type: "laser", x1, y1, x2, y2, width, leadTime, activeTime,
+            age: 0, dead: false, impacted: false,
             update(dt) {
               this.age += dt;
-              if (this.age >= this.warnTime + this.activeTime) this.dead = true;
+              if (!this.impacted && this.age >= this.leadTime) {
+                this.impacted = true;
+                state.shake = Math.max(state.shake, 6);
+              }
+              if (this.age >= this.leadTime + this.activeTime) this.dead = true;
             },
-            isActive() { return this.age >= this.warnTime; },
+            isActive() { return this.age >= this.leadTime; },
             getDanger(px, py, tAhead) {
-              const futureAge = this.age + tAhead;
-              if (futureAge > this.warnTime + this.activeTime) return 0;
+              const fa = this.age + tAhead;
+              if (fa > this.leadTime + this.activeTime) return 0;
               const d = Utils.pointToSegmentDist(px, py, this.x1, this.y1, this.x2, this.y2);
-              const safeDist = this.width * 0.6 + 24;
-              if (d < safeDist) {
-                const urgency = this.isActive() ? 1.0 : Utils.clamp(this.age / this.warnTime, 0.2, 0.95);
-                return (1 - d / safeDist) * 140 * urgency;
+              const safe = this.width * 0.62 + 26;
+              if (d < safe) {
+                const urg = this.isActive() ? 1.15 : Utils.clamp(fa / this.leadTime, 0.25, 1.0);
+                return (1 - d / safe) * 150 * urg;
               }
               return 0;
             },
             checkCollision(px, py, r) {
-              if (!this.isActive()) return false;
-              return Utils.pointToSegmentDist(px, py, this.x1, this.y1, this.x2, this.y2) < (this.width * 0.45 + r);
+              return this.isActive() && Utils.pointToSegmentDist(px, py, this.x1, this.y1, this.x2, this.y2) < (this.width * 0.44 + r);
             },
             draw(ctx) {
               if (!this.isActive()) {
-                const p = this.age / this.warnTime;
-                ctx.save();
-                ctx.strokeStyle = `rgba(255, 31, 113, ${0.25 + p * 0.55})`;
-                ctx.lineWidth = 2 + p * 3;
-                ctx.setLineDash([12, 10]);
-                ctx.beginPath();
-                ctx.moveTo(this.x1, this.y1);
-                ctx.lineTo(this.x2, this.y2);
-                ctx.stroke();
-                ctx.restore();
+                Utils.drawTelegraphLine(ctx, this.x1, this.y1, this.x2, this.y2, this.age / this.leadTime);
               } else {
-                const t = (this.age - this.warnTime) / this.activeTime;
-                const w = this.width * (1 - t * 0.4);
+                const t = (this.age - this.leadTime) / this.activeTime;
+                const w = this.width * (1 - t * 0.45);
                 Utils.withGlow(ctx, COLORS.pink, 22, () => {
                   ctx.strokeStyle = COLORS.pink;
                   ctx.lineWidth = w;
                   ctx.lineCap = "round";
-                  ctx.beginPath();
-                  ctx.moveTo(this.x1, this.y1);
-                  ctx.lineTo(this.x2, this.y2);
-                  ctx.stroke();
-
+                  ctx.beginPath(); ctx.moveTo(this.x1, this.y1); ctx.lineTo(this.x2, this.y2); ctx.stroke();
                   ctx.strokeStyle = COLORS.white;
                   ctx.lineWidth = w * 0.35;
                   ctx.stroke();
@@ -695,82 +738,349 @@
           };
         },
 
-        pulseBomb(x, y, maxR = 85, fuse = 0.65, bulletCount = 10, spiral = 0) {
+        // Close To Me / Clockwork Rotating Beam
+        rotatingBeam(cx, cy, startAngle, angVel, length, width = 22, leadTime = 0.5, activeTime = 1.6) {
           return {
-            type: "pulseBomb", x, y, maxR, fuse, bulletCount, spiral,
+            type: "rotatingBeam", cx, cy, angle: startAngle, angVel, length, width, leadTime, activeTime,
             age: 0, dead: false,
             update(dt) {
               this.age += dt;
-              if (this.age >= this.fuse) {
-                this.dead = true;
-                spawnParticles(this.x, this.y, COLORS.pink, 14, 90, 280);
-                for (let i = 0; i < this.bulletCount; i++) {
-                  const ang = (Math.PI * 2 * i) / this.bulletCount + this.spiral;
-                  const spd = 250 + (i % 2) * 55;
-                  state.entities.push(AttackFactory.bullet(this.x, this.y, Math.cos(ang) * spd, Math.sin(ang) * spd, 8));
-                }
+              if (this.age >= this.leadTime) this.angle += this.angVel * dt;
+              if (this.age >= this.leadTime + this.activeTime) this.dead = true;
+            },
+            isActive() { return this.age >= this.leadTime; },
+            _endPt(a) { return { x: this.cx + Math.cos(a) * this.length, y: this.cy + Math.sin(a) * this.length }; },
+            getDanger(px, py, tAhead) {
+              const fa = this.age + tAhead;
+              const futAng = fa > this.leadTime ? this.angle + this.angVel * Math.max(0, tAhead) : this.angle;
+              const end = this._endPt(futAng);
+              const d = Utils.pointToSegmentDist(px, py, this.cx, this.cy, end.x, end.y);
+              const safe = this.width * 0.65 + 32;
+              if (d < safe) return (1 - d / safe) * 145 * (this.isActive() ? 1.1 : 0.7);
+              return 0;
+            },
+            checkCollision(px, py, r) {
+              if (!this.isActive()) return false;
+              const end = this._endPt(this.angle);
+              return Utils.pointToSegmentDist(px, py, this.cx, this.cy, end.x, end.y) < (this.width * 0.45 + r);
+            },
+            draw(ctx) {
+              const end = this._endPt(this.angle);
+              if (!this.isActive()) {
+                Utils.drawTelegraphLine(ctx, this.cx, this.cy, end.x, end.y, this.age / this.leadTime);
+              } else {
+                Utils.withGlow(ctx, COLORS.pink, 20, () => {
+                  ctx.strokeStyle = COLORS.pink;
+                  ctx.lineWidth = this.width;
+                  ctx.lineCap = "round";
+                  ctx.beginPath(); ctx.moveTo(this.cx, this.cy); ctx.lineTo(end.x, end.y); ctx.stroke();
+                  ctx.strokeStyle = COLORS.white;
+                  ctx.lineWidth = this.width * 0.3;
+                  ctx.stroke();
+                });
               }
+            }
+          };
+        },
+
+        // Checkerboard / Rhythmic Floor Zone
+        floorZone(x, y, w, h, leadTime = 0.55, activeTime = 0.25) {
+          return {
+            type: "floorZone", x, y, w, h, leadTime, activeTime,
+            age: 0, dead: false,
+            update(dt) {
+              this.age += dt;
+              if (this.age >= this.leadTime + this.activeTime) this.dead = true;
+            },
+            isActive() { return this.age >= this.leadTime; },
+            getDanger(px, py, tAhead) {
+              if (px >= this.x - 16 && px <= this.x + this.w + 16 && py >= this.y - 16 && py <= this.y + this.h + 16) {
+                const urg = this.isActive() ? 1.2 : Utils.clamp((this.age + tAhead) / this.leadTime, 0.3, 1.0);
+                return 135 * urg;
+              }
+              return 0;
+            },
+            checkCollision(px, py, r) {
+              return this.isActive() && px + r > this.x && px - r < this.x + this.w && py + r > this.y && py - r < this.y + this.h;
+            },
+            draw(ctx) {
+              if (!this.isActive()) {
+                const p = this.age / this.leadTime;
+                ctx.save();
+                ctx.strokeStyle = `rgba(255, 31, 113, ${0.35 + p * 0.65})`;
+                ctx.fillStyle = `rgba(255, 31, 113, ${0.06 + p * 0.16})`;
+                ctx.lineWidth = 2;
+                ctx.fillRect(this.x + 2, this.y + 2, this.w - 4, this.h - 4);
+                ctx.strokeRect(this.x + 2, this.y + 2, this.w - 4, this.h - 4);
+                ctx.restore();
+              } else {
+                const a = 1 - (this.age - this.leadTime) / this.activeTime;
+                Utils.withGlow(ctx, COLORS.pink, 18, () => {
+                  ctx.fillStyle = `rgba(255, 31, 113, ${a * 0.9})`;
+                  ctx.fillRect(this.x + 2, this.y + 2, this.w - 4, this.h - 4);
+                });
+              }
+            }
+          };
+        },
+
+        // Annihilate / Hydraulic Wall Crusher
+        hydraulicPiston(side, depth, leadTime = 0.6, activeTime = 0.35) {
+          return {
+            type: "hydraulicPiston", side, depth, leadTime, activeTime,
+            age: 0, dead: false, impacted: false,
+            update(dt) {
+              this.age += dt;
+              if (!this.impacted && this.age >= this.leadTime) {
+                this.impacted = true;
+                state.shake = Math.max(state.shake, 11);
+              }
+              if (this.age >= this.leadTime + this.activeTime) this.dead = true;
+            },
+            isActive() { return this.age >= this.leadTime; },
+            _rect(W, H) {
+              const p = this.isActive()
+                ? 1 - Math.pow((this.age - this.leadTime) / this.activeTime, 2) * 0.2
+                : Math.pow(this.age / this.leadTime, 3) * 0.15;
+              const d = this.depth * p;
+              if (this.side === "left") return { x: 0, y: 0, w: d, h: H };
+              if (this.side === "right") return { x: W - d, y: 0, w: d, h: H };
+              if (this.side === "top") return { x: 0, y: 0, w: W, h: d };
+              return { x: 0, y: H - d, w: W, h: d };
+            },
+            getDanger(px, py) {
+              const W = state.width, H = state.height;
+              const pad = this.depth + 35;
+              if (this.side === "left" && px < pad) return (1 - px / pad) * 145;
+              if (this.side === "right" && px > W - pad) return (1 - (W - px) / pad) * 145;
+              if (this.side === "top" && py < pad) return (1 - py / pad) * 145;
+              if (this.side === "bottom" && py > H - pad) return (1 - (H - py) / pad) * 145;
+              return 0;
+            },
+            checkCollision(px, py, r) {
+              if (!this.isActive()) return false;
+              const rc = this._rect(state.width, state.height);
+              return px + r > rc.x && px - r < rc.x + rc.w && py + r > rc.y && py - r < rc.y + rc.h;
+            },
+            draw(ctx, W, H) {
+              const rc = this._rect(W, H);
+              if (!this.isActive()) {
+                ctx.save();
+                ctx.strokeStyle = "rgba(255, 31, 113, 0.55)";
+                ctx.setLineDash([10, 8]);
+                ctx.lineWidth = 2;
+                if (this.side === "left") ctx.strokeRect(0, 0, this.depth, H);
+                else if (this.side === "right") ctx.strokeRect(W - this.depth, 0, this.depth, H);
+                else if (this.side === "top") ctx.strokeRect(0, 0, W, this.depth);
+                else ctx.strokeRect(0, H - this.depth, W, this.depth);
+                ctx.restore();
+              }
+              Utils.withGlow(ctx, COLORS.pink, 20, () => {
+                ctx.fillStyle = COLORS.pink;
+                ctx.fillRect(rc.x, rc.y, rc.w, rc.h);
+              });
+            }
+          };
+        },
+
+        // Annihilate Twin Hand Slam
+        handSlam(targetX, targetY, radius = 95, leadTime = 0.55) {
+          return {
+            type: "handSlam", x: targetX, y: targetY, radius, leadTime,
+            age: 0, dead: false, impacted: false,
+            update(dt) {
+              this.age += dt;
+              if (!this.impacted && this.age >= this.leadTime) {
+                this.impacted = true;
+                state.shake = Math.max(state.shake, 13);
+                spawnParticles(this.x, this.y, COLORS.pink, 22, 120, 380);
+                state.entities.push(AttackFactory.shockwave(this.x, this.y, 440, 460, 18));
+              }
+              if (this.age >= this.leadTime + 0.25) this.dead = true;
             },
             getDanger(px, py) {
               const d = Math.hypot(px - this.x, py - this.y);
-              if (d < this.maxR + 30) return (1 - d / (this.maxR + 30)) * 90 * (this.age / this.fuse);
+              if (d < this.radius + 40) return (1 - d / (this.radius + 40)) * 155 * (this.age / this.leadTime);
               return 0;
             },
-            checkCollision() { return false; },
+            checkCollision(px, py, r) {
+              return this.impacted && Math.hypot(px - this.x, py - this.y) < (this.radius * 0.85 + r);
+            },
             draw(ctx) {
-              const p = Utils.clamp(this.age / this.fuse, 0, 1);
+              const p = Utils.clamp(this.age / this.leadTime, 0, 1);
               ctx.save();
-              ctx.strokeStyle = `rgba(255, 31, 113, ${0.4 + p * 0.6})`;
-              ctx.lineWidth = 3;
-              ctx.beginPath();
-              ctx.arc(this.x, this.y, this.maxR * p, 0, Math.PI * 2);
-              ctx.stroke();
-
-              ctx.fillStyle = COLORS.pink;
-              ctx.beginPath();
-              ctx.arc(this.x, this.y, 10 + p * 12, 0, Math.PI * 2);
-              ctx.fill();
+              ctx.translate(this.x, this.y);
+              if (!this.impacted) {
+                ctx.strokeStyle = `rgba(255, 31, 113, ${0.35 + p * 0.65})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.stroke();
+                // Claw approaching
+                const scale = 1.8 - p * 0.8;
+                ctx.scale(scale, scale);
+                ctx.fillStyle = `rgba(255, 31, 113, ${0.25 + p * 0.5})`;
+                Utils.drawPolygon(ctx, 0, 0, 5, this.radius * 0.65, p * 0.4);
+                ctx.fill();
+              } else {
+                Utils.withGlow(ctx, COLORS.pink, 24, () => {
+                  ctx.fillStyle = COLORS.pink;
+                  Utils.drawPolygon(ctx, 0, 0, 5, this.radius * 0.85, 0.4);
+                  ctx.fill();
+                });
+              }
               ctx.restore();
             }
           };
         },
 
-        shockwave(x, y, speed = 420, maxR = 950, thickness = 22) {
+        // Lycanthropy Rising Spikes
+        lycanthropySpike(x, baseY, maxH, width = 34, leadTime = 0.5, activeTime = 0.45) {
           return {
-            type: "shockwave", x, y, speed, maxR, thickness,
-            r: 20, dead: false,
+            type: "lycanthropySpike", x, baseY, maxH, width, leadTime, activeTime,
+            age: 0, dead: false,
+            update(dt) {
+              this.age += dt;
+              if (this.age >= this.leadTime + this.activeTime) this.dead = true;
+            },
+            isActive() { return this.age >= this.leadTime; },
+            _curH() {
+              if (!this.isActive()) return this.maxH * 0.08;
+              const t = (this.age - this.leadTime) / this.activeTime;
+              return this.maxH * (t < 0.25 ? t / 0.25 : 1 - (t - 0.25) / 0.75);
+            },
+            getDanger(px, py) {
+              if (Math.abs(px - this.x) < this.width * 0.85 && py > this.baseY - this.maxH - 25) {
+                return 140 * (this.isActive() ? 1.1 : 0.75);
+              }
+              return 0;
+            },
+            checkCollision(px, py, r) {
+              if (!this.isActive()) return false;
+              const h = this._curH();
+              return Math.abs(px - this.x) < (this.width * 0.42 + r) && py > this.baseY - h;
+            },
+            draw(ctx) {
+              const h = this._curH();
+              if (!this.isActive()) {
+                Utils.drawTelegraphLine(ctx, this.x, this.baseY, this.x, this.baseY - this.maxH, this.age / this.leadTime);
+              }
+              Utils.withGlow(ctx, COLORS.pink, 16, () => {
+                ctx.fillStyle = COLORS.pink;
+                ctx.beginPath();
+                ctx.moveTo(this.x - this.width / 2, this.baseY);
+                ctx.lineTo(this.x, this.baseY - h);
+                ctx.lineTo(this.x + this.width / 2, this.baseY);
+                ctx.closePath();
+                ctx.fill();
+              });
+            }
+          };
+        },
+
+        // Barracuda Zig-Zag Serpent
+        barracudaSerpent(y, dir, speed = 520, amp = 75, freq = 6) {
+          return {
+            type: "barracudaSerpent", x: dir === 1 ? -60 : state.width + 60, baseY: y, y, dir, speed, amp, freq,
+            age: 0, r: 20, dead: false, history: [],
+            update(dt, W) {
+              this.age += dt;
+              this.x += this.dir * this.speed * dt;
+              this.y = this.baseY + Math.sin(this.age * this.freq) * this.amp;
+              this.history.unshift({ x: this.x, y: this.y });
+              if (this.history.length > 9) this.history.pop();
+              if ((this.dir === 1 && this.x > W + 160) || (this.dir === -1 && this.x < -160)) this.dead = true;
+            },
+            getDanger(px, py, tAhead) {
+              const fx = this.x + this.dir * this.speed * tAhead;
+              const fy = this.baseY + Math.sin((this.age + tAhead) * this.freq) * this.amp;
+              const d = Math.hypot(px - fx, py - fy);
+              if (d < this.r + 50) return (1 - d / (this.r + 50)) * 140;
+              return 0;
+            },
+            checkCollision(px, py, pr) {
+              for (let i = 0; i < this.history.length; i += 2) {
+                if (Math.hypot(px - this.history[i].x, py - this.history[i].y) < this.r * 0.8 + pr) return true;
+              }
+              return false;
+            },
+            draw(ctx) {
+              Utils.withGlow(ctx, COLORS.pink, 14, () => {
+                for (let i = this.history.length - 1; i >= 0; i--) {
+                  const pt = this.history[i];
+                  const rad = this.r * (1 - i * 0.08);
+                  ctx.fillStyle = i === 0 ? COLORS.white : COLORS.pink;
+                  Utils.drawPolygon(ctx, pt.x, pt.y, 3, rad, this.dir === 1 ? 0 : Math.PI);
+                  ctx.fill();
+                }
+              });
+            }
+          };
+        },
+
+        pulseBomb(x, y, maxR = 85, leadTime = 0.55, bulletCount = 10, spiral = 0) {
+          return {
+            type: "pulseBomb", x, y, maxR, leadTime, bulletCount, spiral,
+            age: 0, dead: false,
+            update(dt) {
+              this.age += dt;
+              if (this.age >= this.leadTime) {
+                this.dead = true;
+                spawnParticles(this.x, this.y, COLORS.pink, 14, 90, 290);
+                for (let i = 0; i < this.bulletCount; i++) {
+                  const ang = (Math.PI * 2 * i) / this.bulletCount + this.spiral;
+                  const spd = 260 + (i % 2) * 55;
+                  state.entities.push(AttackFactory.bullet(this.x, this.y, Math.cos(ang) * spd, Math.sin(ang) * spd, 8, i % 2 === 0 ? "diamond" : "circle"));
+                }
+              }
+            },
+            getDanger(px, py) {
+              const d = Math.hypot(px - this.x, py - this.y);
+              if (d < this.maxR + 35) return (1 - d / (this.maxR + 35)) * 105 * (this.age / this.leadTime);
+              return 0;
+            },
+            checkCollision() { return false; },
+            draw(ctx) {
+              const p = Utils.clamp(this.age / this.leadTime, 0, 1);
+              ctx.save();
+              ctx.strokeStyle = `rgba(255, 31, 113, ${0.4 + p * 0.6})`;
+              ctx.lineWidth = 3;
+              ctx.beginPath(); ctx.arc(this.x, this.y, this.maxR * p, 0, Math.PI * 2); ctx.stroke();
+              ctx.fillStyle = COLORS.pink;
+              ctx.beginPath(); ctx.arc(this.x, this.y, 10 + p * 14, 0, Math.PI * 2); ctx.fill();
+              ctx.restore();
+            }
+          };
+        },
+
+        shockwave(x, y, speed = 440, maxR = 950, thickness = 22) {
+          return {
+            type: "shockwave", x, y, speed, maxR, thickness, r: 22, dead: false,
             update(dt) {
               this.r += this.speed * dt;
               if (this.r >= this.maxR) this.dead = true;
             },
             getDanger(px, py, tAhead) {
-              const futureR = this.r + this.speed * tAhead;
-              const d = Math.hypot(px - this.x, py - this.y);
-              const band = Math.abs(d - futureR);
-              if (band < this.thickness + 28) return (1 - band / (this.thickness + 28)) * 120;
+              const fr = this.r + this.speed * tAhead;
+              const band = Math.abs(Math.hypot(px - this.x, py - this.y) - fr);
+              if (band < this.thickness + 30) return (1 - band / (this.thickness + 30)) * 125;
               return 0;
             },
             checkCollision(px, py, pr) {
-              const d = Math.hypot(px - this.x, py - this.y);
-              return Math.abs(d - this.r) < (this.thickness * 0.45 + pr);
+              return Math.abs(Math.hypot(px - this.x, py - this.y) - this.r) < (this.thickness * 0.45 + pr);
             },
             draw(ctx) {
               const alpha = Utils.clamp(1 - this.r / this.maxR, 0.1, 1);
               Utils.withGlow(ctx, COLORS.pink, 18, () => {
                 ctx.strokeStyle = `rgba(255, 31, 113, ${alpha})`;
                 ctx.lineWidth = this.thickness * alpha;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-                ctx.stroke();
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.stroke();
               });
             }
           };
         },
 
-        sweepBar(axis, pos, dir, speed, thickness = 36, gapCenter = null, gapSize = 150) {
+        sweepBar(axis, pos, dir, speed, thickness = 34, gapCenter = null, gapSize = 165) {
           return {
-            type: "sweepBar", axis, pos, dir, speed, thickness, gapCenter, gapSize,
-            dead: false,
+            type: "sweepBar", axis, pos, dir, speed, thickness, gapCenter, gapSize, dead: false,
             update(dt, W, H) {
               this.pos += this.dir * this.speed * dt;
               const limit = this.axis === "x" ? W : H;
@@ -778,21 +1088,17 @@
             },
             _inGap(px, py) {
               if (this.gapCenter === null) return false;
-              const coord = this.axis === "x" ? py : px;
-              return Math.abs(coord - this.gapCenter) < this.gapSize * 0.5;
+              return Math.abs((this.axis === "x" ? py : px) - this.gapCenter) < this.gapSize * 0.5;
             },
             getDanger(px, py, tAhead) {
               if (this._inGap(px, py)) return 0;
-              const futurePos = this.pos + this.dir * this.speed * tAhead;
-              const coord = this.axis === "x" ? px : py;
-              const d = Math.abs(coord - futurePos);
-              if (d < this.thickness + 45) return (1 - d / (this.thickness + 45)) * 135;
+              const d = Math.abs((this.axis === "x" ? px : py) - (this.pos + this.dir * this.speed * tAhead));
+              if (d < this.thickness + 48) return (1 - d / (this.thickness + 48)) * 140;
               return 0;
             },
             checkCollision(px, py, r) {
               if (this._inGap(px, py)) return false;
-              const coord = this.axis === "x" ? px : py;
-              return Math.abs(coord - this.pos) < (this.thickness * 0.5 + r);
+              return Math.abs((this.axis === "x" ? px : py) - this.pos) < (this.thickness * 0.5 + r);
             },
             draw(ctx, W, H) {
               Utils.withGlow(ctx, COLORS.pink, 16, () => {
@@ -803,100 +1109,83 @@
                     const gBot = this.gapCenter + this.gapSize * 0.5;
                     ctx.fillRect(this.pos - this.thickness / 2, 0, this.thickness, Math.max(0, gTop));
                     ctx.fillRect(this.pos - this.thickness / 2, gBot, this.thickness, Math.max(0, H - gBot));
-                  } else {
-                    ctx.fillRect(this.pos - this.thickness / 2, 0, this.thickness, H);
-                  }
+                  } else ctx.fillRect(this.pos - this.thickness / 2, 0, this.thickness, H);
                 } else {
                   if (this.gapCenter !== null) {
-                    const gLeft = this.gapCenter - this.gapSize * 0.5;
-                    const gRight = this.gapCenter + this.gapSize * 0.5;
-                    ctx.fillRect(0, this.pos - this.thickness / 2, Math.max(0, gLeft), this.thickness);
-                    ctx.fillRect(gRight, this.pos - this.thickness / 2, Math.max(0, W - gRight), this.thickness);
-                  } else {
-                    ctx.fillRect(0, this.pos - this.thickness / 2, W, this.thickness);
-                  }
+                    const gL = this.gapCenter - this.gapSize * 0.5;
+                    const gR = this.gapCenter + this.gapSize * 0.5;
+                    ctx.fillRect(0, this.pos - this.thickness / 2, Math.max(0, gL), this.thickness);
+                    ctx.fillRect(gR, this.pos - this.thickness / 2, Math.max(0, W - gR), this.thickness);
+                  } else ctx.fillRect(0, this.pos - this.thickness / 2, W, this.thickness);
                 }
               });
             }
           };
         },
 
-        sawblade(x, y, vx, vy, r = 24, life = 5.5) {
+        sawblade(x, y, vx, vy, r = 24, life = 4.5) {
           return {
             type: "sawblade", x, y, vx, vy, r, life, age: 0, rot: 0, dead: false,
             update(dt, W, H) {
-              this.age += dt;
-              this.rot += dt * 9;
-              this.x += this.vx * dt;
-              this.y += this.vy * dt;
+              this.age += dt; this.rot += dt * 10;
+              this.x += this.vx * dt; this.y += this.vy * dt;
               if (this.x < this.r || this.x > W - this.r) this.vx *= -1;
               if (this.y < this.r || this.y > H - this.r) this.vy *= -1;
               if (this.age >= this.life) this.dead = true;
             },
             getDanger(px, py, tAhead) {
-              const fx = this.x + this.vx * tAhead;
-              const fy = this.y + this.vy * tAhead;
-              const d = Math.hypot(px - fx, py - fy);
-              if (d < this.r + 48) return (1 - d / (this.r + 48)) * 130;
+              const d = Math.hypot(px - (this.x + this.vx * tAhead), py - (this.y + this.vy * tAhead));
+              if (d < this.r + 50) return (1 - d / (this.r + 50)) * 135;
               return 0;
             },
-            checkCollision(px, py, pr) {
-              return Math.hypot(px - this.x, py - this.y) < (this.r * 0.85 + pr);
-            },
+            checkCollision(px, py, pr) { return Math.hypot(px - this.x, py - this.y) < (this.r * 0.85 + pr); },
             draw(ctx) {
-              ctx.save();
-              ctx.translate(this.x, this.y);
-              ctx.rotate(this.rot);
+              ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.rot);
               Utils.withGlow(ctx, COLORS.pink, 14, () => {
                 ctx.fillStyle = COLORS.pink;
                 ctx.beginPath();
                 const teeth = 10;
                 for (let i = 0; i < teeth * 2; i++) {
-                  const rad = i % 2 === 0 ? this.r : this.r * 0.62;
+                  const rad = i % 2 === 0 ? this.r : this.r * 0.6;
                   const a = (Math.PI * i) / teeth;
                   if (i === 0) ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad);
                   else ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
                 }
-                ctx.closePath();
-                ctx.fill();
+                ctx.closePath(); ctx.fill();
                 ctx.fillStyle = COLORS.bg;
-                ctx.beginPath();
-                ctx.arc(0, 0, this.r * 0.28, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(0, 0, this.r * 0.28, 0, Math.PI * 2); ctx.fill();
               });
               ctx.restore();
             }
           };
         },
 
-        bullet(x, y, vx, vy, r = 8) {
+        bullet(x, y, vx, vy, r = 8, shape = "circle", gravity = 0) {
           return {
-            type: "bullet", x, y, vx, vy, r, dead: false,
+            type: "bullet", x, y, vx, vy, r, shape, gravity, dead: false, rot: Math.atan2(vy, vx),
             update(dt, W, H) {
-              this.x += this.vx * dt;
-              this.y += this.vy * dt;
-              if (this.x < -40 || this.x > W + 40 || this.y < -40 || this.y > H + 40) this.dead = true;
+              this.vy += this.gravity * dt;
+              this.x += this.vx * dt; this.y += this.vy * dt;
+              this.rot = Math.atan2(this.vy, this.vx);
+              if (this.x < -50 || this.x > W + 50 || this.y < -50 || this.y > H + 50) this.dead = true;
             },
             getDanger(px, py, tAhead) {
               const fx = this.x + this.vx * tAhead;
-              const fy = this.y + this.vy * tAhead;
+              const fy = this.y + this.vy * tAhead + 0.5 * this.gravity * tAhead * tAhead;
               const d = Math.hypot(px - fx, py - fy);
-              if (d < this.r + 36) return (1 - d / (this.r + 36)) * 115;
+              if (d < this.r + 36) return (1 - d / (this.r + 36)) * 120;
               return 0;
             },
-            checkCollision(px, py, pr) {
-              return Math.hypot(px - this.x, py - this.y) < (this.r * 0.85 + pr);
-            },
+            checkCollision(px, py, pr) { return Math.hypot(px - this.x, py - this.y) < (this.r * 0.85 + pr); },
             draw(ctx) {
               Utils.withGlow(ctx, COLORS.pink, 10, () => {
                 ctx.fillStyle = COLORS.pink;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                if (this.shape === "diamond") Utils.drawPolygon(ctx, this.x, this.y, 4, this.r * 1.25, this.rot);
+                else if (this.shape === "triangle") Utils.drawPolygon(ctx, this.x, this.y, 3, this.r * 1.3, this.rot);
+                else { ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); }
                 ctx.fill();
                 ctx.fillStyle = COLORS.white;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.r * 0.4, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.r * 0.38, 0, Math.PI * 2); ctx.fill();
               });
             }
           };
@@ -904,169 +1193,227 @@
       };
 
       // =========================================================================
-      // 7. CHOREOGRAPHY GENERATOR (SONG-SPECIFIC & VARIED)
+      // 7. CHOREOGRAPHY DIRECTOR (PRE-CUED SETPIECES PER PHRASE)
       // =========================================================================
       function buildChoreographySchedule() {
         const { analysis, duration } = state;
         if (!analysis) return [];
 
+        const { beats, beatDur, sections, archetype, bpm } = analysis;
+        const rng = Utils.seededRandom(Math.floor(bpm * 131 + analysis.profile.avgBass * 997));
         const schedule = [];
-        const { beats, profile, bpm } = analysis;
-        const rng = Utils.seededRandom(Math.floor(bpm * 100 + profile.avgBass * 1000));
 
-        // Choose attack repertoire based on song fingerprint
-        const isBassHeavy = profile.avgBass > profile.avgHigh * 1.15;
-        const isFast = bpm >= 135;
+        // Group beats into 4-beat or 8-beat musical phrases
+        const phraseLen = 4;
+        for (let i = 0; i < beats.length; i += phraseLen) {
+          const phraseBeat = beats[i];
+          const t = phraseBeat.t;
+          if (t < 0.8 || t > duration - 0.6) continue;
 
-        beats.forEach((b, idx) => {
-          const progress = b.t / duration;
-          const phase = progress < 0.25 ? 1 : progress < 0.55 ? 2 : progress < 0.85 ? 3 : 4;
+          const sec = sections.find(s => t >= s.start && t < s.end) || { type: "VERSE" };
+          const progress = t / duration;
+          const phase = progress < 0.22 ? 1 : progress < 0.52 ? 2 : progress < 0.82 ? 3 : 4;
 
-          // Skip some beats in intro/outro for breathing room
-          if (progress < 0.08 && idx % 2 !== 0) return;
-          if (progress > 0.94 && idx % 2 !== 0) return;
-
-          const roll = rng();
-          let attack = "bulletRing";
-
-          if (phase === 1) {
-            attack = roll < 0.4 ? "laser" : roll < 0.75 ? "pulseBomb" : "shockwave";
-          } else if (phase === 2) {
-            if (isBassHeavy) {
-              attack = roll < 0.35 ? "shockwave" : roll < 0.65 ? "sweepBar" : roll < 0.85 ? "sawblade" : "laser";
-            } else {
-              attack = roll < 0.35 ? "laser" : roll < 0.65 ? "pulseBomb" : roll < 0.85 ? "bulletSpiral" : "sweepBar";
-            }
-          } else if (phase === 3) {
-            if (roll < 0.22) attack = "crossLaser";
-            else if (roll < 0.42) attack = "bossDash";
-            else if (roll < 0.62) attack = "sawblade";
-            else if (roll < 0.82) attack = "sweepBar";
-            else attack = "bulletSpiral";
-          } else {
-            // Phase 4: Hypernova
-            if (roll < 0.25) attack = "crossLaser";
-            else if (roll < 0.45) attack = "bossDash";
-            else if (roll < 0.65) attack = "pulseBomb";
-            else if (roll < 0.85) attack = "shockwave";
-            else attack = isFast ? "bulletSpiral" : "sweepBar";
+          // Choose a coherent Setpiece for this musical phrase based on Section + Archetype
+          let setpiece = archetype.setpieces[Math.floor(rng() * archetype.setpieces.length)];
+          if (sec.type === "DROP") {
+            setpiece = (i % 8 === 0) ? "DROP_EXPLOSION" : archetype.setpieces[Math.floor(rng() * 3)];
+          } else if (sec.type === "BUILDUP") {
+            setpiece = "BUILDUP_LOCKON";
+          } else if (sec.type === "BREAKDOWN" || sec.type === "INTRO") {
+            setpiece = "BREAKDOWN_PULSE";
           }
 
-          schedule.push({
-            t: b.t,
-            phase,
-            strength: b.strength,
-            attack,
-            seed: rng()
-          });
-        });
+          // Schedule sub-events inside this phrase with exact Pre-Cueing!
+          for (let step = 0; step < phraseLen && (i + step) < beats.length; step++) {
+            const b = beats[i + step];
+            const leadTime = Math.min(0.65, beatDur * 0.95);
+            const spawnTime = Math.max(0.05, b.t - leadTime);
 
+            schedule.push({
+              spawnTime,
+              impactTime: b.t,
+              leadTime,
+              phase,
+              step,
+              setpiece,
+              section: sec.type,
+              beat: b,
+              seed: rng()
+            });
+          }
+        }
+
+        schedule.sort((a, b) => a.spawnTime - b.spawnTime);
         return schedule;
       }
 
-      function spawnScheduledEvent(ev) {
+      function spawnSetpieceEvent(ev) {
         const W = state.width, H = state.height;
         const bx = state.blixer.x, by = state.blixer.y;
         const cx = state.cyan.x, cy = state.cyan.y;
-        const phase = ev.phase;
-        const spdMul = PHASES[phase - 1].speedMul;
+        const spdMul = PHASES[ev.phase - 1].speedMul;
+        const lt = ev.leadTime;
 
+        state.activeSetpiece = ev.setpiece;
+        dom.statSetpiece.textContent = ev.setpiece.replace(/_/g, " ");
         state.blixer.pulse = 1.0;
-        state.bgPulse = Math.max(state.bgPulse, 0.55 * ev.strength);
 
-        switch (ev.attack) {
-          case "laser": {
-            const ang = Math.atan2(cy - by, cx - bx) + (ev.seed - 0.5) * 0.35;
-            const len = Math.max(W, H) * 1.4;
-            state.entities.push(AttackFactory.laser(
-              bx, by, bx + Math.cos(ang) * len, by + Math.sin(ang) * len,
-              24 + phase * 4, 0.55 / spdMul, 0.32
-            ));
-            break;
-          }
-          case "crossLaser": {
-            const baseAng = ev.seed * Math.PI;
-            const len = Math.max(W, H) * 1.4;
-            for (let i = 0; i < 4; i++) {
-              const a = baseAng + (Math.PI / 2) * i;
-              state.entities.push(AttackFactory.laser(
-                bx, by, bx + Math.cos(a) * len, by + Math.sin(a) * len,
-                22 + phase * 3, 0.6 / spdMul, 0.32
-              ));
+        switch (ev.setpiece) {
+          case "DROP_EXPLOSION": {
+            if (ev.step === 0) {
+              state.flashAlpha = 0.35;
+              state.zoomPunch = 0.045;
+              state.entities.push(AttackFactory.shockwave(bx, by, 480 * spdMul, Math.max(W, H) * 1.1, 24));
+            }
+            const count = 8 + ev.phase * 2;
+            for (let k = 0; k < count; k++) {
+              const a = (Math.PI * 2 * k) / count + ev.step * 0.3;
+              state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * 260 * spdMul, Math.sin(a) * 260 * spdMul, 8, "diamond"));
             }
             break;
           }
-          case "pulseBomb": {
-            const px = 100 + ev.seed * (W - 200);
-            const py = 120 + ((ev.seed * 7.3) % 1) * (H - 240);
-            state.entities.push(AttackFactory.pulseBomb(px, py, 80 + phase * 10, 0.65 / spdMul, 8 + phase * 2, ev.seed * Math.PI));
+
+          case "BUILDUP_LOCKON": {
+            const ang = Math.atan2(cy - by, cx - bx);
+            const len = Math.max(W, H) * 1.4;
+            state.entities.push(AttackFactory.laser(bx, by, bx + Math.cos(ang) * len, by + Math.sin(ang) * len, 22, lt, 0.22));
             break;
           }
-          case "shockwave": {
-            state.entities.push(AttackFactory.shockwave(bx, by, 380 * spdMul, Math.max(W, H) * 1.1, 22));
-            state.shake = Math.max(state.shake, 7);
+
+          case "TWIN_HAND_SMASH": {
+            const tx = ev.step % 2 === 0 ? W * 0.28 + ev.seed * W * 0.18 : W * 0.54 + ev.seed * W * 0.18;
+            const ty = H * 0.48 + (ev.seed - 0.5) * H * 0.28;
+            state.entities.push(AttackFactory.handSlam(tx, ty, 88 + ev.phase * 8, lt));
             break;
           }
-          case "sweepBar": {
-            const axis = ev.seed > 0.5 ? "x" : "y";
-            const dir = ev.seed > 0.25 && ev.seed < 0.75 ? 1 : -1;
-            const startPos = dir === 1 ? -40 : (axis === "x" ? W + 40 : H + 40);
-            const gap = axis === "x" ? H * (0.25 + ev.seed * 0.5) : W * (0.25 + ev.seed * 0.5);
-            state.entities.push(AttackFactory.sweepBar(axis, startPos, dir, 360 * spdMul, 34, gap, 175));
+
+          case "HYDRAULIC_CRUSH": {
+            const sides = ["left", "right", "top", "bottom"];
+            const side = sides[ev.step % 2 === 0 ? 0 : 1];
+            const depth = (side === "left" || side === "right") ? W * 0.22 : H * 0.22;
+            state.entities.push(AttackFactory.hydraulicPiston(side, depth, lt, 0.32));
             break;
           }
-          case "sawblade": {
-            const side = ev.seed > 0.5 ? 40 : W - 40;
-            const vx = (side < W / 2 ? 1 : -1) * (220 + ev.seed * 120) * spdMul;
-            const vy = (ev.seed - 0.5) * 320 * spdMul;
-            state.entities.push(AttackFactory.sawblade(side, 100 + ev.seed * (H - 200), vx, vy, 22 + phase * 2, 4.5));
-            break;
-          }
-          case "bulletSpiral": {
-            const count = 8 + phase * 2;
-            const base = ev.t * 3;
-            for (let i = 0; i < count; i++) {
-              const a = base + (Math.PI * 2 * i) / count;
-              const spd = 230 * spdMul;
-              state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * spd, Math.sin(a) * spd, 8));
+
+          case "CHECKERBOARD_DANCE": {
+            const cols = 4, rows = 3;
+            const cw = W / cols, ch = H / rows;
+            const parity = ev.step % 2;
+            for (let r = 0; r < rows; r++) {
+              for (let c = 0; c < cols; c++) {
+                if ((r + c) % 2 === parity) {
+                  state.entities.push(AttackFactory.floorZone(c * cw, r * ch, cw, ch, lt, 0.22));
+                }
+              }
             }
             break;
           }
-          case "bossDash": {
-            state.blixer.dashTarget = {
-              x: 120 + ev.seed * (W - 240),
-              y: 120 + ((ev.seed * 3.7) % 1) * (H - 240)
-            };
-            state.blixer.dashTimer = 0.45;
-            state.shake = Math.max(state.shake, 10);
+
+          case "BARRACUDA_SWARM": {
+            const dir = ev.step % 2 === 0 ? 1 : -1;
+            const y = H * (0.22 + ev.seed * 0.58);
+            state.entities.push(AttackFactory.barracudaSerpent(y, dir, 480 * spdMul, 65, 5.5));
             break;
           }
+
+          case "CLOSE_TO_ME_ORBS": {
+            if (ev.step === 0) {
+              for (let k = 0; k < 3; k++) {
+                const a = (Math.PI * 2 * k) / 3 + ev.seed * Math.PI;
+                state.entities.push(AttackFactory.rotatingBeam(bx, by, a, (ev.seed > 0.5 ? 1 : -1) * 1.15 * spdMul, Math.max(W, H) * 0.85, 20, lt, state.analysis.beatDur * 3.5));
+              }
+            } else {
+              const px = 100 + ev.seed * (W - 200);
+              const py = 120 + ((ev.seed * 5.3) % 1) * (H - 240);
+              state.entities.push(AttackFactory.pulseBomb(px, py, 75, lt, 8, ev.step * 0.5));
+            }
+            break;
+          }
+
+          case "CLOCKWORK_LASERS": {
+            const base = ev.step * 0.4 + ev.seed * Math.PI;
+            const len = Math.max(W, H) * 1.4;
+            for (let k = 0; k < 4; k++) {
+              const a = base + (Math.PI / 2) * k;
+              state.entities.push(AttackFactory.laser(bx, by, bx + Math.cos(a) * len, by + Math.sin(a) * len, 22, lt, 0.25));
+            }
+            break;
+          }
+
+          case "LYCANTHROPY_VINES": {
+            const count = 4 + ev.phase;
+            for (let k = 0; k < count; k++) {
+              const sx = (W / (count + 1)) * (k + 1) + (ev.step % 2 === 0 ? 25 : -25);
+              state.entities.push(AttackFactory.lycanthropySpike(sx, H, H * (0.32 + ev.seed * 0.22), 38, lt, 0.38));
+            }
+            break;
+          }
+
+          case "ORB_RAIN": {
+            for (let k = 0; k < 5; k++) {
+              const sx = W * (0.1 + k * 0.2) + (ev.seed - 0.5) * 60;
+              state.entities.push(AttackFactory.bullet(sx, -10, (ev.seed - 0.5) * 90, 140, 10, "circle", 360 * spdMul));
+            }
+            break;
+          }
+
+          case "WAVE_CORRIDOR": {
+            const axis = ev.step % 2 === 0 ? "x" : "y";
+            const dir = ev.seed > 0.5 ? 1 : -1;
+            const start = dir === 1 ? -40 : (axis === "x" ? W + 40 : H + 40);
+            const gap = (axis === "x" ? H : W) * (0.3 + ev.seed * 0.4);
+            state.entities.push(AttackFactory.sweepBar(axis, start, dir, 380 * spdMul, 32, gap, 175));
+            break;
+          }
+
+          case "SAWBLADE_GAUNTLET": {
+            const side = ev.step % 2 === 0 ? 35 : W - 35;
+            state.entities.push(AttackFactory.sawblade(side, 100 + ev.seed * (H - 200), (side < W / 2 ? 1 : -1) * 260 * spdMul, (ev.seed - 0.5) * 260, 24, 3.8));
+            break;
+          }
+
+          case "MANDALA_BLOOM": {
+            const count = 10 + ev.phase * 2;
+            for (let k = 0; k < count; k++) {
+              const a = ev.step * 0.45 + (Math.PI * 2 * k) / count;
+              state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * 250 * spdMul, Math.sin(a) * 250 * spdMul, 8, "triangle"));
+            }
+            break;
+          }
+
+          case "MEGA_MOUTH_BEAM": {
+            const ang = Math.atan2(cy - by, cx - bx);
+            const len = Math.max(W, H) * 1.4;
+            state.entities.push(AttackFactory.laser(bx, by, bx + Math.cos(ang) * len, by + Math.sin(ang) * len, 64, lt, 0.38));
+            break;
+          }
+
           default: {
-            for (let i = 0; i < 8; i++) {
-              const a = (Math.PI * 2 * i) / 8;
-              state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * 240, Math.sin(a) * 240, 8));
+            // BREAKDOWN_PULSE
+            if (ev.step % 2 === 0) {
+              state.entities.push(AttackFactory.shockwave(bx, by, 320, Math.max(W, H) * 0.9, 16));
             }
+            break;
           }
         }
       }
 
       // =========================================================================
-      // 8. CYAN PERFECT NO-HIT AI
+      // 8. CYAN PERFECT NO-HIT AI (MULTI-HORIZON + DASH I-FRAMES)
       // =========================================================================
       function evaluateDangerAt(px, py, tAhead) {
         let danger = 0;
         const W = state.width, H = state.height;
         const margin = 42;
-        if (px < margin) danger += (margin - px) * 3.5;
-        if (px > W - margin) danger += (px - (W - margin)) * 3.5;
-        if (py < margin) danger += (margin - py) * 3.5;
-        if (py > H - margin) danger += (py - (H - margin)) * 3.5;
+        if (px < margin) danger += (margin - px) * 3.8;
+        if (px > W - margin) danger += (px - (W - margin)) * 3.8;
+        if (py < margin) danger += (margin - py) * 3.8;
+        if (py > H - margin) danger += (py - (H - margin)) * 3.8;
 
-        // Blixer body
         const bd = Math.hypot(px - state.blixer.x, py - state.blixer.y);
-        if (bd < state.blixer.r + 50) danger += (1 - bd / (state.blixer.r + 50)) * 160;
+        if (bd < state.blixer.r + 52) danger += (1 - bd / (state.blixer.r + 52)) * 170;
 
-        // Unified entity danger
         for (const ent of state.entities) {
           danger += ent.getDanger(px, py, tAhead);
         }
@@ -1076,77 +1423,65 @@
       function updateCyanAI(dt) {
         const c = state.cyan;
         const W = state.width, H = state.height;
-
         if (c.dashCooldown > 0) c.dashCooldown -= dt;
         if (c.invuln > 0) c.invuln -= dt;
+        c.squash = Utils.lerp(c.squash, 1, dt * 12);
 
-        // Active dash movement
         if (c.dashTimer > 0) {
           c.dashTimer -= dt;
-          const dashSpd = 980;
+          const dashSpd = 1040;
           c.x = Utils.clamp(c.x + c.dashDirX * dashSpd * dt, 24, W - 24);
           c.y = Utils.clamp(c.y + c.dashDirY * dashSpd * dt, 24, H - 24);
-          c.trail.push({ x: c.x, y: c.y, alpha: 0.9 });
+          c.trail.push({ x: c.x, y: c.y, alpha: 0.95 });
           return;
         }
 
-        // Sample candidate directions
-        const speed = 420;
+        const speed = 445;
         let bestX = 0, bestY = 0, bestScore = Infinity;
-        const dirs = 12;
+        const dirs = 16;
         for (let i = 0; i <= dirs; i++) {
           const dx = i === dirs ? 0 : Math.cos((Math.PI * 2 * i) / dirs);
           const dy = i === dirs ? 0 : Math.sin((Math.PI * 2 * i) / dirs);
           const nx = Utils.clamp(c.x + dx * speed * 0.14, 24, W - 24);
           const ny = Utils.clamp(c.y + dy * speed * 0.14, 24, H - 24);
 
-          let score = evaluateDangerAt(nx, ny, 0.14);
-          // Slight preference for staying near lower-center arena
-          score += Math.hypot(nx - W * 0.5, ny - H * 0.65) * 0.04;
-          if (score < bestScore) {
-            bestScore = score;
-            bestX = dx;
-            bestY = dy;
-          }
+          let score = evaluateDangerAt(nx, ny, 0.08) * 0.6 + evaluateDangerAt(nx, ny, 0.20) * 0.4;
+          score += Math.hypot(nx - W * 0.5, ny - H * 0.65) * 0.035;
+          if (score < bestScore) { bestScore = score; bestX = dx; bestY = dy; }
         }
 
-        // Trigger Dash if current position is in imminent danger
         const currentDanger = evaluateDangerAt(c.x, c.y, 0.05);
-        if (currentDanger > 75 && c.dashCooldown <= 0 && (bestX !== 0 || bestY !== 0)) {
-          c.dashTimer = 0.16;
-          c.dashCooldown = 0.42;
-          c.invuln = 0.22;
+        if (currentDanger > 72 && c.dashCooldown <= 0 && (bestX !== 0 || bestY !== 0)) {
+          c.dashTimer = 0.17;
+          c.dashCooldown = 0.36;
+          c.invuln = 0.24;
+          c.squash = 1.45;
           c.dashDirX = bestX;
           c.dashDirY = bestY;
-          spawnParticles(c.x, c.y, COLORS.cyan, 8, 60, 180);
+          spawnParticles(c.x, c.y, COLORS.cyan, 10, 80, 220);
           return;
         }
 
-        c.vx = Utils.lerp(c.vx, bestX * speed, dt * 14);
-        c.vy = Utils.lerp(c.vy, bestY * speed, dt * 14);
+        c.vx = Utils.lerp(c.vx, bestX * speed, dt * 15);
+        c.vy = Utils.lerp(c.vy, bestY * speed, dt * 15);
         c.x = Utils.clamp(c.x + c.vx * dt, 24, W - 24);
         c.y = Utils.clamp(c.y + c.vy * dt, 24, H - 24);
         c.rot = Math.atan2(c.vy, c.vx);
 
-        if (Math.hypot(c.vx, c.vy) > 40) {
-          c.trail.push({ x: c.x, y: c.y, alpha: 0.55 });
-        }
+        if (Math.hypot(c.vx, c.vy) > 35) c.trail.push({ x: c.x, y: c.y, alpha: 0.6 });
         if (c.trail.length > 14) c.trail.shift();
-        for (const tr of c.trail) tr.alpha -= dt * 2.2;
+        for (const tr of c.trail) tr.alpha -= dt * 2.4;
         c.trail = c.trail.filter(tr => tr.alpha > 0);
       }
 
       // =========================================================================
-      // 9. SIMULATION & RENDERING
+      // 9. SIMULATION, BIOME BACKGROUNDS & ARTICULATED BOSS
       // =========================================================================
       function spawnParticles(x, y, color, count = 10, sMin = 60, sMax = 240) {
         for (let i = 0; i < count; i++) {
           const a = Math.random() * Math.PI * 2;
           const s = sMin + Math.random() * (sMax - sMin);
-          state.particles.push({
-            x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
-            r: 2 + Math.random() * 3, color, life: 0.4 + Math.random() * 0.35, maxLife: 0.75
-          });
+          state.particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, r: 2 + Math.random() * 3, color, life: 0.4 + Math.random() * 0.35, maxLife: 0.75 });
         }
       }
 
@@ -1156,14 +1491,14 @@
         state.particles = [];
         state.phase = 1;
         state.shake = 0;
+        state.zoomPunch = 0;
+        state.flashAlpha = 0;
         state.bgPulse = 0;
         state.blixer.x = W * 0.5;
-        state.blixer.y = H * 0.28;
-        state.blixer.dashTarget = null;
+        state.blixer.y = H * 0.26;
         state.cyan.x = W * 0.5;
         state.cyan.y = H * 0.72;
-        state.cyan.vx = 0;
-        state.cyan.vy = 0;
+        state.cyan.vx = 0; state.cyan.vy = 0;
         state.cyan.trail = [];
         state.cyan.invuln = 0;
       }
@@ -1172,7 +1507,6 @@
         const W = state.width, H = state.height;
         const t = state.currentTime;
 
-        // Current audio frame
         let bass = 0, mid = 0, high = 0;
         if (state.analysis) {
           const idx = Utils.clamp(Math.floor(t * state.analysis.fps), 0, state.analysis.frames.length - 1);
@@ -1182,114 +1516,131 @@
           dom.barMid.style.width = `${Math.min(100, mid * 90)}%`;
           dom.barHigh.style.width = `${Math.min(100, high * 90)}%`;
 
-          // Update section label
+          if (fr.kickOnset > 0.45) {
+            state.zoomPunch = Math.max(state.zoomPunch, 0.022);
+            state.bgPulse = Math.max(state.bgPulse, 0.65);
+          }
+
           const sec = state.analysis.sections.find(s => t >= s.start && t < s.end);
-          if (sec) dom.statSection.textContent = sec.label;
+          if (sec) dom.statSection.textContent = sec.type;
         }
 
-        // Phase progression
         const prog = state.duration > 0 ? t / state.duration : 0;
-        const newPhase = prog < 0.25 ? 1 : prog < 0.55 ? 2 : prog < 0.85 ? 3 : 4;
+        const newPhase = prog < 0.22 ? 1 : prog < 0.52 ? 2 : prog < 0.82 ? 3 : 4;
         if (newPhase !== state.phase) {
           state.phase = newPhase;
           const pInfo = PHASES[newPhase - 1];
           dom.phaseBadge.textContent = `FASE ${newPhase}`;
           dom.phaseName.textContent = pInfo.name;
           state.shake = 14;
-          spawnParticles(state.blixer.x, state.blixer.y, COLORS.pink, 30, 120, 420);
+          state.flashAlpha = 0.28;
+          spawnParticles(state.blixer.x, state.blixer.y, COLORS.pink, 32, 120, 440);
         }
 
-        // Spawn scheduled events
-        while (state.nextEventIdx < state.schedule.length && state.schedule[state.nextEventIdx].t <= t) {
-          spawnScheduledEvent(state.schedule[state.nextEventIdx]);
+        while (state.nextEventIdx < state.schedule.length && state.schedule[state.nextEventIdx].spawnTime <= t) {
+          spawnSetpieceEvent(state.schedule[state.nextEventIdx]);
           state.nextEventIdx++;
         }
 
-        // Blixer movement & beat reaction
+        // Blixer & Articulated Hands
         const b = state.blixer;
         const pInfo = PHASES[state.phase - 1];
         b.rot += dt * (0.8 + state.phase * 0.45);
         b.pulse = Math.max(0, b.pulse - dt * 3.5);
-        b.r = b.baseR * pInfo.scale * (1 + bass * 0.24 + b.pulse * 0.14);
+        b.mouthOpen = Utils.lerp(b.mouthOpen, mid * 0.9, dt * 16);
+        b.r = b.baseR * pInfo.scale * (1 + bass * 0.22 + b.pulse * 0.14);
 
-        if (b.dashTarget && b.dashTimer > 0) {
-          b.dashTimer -= dt;
-          b.x = Utils.lerp(b.x, b.dashTarget.x, dt * 10);
-          b.y = Utils.lerp(b.y, b.dashTarget.y, dt * 10);
-        } else {
-          const targetX = W * 0.5 + Math.sin(t * 1.1 * pInfo.speedMul) * (W * 0.26);
-          const targetY = H * 0.26 + Math.cos(t * 1.7 * pInfo.speedMul) * (H * 0.08);
-          b.x = Utils.lerp(b.x, targetX, dt * 3.5);
-          b.y = Utils.lerp(b.y, targetY, dt * 3.5);
-        }
+        const targetX = W * 0.5 + Math.sin(t * 1.15 * pInfo.speedMul) * (W * 0.24);
+        const targetY = H * 0.24 + Math.cos(t * 1.65 * pInfo.speedMul) * (H * 0.06);
+        b.x = Utils.lerp(b.x, targetX, dt * 4);
+        b.y = Utils.lerp(b.y, targetY, dt * 4);
 
-        // Update entities
+        b.leftHand.x = Utils.lerp(b.leftHand.x, b.x - b.r * 2.1 + Math.sin(t * 3) * 18, dt * 6);
+        b.leftHand.y = Utils.lerp(b.leftHand.y, b.y + 30 + Math.cos(t * 4) * 20, dt * 6);
+        b.rightHand.x = Utils.lerp(b.rightHand.x, b.x + b.r * 2.1 - Math.sin(t * 3) * 18, dt * 6);
+        b.rightHand.y = Utils.lerp(b.rightHand.y, b.y + 30 + Math.cos(t * 4) * 20, dt * 6);
+
         for (const ent of state.entities) ent.update(dt, W, H);
         state.entities = state.entities.filter(e => !e.dead);
 
-        // Update Cyan AI
         updateCyanAI(dt);
 
-        // Particles
-        for (const p of state.particles) {
-          p.x += p.vx * dt;
-          p.y += p.vy * dt;
-          p.life -= dt;
-        }
+        for (const p of state.particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }
         state.particles = state.particles.filter(p => p.life > 0);
 
-        state.shake = Math.max(0, state.shake - dt * 28);
-        state.bgPulse = Math.max(0, state.bgPulse - dt * 2.5);
+        state.shake = Math.max(0, state.shake - dt * 30);
+        state.zoomPunch = Utils.lerp(state.zoomPunch, 0, dt * 12);
+        state.flashAlpha = Math.max(0, state.flashAlpha - dt * 2.2);
+        state.bgPulse = Math.max(0, state.bgPulse - dt * 2.6);
+      }
+
+      function drawBiomeBackground(W, H) {
+        const arch = state.analysis ? state.analysis.archetype : ARCHETYPES.TITAN_CRUSHER;
+        ctx.fillStyle = arch.bgTint;
+        ctx.fillRect(0, 0, W, H);
+
+        const alpha = 0.07 + state.bgPulse * 0.16;
+        ctx.strokeStyle = `${arch.gridColor}${alpha})`;
+        ctx.lineWidth = 1.2;
+
+        if (arch.bgStyle === "tunnel") {
+          for (let i = 1; i <= 7; i++) {
+            const s = ((i / 7 + (state.currentTime * 0.35) % (1 / 7)));
+            const rw = W * s, rh = H * s;
+            ctx.strokeRect((W - rw) / 2, (H - rh) / 2, rw, rh);
+          }
+        } else if (arch.bgStyle === "vortex") {
+          for (let r = 80; r < Math.max(W, H); r += 90) {
+            ctx.beginPath(); ctx.arc(W / 2, H / 2, r + state.bgPulse * 24, 0, Math.PI * 2); ctx.stroke();
+          }
+        } else {
+          const step = 64;
+          for (let x = 0; x < W; x += step) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke(); }
+          for (let y = 0; y < H; y += step) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+        }
       }
 
       function renderFrame() {
         const W = state.width, H = state.height;
         ctx.save();
-        ctx.fillStyle = COLORS.bg;
-        ctx.fillRect(0, 0, W, H);
 
+        // Zoom punch + screen shake
+        if (state.zoomPunch > 0.001) {
+          const z = 1 + state.zoomPunch;
+          ctx.translate(W / 2, H / 2);
+          ctx.scale(z, z);
+          ctx.translate(-W / 2, -H / 2);
+        }
         if (state.shake > 0.2) {
           ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
         }
 
-        // Reactive Grid
-        ctx.strokeStyle = `rgba(255, 31, 113, ${0.06 + state.bgPulse * 0.12})`;
-        ctx.lineWidth = 1;
-        const step = 64;
-        for (let x = 0; x < W; x += step) {
-          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
-        }
-        for (let y = 0; y < H; y += step) {
-          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-        }
+        drawBiomeBackground(W, H);
 
-        // Entities
         for (const ent of state.entities) ent.draw(ctx, W, H);
 
-        // Particles
         for (const p of state.particles) {
           ctx.globalAlpha = Utils.clamp(p.life / p.maxLife, 0, 1);
           ctx.fillStyle = p.color;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
         }
         ctx.globalAlpha = 1;
 
-        // Blixer
         drawBlixer();
-
-        // Cyan
         drawCyan();
 
-        // Optional HUD
+        if (state.flashAlpha > 0.01) {
+          ctx.fillStyle = `rgba(255, 31, 113, ${state.flashAlpha})`;
+          ctx.fillRect(0, 0, W, H);
+        }
+
         if (state.showHud) {
-          ctx.fillStyle = "rgba(255,255,255,0.75)";
+          ctx.fillStyle = "rgba(255,255,255,0.8)";
           ctx.font = "700 14px Orbitron, sans-serif";
           ctx.fillText(`PHASE ${state.phase} • ${PHASES[state.phase - 1].name}`, 24, 34);
           ctx.fillStyle = COLORS.cyan;
-          ctx.font = "600 12px 'JetBrains Mono', monospace";
-          ctx.fillText("PERFECT NO-HIT AI", 24, 54);
+          ctx.font = "600 11px 'JetBrains Mono', monospace";
+          ctx.fillText(`SETPIECE: ${state.activeSetpiece.replace(/_/g, " ")}`, 24, 54);
         }
 
         ctx.restore();
@@ -1297,10 +1648,37 @@
 
       function drawBlixer() {
         const b = state.blixer;
+
+        // Articulated Hands in Phase 3 & 4
+        if (state.phase >= 3) {
+          [b.leftHand, b.rightHand].forEach((h, idx) => {
+            ctx.save();
+            ctx.translate(h.x, h.y);
+            ctx.rotate(idx === 0 ? -0.35 : 0.35);
+            Utils.withGlow(ctx, COLORS.pink, 16, () => {
+              ctx.fillStyle = COLORS.pink;
+              Utils.drawPolygon(ctx, 0, 0, 5, b.r * 0.42, 0.3);
+              ctx.fill();
+            });
+            ctx.restore();
+          });
+        }
+
         ctx.save();
         ctx.translate(b.x, b.y);
-        ctx.rotate(b.rot);
 
+        // Outer Halo Ring in Phase 2+
+        if (state.phase >= 2) {
+          ctx.save();
+          ctx.rotate(-b.rot * 0.7);
+          ctx.strokeStyle = "rgba(255, 31, 113, 0.45)";
+          ctx.lineWidth = 3;
+          ctx.setLineDash([16, 12]);
+          ctx.beginPath(); ctx.arc(0, 0, b.r * 1.48, 0, Math.PI * 2); ctx.stroke();
+          ctx.restore();
+        }
+
+        ctx.rotate(b.rot);
         Utils.withGlow(ctx, COLORS.pink, 28, () => {
           ctx.fillStyle = COLORS.pink;
           ctx.beginPath();
@@ -1315,29 +1693,30 @@
           ctx.fill();
         });
 
-        // Inner face
         ctx.rotate(-b.rot);
         ctx.fillStyle = "#1a0612";
-        ctx.beginPath();
-        ctx.arc(0, 0, b.r * 0.58, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(0, 0, b.r * 0.58, 0, Math.PI * 2); ctx.fill();
 
-        // Eyes
+        // Expressive Eyes looking toward Cyan
+        const angToCyan = Math.atan2(state.cyan.y - b.y, state.cyan.x - b.x);
+        const lookX = Math.cos(angToCyan) * 4;
+        const lookY = Math.sin(angToCyan) * 4;
         ctx.fillStyle = COLORS.white;
         const eyeOff = b.r * 0.22;
         ctx.beginPath();
-        ctx.arc(-eyeOff, -b.r * 0.08, b.r * 0.12, 0, Math.PI * 2);
-        ctx.arc(eyeOff, -b.r * 0.08, b.r * 0.12, 0, Math.PI * 2);
+        ctx.arc(-eyeOff + lookX, -b.r * 0.08 + lookY, b.r * 0.12, 0, Math.PI * 2);
+        ctx.arc(eyeOff + lookX, -b.r * 0.08 + lookY, b.r * 0.12, 0, Math.PI * 2);
         ctx.fill();
 
-        // Jagged mouth
+        // Reactive Equalizer Mouth
         ctx.strokeStyle = COLORS.pinkHot;
         ctx.lineWidth = 3;
+        const mOpen = 4 + b.mouthOpen * 14;
         ctx.beginPath();
         ctx.moveTo(-eyeOff * 1.1, b.r * 0.2);
-        ctx.lineTo(-eyeOff * 0.4, b.r * 0.32);
+        ctx.lineTo(-eyeOff * 0.4, b.r * 0.2 + mOpen);
         ctx.lineTo(0, b.r * 0.2);
-        ctx.lineTo(eyeOff * 0.4, b.r * 0.32);
+        ctx.lineTo(eyeOff * 0.4, b.r * 0.2 + mOpen);
         ctx.lineTo(eyeOff * 1.1, b.r * 0.2);
         ctx.stroke();
 
@@ -1354,6 +1733,7 @@
         ctx.save();
         ctx.translate(c.x, c.y);
         ctx.rotate(c.rot);
+        ctx.scale(c.squash, 2 - c.squash);
         Utils.withGlow(ctx, COLORS.cyan, 18, () => {
           ctx.fillStyle = COLORS.cyan;
           ctx.fillRect(-c.r, -c.r, c.r * 2, c.r * 2);
@@ -1382,9 +1762,8 @@
         }
 
         const prog = state.duration > 0 ? state.currentTime / state.duration : 0;
-        const px = prog * w;
         tCtx.fillStyle = COLORS.pink;
-        tCtx.fillRect(px - 1, 0, 2, h);
+        tCtx.fillRect(prog * w - 1, 0, 2, h);
       }
 
       function stopAudioSource() {
@@ -1449,31 +1828,26 @@
 
         dom.emptyOverlay.classList.add("hidden");
         dom.trackName.textContent = title;
-        dom.trackStatus.textContent = "Listo";
+        dom.trackStatus.textContent = "Sincronizado";
         dom.trackStatus.className = "text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300";
         dom.statBpm.textContent = state.analysis.bpm;
         dom.statDuration.textContent = Utils.formatTime(state.duration);
         dom.statEvents.textContent = state.schedule.length;
-        dom.statStyle.textContent = state.analysis.profile.style;
+        dom.statArchetype.textContent = state.analysis.archetype.label;
         dom.timeTotal.textContent = Utils.formatTime(state.duration);
         dom.btnPlayPause.disabled = false;
         dom.btnRestart.disabled = false;
         dom.btnRecord.disabled = false;
 
         drawTimeline();
-        showToast(`Analizado: ${state.analysis.bpm} BPM • ${state.analysis.profile.style}`, "success");
+        showToast(`${state.analysis.bpm} BPM • Arquetipo: ${state.analysis.archetype.label}`, "success");
       }
 
-      // Recording
       function startRecordingFullTrack() {
         if (!state.audioBuffer || state.isRecording) return;
         const stream = dom.canvas.captureStream(60);
-        if (state.mediaDest) {
-          state.mediaDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
-        }
-        const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
-          ? "video/webm;codecs=vp9,opus"
-          : "video/webm";
+        if (state.mediaDest) state.mediaDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+        const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus") ? "video/webm;codecs=vp9,opus" : "video/webm";
 
         state.recordedChunks = [];
         state.mediaRecorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
@@ -1483,7 +1857,7 @@
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
-          a.download = `jsab_${state.aspect.replace(":", "x")}_${Date.now()}.webm`;
+          a.download = `jsab_v2_${state.aspect.replace(":", "x")}_${Date.now()}.webm`;
           a.click();
           URL.revokeObjectURL(url);
           showToast("Video exportado correctamente", "success");
@@ -1504,13 +1878,11 @@
         state.isRecording = false;
         dom.recIcon.classList.remove("rec-dot");
         dom.recBtnText.textContent = "Grabar Video Completo";
-        if (state.mediaRecorder && state.mediaRecorder.state !== "inactive") {
-          state.mediaRecorder.stop();
-        }
+        if (state.mediaRecorder && state.mediaRecorder.state !== "inactive") state.mediaRecorder.stop();
       }
 
       // =========================================================================
-      // 11. EVENT LISTENERS & MAIN LOOP
+      // 11. EVENTS & MAIN LOOP
       // =========================================================================
       dom.audioInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
@@ -1521,18 +1893,18 @@
           const buf = await file.arrayBuffer();
           const decoded = await ac.decodeAudioData(buf);
           loadAudioBuffer(decoded, file.name);
-        } catch (err) {
+        } catch {
           showToast("Error al decodificar el audio", "error");
         }
       });
 
-      const loadDemo = () => {
-        const buf = generateDemoBossTrack();
-        loadAudioBuffer(buf, "Demo Boss — Corrupted Core (142 BPM)");
-        startPlayback(0);
-      };
-      dom.btnDemo.addEventListener("click", loadDemo);
-      dom.overlayDemoBtn.addEventListener("click", loadDemo);
+      dom.demoBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const { buffer, title } = generateDemoTrack(btn.dataset.demo);
+          loadAudioBuffer(buffer, title);
+          startPlayback(0);
+        });
+      });
 
       dom.btnPlayPause.addEventListener("click", () => {
         if (state.isPlaying) pausePlayback();
@@ -1547,17 +1919,11 @@
       });
 
       dom.btnRecord.addEventListener("click", () => {
-        if (state.isRecording) {
-          pausePlayback();
-          stopRecordingAndDownload();
-        } else {
-          startRecordingFullTrack();
-        }
+        if (state.isRecording) { pausePlayback(); stopRecordingAndDownload(); }
+        else startRecordingFullTrack();
       });
 
-      dom.toggleHud.addEventListener("change", (e) => {
-        state.showHud = e.target.checked;
-      });
+      dom.toggleHud.addEventListener("change", (e) => { state.showHud = e.target.checked; });
 
       dom.aspectBtns.forEach(btn => {
         btn.addEventListener("click", () => {
@@ -1586,11 +1952,10 @@
       dom.timelineWrapper.addEventListener("click", (e) => {
         if (!state.audioBuffer) return;
         const rect = dom.timelineWrapper.getBoundingClientRect();
-        const ratio = Utils.clamp((e.clientX - rect.left) / rect.width, 0, 1);
-        const target = ratio * state.duration;
+        const target = Utils.clamp((e.clientX - rect.left) / rect.width, 0, 1) * state.duration;
         state.pauseOffset = target;
         state.currentTime = target;
-        state.nextEventIdx = state.schedule.findIndex(ev => ev.t >= target);
+        state.nextEventIdx = state.schedule.findIndex(ev => ev.spawnTime >= target);
         if (state.nextEventIdx === -1) state.nextEventIdx = state.schedule.length;
         resetWorldEntities();
         if (state.isPlaying) startPlayback(target);
@@ -1601,7 +1966,6 @@
       function mainLoop(now) {
         const dt = Math.min(0.05, (now - lastNow) / 1000);
         lastNow = now;
-
         if (state.isPlaying && state.audioCtx) {
           state.currentTime = state.audioCtx.currentTime - state.startTime;
           dom.timeCurrent.textContent = Utils.formatTime(state.currentTime);
