@@ -121,6 +121,8 @@ function pausePlayback() {
 function loadAudioBuffer(buffer, title) {
   pausePlayback();
   state.audioBuffer = buffer;
+  state.mediaEl = null;
+  state.liveAnalyser = null;
   state.duration = buffer.duration;
   state.trackTitle = title;
   state.pauseOffset = 0;
@@ -148,8 +150,100 @@ function loadAudioBuffer(buffer, title) {
   showToast(`${state.analysis.bpm} BPM • Arquetipo: ${state.analysis.archetype.label}`, "success");
 }
 
+function loadMediaElementFallback(file) {
+  return new Promise((resolve, reject) => {
+    const ac = ensureAudioContext();
+    const url = URL.createObjectURL(file);
+    const el = document.createElement("video");
+    el.src = url;
+    el.preload = "auto";
+    el.playsInline = true;
+
+    el.onloadedmetadata = () => {
+      const duration = Number.isFinite(el.duration) && el.duration > 0 ? el.duration : 120;
+      const srcNode = ac.createMediaElementSource(el);
+      const analyser = ac.createAnalyser();
+      analyser.fftSize = 256;
+      srcNode.connect(analyser);
+      analyser.connect(ac.destination);
+      if (state.mediaDest) analyser.connect(state.mediaDest);
+
+      el.onended = () => {
+        if (state.isPlaying) {
+          state.isPlaying = false;
+          state.pauseOffset = 0;
+          updatePlayButtonUI();
+          if (state.isRecording) stopRecordingAndDownload();
+        }
+      };
+
+      const fps = 30;
+      const totalFrames = Math.ceil(duration * fps);
+      const frames = new Array(totalFrames);
+      for (let f = 0; f < totalFrames; f++) {
+        const t = f / fps;
+        const pulse = 0.5 + 0.45 * Math.sin(t * Math.PI * 4);
+        frames[f] = { t, rms: 0.55, bass: pulse, mid: 0.45, high: 0.45, kickOnset: pulse > 0.85 ? 0.6 : 0.1, snareOnset: 0.2, highOnset: 0.2, onset: 0.4 };
+      }
+      const bpm = 128;
+      const beatDur = 60 / bpm;
+      const beats = [];
+      for (let t = 0.4; t < duration - 0.3; t += beatDur) {
+        beats.push({ t, bass: 0.7, mid: 0.5, high: 0.5, rms: 0.6, isKick: true, isSnare: false });
+      }
+      const sections = [
+        { start: 0, end: duration * 0.12, energy: 0.4, type: "INTRO" },
+        { start: duration * 0.12, end: duration * 0.25, energy: 0.6, type: "BUILDUP" },
+        { start: duration * 0.25, end: duration * 0.55, energy: 0.9, type: "DROP" },
+        { start: duration * 0.55, end: duration * 0.68, energy: 0.4, type: "BREAKDOWN" },
+        { start: duration * 0.68, end: duration * 0.9, energy: 0.95, type: "DROP" },
+        { start: duration * 0.9, end: duration, energy: 0.4, type: "OUTRO" }
+      ];
+
+      pausePlayback();
+      state.audioBuffer = null;
+      state.mediaEl = el;
+      state.liveAnalyser = analyser;
+      state.duration = duration;
+      state.trackTitle = file.name;
+      state.pauseOffset = 0;
+      state.currentTime = 0;
+
+      const dummyBuf = ac.createBuffer(1, Math.min(ac.sampleRate * 2, 44100), ac.sampleRate);
+      state.analysis = analyzeAudioBuffer(dummyBuf);
+      state.analysis.frames = frames;
+      state.analysis.beats = beats;
+      state.analysis.sections = sections;
+      state.analysis.bpm = bpm;
+      state.analysis.beatDur = beatDur;
+
+      state.schedule = buildChoreographySchedule();
+      state.nextEventIdx = 0;
+      resetWorldEntities();
+
+      dom.emptyOverlay.classList.add("hidden");
+      dom.trackName.textContent = file.name;
+      dom.trackStatus.textContent = "MP4 Live Sync";
+      dom.trackStatus.className = "text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300";
+      dom.statBpm.textContent = bpm;
+      dom.statDuration.textContent = Utils.formatTime(duration);
+      dom.statEvents.textContent = state.schedule.length;
+      dom.statArchetype.textContent = state.analysis.archetype.label;
+      dom.timeTotal.textContent = Utils.formatTime(duration);
+      dom.btnPlayPause.disabled = false;
+      dom.btnRestart.disabled = false;
+      dom.btnRecord.disabled = false;
+
+      drawTimeline(tCtx, dom.timelineCanvas);
+      showToast(`MP4 cargado (Live Sync) • ${state.analysis.archetype.label}`, "success");
+      resolve();
+    };
+    el.onerror = () => reject(new Error("Media load failed"));
+  });
+}
+
 function startRecordingFullTrack() {
-  if (!state.audioBuffer || state.isRecording) return;
+  if ((!state.audioBuffer && !state.mediaEl) || state.isRecording) return;
   const stream = dom.canvas.captureStream(60);
   if (state.mediaDest) state.mediaDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
   const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus") ? "video/webm;codecs=vp9,opus" : "video/webm";
@@ -260,122 +354,11 @@ function updateSimulation(dt) {
 dom.audioInput.addEventListener("change", async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  try {
-    dom.trackStatus.textContent = "Analizando...";
-    const ac = ensureAudioContext();
-    const buf = await file.arrayBuffer();
-    const decoded = await ac.decodeAudioData(buf);
-    loadAudioBuffer(decoded, file.name);
-  } catch {
-    showToast("Error al decodificar el audio", "error");
-  }
-});
-
-dom.demoBtns.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const { buffer, title } = generateDemoTrack(btn.dataset.demo);
-    loadAudioBuffer(buffer, title);
-    startPlayback(0);
-  });
-});
-
-dom.btnPlayPause.addEventListener("click", () => {
-  if (state.isPlaying) pausePlayback();
-  else startPlayback(state.pauseOffset);
-});
-
-dom.btnRestart.addEventListener("click", () => {
-  state.pauseOffset = 0;
-  state.nextEventIdx = 0;
-  resetWorldEntities();
-  startPlayback(0);
-});
-
-dom.btnRecord.addEventListener("click", () => {
-  if (state.isRecording) { pausePlayback(); stopRecordingAndDownload(); }
-  else startRecordingFullTrack();
-});
-
-dom.toggleHud.addEventListener("change", (e) => { state.showHud = e.target.checked; });
-
-dom.aspectBtns.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const aspect = btn.dataset.aspect;
-    const preset = ASPECT_PRESETS[aspect];
-    state.aspect = aspect;
-    state.width = preset.w;
-    state.height = preset.h;
-    dom.canvas.width = preset.w;
-    dom.canvas.height = preset.h;
-    dom.resolutionLabel.textContent = preset.label;
-
-    dom.aspectBtns.forEach(b => {
-      const active = b.dataset.aspect === aspect;
-      b.classList.toggle("border-[#00F0FF]", active);
-      b.classList.toggle("bg-[#00F0FF]/15", active);
-      b.classList.toggle("text-[#00F0FF]", active);
-      b.classList.toggle("border-slate-700", !active);
-      b.classList.toggle("bg-[#090b1a]", !active);
-      b.classList.toggle("text-slate-300", !active);
-    });
-    resetWorldEntities();
-  });
-});
-
-dom.timelineWrapper.addEventListener("click", (e) => {
-  if (!state.audioBuffer) return;
-  const rect = dom.timelineWrapper.getBoundingClientRect();
-  const target = Utils.clamp((e.clientX - rect.left) / rect.width, 0, 1) * state.duration;
-  state.pauseOffset = target;
-  state.currentTime = target;
-  state.nextEventIdx = state.schedule.findIndex(ev => ev.spawnTime >= target);
-  if (state.nextEventIdx === -1) state.nextEventIdx = state.schedule.length;
-  resetWorldEntities();
-  if (state.isPlaying) startPlayback(target);
-  drawTimeline(tCtx, dom.timelineCanvas);
-});
-
-let lastNow = performance.now();
-function mainLoop(now) {
-  const dt = Math.min(0.05, (now - lastNow) / 1000);
-  lastNow = now;
-  if (state.isPlaying && state.audioCtx) {
-    state.currentTime = state.audioCtx.currentTime - state.startTime;
-    dom.timeCurrent.textContent = Utils.formatTime(state.currentTime);
-    updateSimulation(dt);
-    drawTimeline(tCtx, dom.timelineCanvas);
-  }
-  renderFrame(ctx);
-  requestAnimationFrame(mainLoop);
-}
-
-const resizeTimeline = () => {
-  dom.timelineCanvas.width = dom.timelineWrapper.clientWidth || 400;
-  dom.timelineCanvas.height = dom.timelineWrapper.clientHeight || 40;
-  drawTimeline(tCtx, dom.timelineCanvas);
-};
-window.addEventListener("resize", resizeTimeline);
-resizeTimeline();
-requestAnimationFrame(mainLoop);
-(tCtx, dom.timelineCanvas);
-      showToast(`MP4 cargado (Live Sync) • ${state.analysis.archetype.label}`, "success");
-      resolve();
-    };
-    el.onerror = () => reject(new Error("Media load failed"));
-  });
-}
-
-// Event Listeners
-dom.audioInput.addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
   dom.trackStatus.textContent = "Analizando...";
   try {
     const ac = ensureAudioContext();
     const buf = await file.arrayBuffer();
     const decoded = await ac.decodeAudioData(buf.slice(0));
-    state.mediaEl = null;
-    state.liveAnalyser = null;
     loadAudioBuffer(decoded, file.name);
   } catch {
     try {
@@ -439,7 +422,7 @@ dom.aspectBtns.forEach(btn => {
 });
 
 dom.timelineWrapper.addEventListener("click", (e) => {
-  if (!state.audioBuffer) return;
+  if (!state.audioBuffer && !state.mediaEl) return;
   const rect = dom.timelineWrapper.getBoundingClientRect();
   const target = Utils.clamp((e.clientX - rect.left) / rect.width, 0, 1) * state.duration;
   state.pauseOffset = target;
@@ -456,7 +439,7 @@ function mainLoop(now) {
   const dt = Math.min(0.05, (now - lastNow) / 1000);
   lastNow = now;
   if (state.isPlaying && state.audioCtx) {
-    state.currentTime = state.audioCtx.currentTime - state.startTime;
+    state.currentTime = state.mediaEl ? state.mediaEl.currentTime : (state.audioCtx.currentTime - state.startTime);
     dom.timeCurrent.textContent = Utils.formatTime(state.currentTime);
     updateSimulation(dt);
     drawTimeline(tCtx, dom.timelineCanvas);
