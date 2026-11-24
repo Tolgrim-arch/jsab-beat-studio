@@ -17,6 +17,19 @@ export function drawProceduralBoss(ctx) {
   const danger = getDanger();
   const flash = b.pulse > 0.82;
 
+  // Crisp JSAB Dash Afterimages
+  if (b.trail && b.trail.length > 0) {
+    for (const tr of b.trail) {
+      ctx.save();
+      ctx.globalAlpha = tr.alpha * 0.45;
+      ctx.fillStyle = danger;
+      ctx.beginPath();
+      ctx.arc(tr.x, tr.y, tr.r * 0.9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
   // Articulated Limbs in Phase 2+
   if (state.phase >= 2) {
     [b.leftHand, b.rightHand].forEach((h, idx) => {

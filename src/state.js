@@ -30,8 +30,10 @@ export const state = {
   particles: [],
   blixer: {
     x: 640, y: 200,
-    baseR: 52, r: 52, rot: 0,
+    targetX: 640, targetY: 200,
+    baseR: 54, r: 54, rot: 0,
     pulse: 0, mouthOpen: 0,
+    trail: [],
     leftHand: { x: 440, y: 220 },
     rightHand: { x: 840, y: 220 }
   },

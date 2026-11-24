@@ -1,10 +1,10 @@
 import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
-import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=7";
-import { buildChoreographySchedule, spawnSetpieceEvent } from "./combat/choreography.js?v=7";
-import { updateCyanAI } from "./combat/cyanAI.js?v=7";
-import { renderFrame, drawTimeline } from "./render/renderer.js?v=7";
+import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=8";
+import { buildChoreographySchedule, spawnSetpieceEvent } from "./combat/choreography.js?v=8";
+import { updateCyanAI } from "./combat/cyanAI.js?v=8";
+import { renderFrame, drawTimeline } from "./render/renderer.js?v=8";
 
 const dom = {
   canvas: document.getElementById("gameCanvas"),
@@ -339,15 +339,22 @@ function updateSimulation(dt) {
 
   const b = state.blixer;
   const pInfo = PHASES[state.phase - 1];
-  b.rot += dt * (0.8 + state.phase * 0.45);
-  b.pulse = Math.max(0, b.pulse - dt * 3.5);
-  b.mouthOpen = Utils.lerp(b.mouthOpen, mid * 0.9, dt * 16);
-  b.r = b.baseR * pInfo.scale * (1 + bass * 0.22 + b.pulse * 0.14);
+  b.rot += dt * (1.1 + state.phase * 0.55);
+  b.pulse = Math.max(0, b.pulse - dt * 4.0);
+  b.mouthOpen = Utils.lerp(b.mouthOpen, mid * 1.1, dt * 18);
+  b.r = b.baseR * pInfo.scale * (1 + bass * 0.28 + b.pulse * 0.22);
 
-  const targetX = W * 0.5 + Math.sin(t * 1.15 * pInfo.speedMul) * (W * 0.24);
-  const targetY = H * 0.24 + Math.cos(t * 1.65 * pInfo.speedMul) * (H * 0.06);
-  b.x = Utils.lerp(b.x, targetX, dt * 4);
-  b.y = Utils.lerp(b.y, targetY, dt * 4);
+  // Aggressive JSAB Snap-Dash toward target position
+  const prevX = b.x, prevY = b.y;
+  b.x = Utils.lerp(b.x, b.targetX + Math.sin(t * 2.2) * 28, dt * 9.5);
+  b.y = Utils.lerp(b.y, b.targetY + Math.cos(t * 2.8) * 18, dt * 9.5);
+
+  if (Math.hypot(b.x - prevX, b.y - prevY) > 4) {
+    b.trail.push({ x: b.x, y: b.y, r: b.r, alpha: 0.55 });
+    if (b.trail.length > 6) b.trail.shift();
+  }
+  for (const tr of b.trail) tr.alpha -= dt * 3.0;
+  b.trail = b.trail.filter(tr => tr.alpha > 0);
 
   b.leftHand.x = Utils.lerp(b.leftHand.x, b.x - b.r * 2.1 + Math.sin(t * 3) * 18, dt * 6);
   b.leftHand.y = Utils.lerp(b.leftHand.y, b.y + 30 + Math.cos(t * 4) * 20, dt * 6);
