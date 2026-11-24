@@ -1,23 +1,29 @@
 import { COLORS, PHASES, ARCHETYPES } from "../config.js";
 import { Utils } from "../utils.js";
 import { state } from "../state.js";
+import { drawProceduralBoss } from "./bossRenderer.js";
 
 function drawBiomeBackground(ctx, W, H) {
+  const dna = state.analysis?.dna;
   const arch = state.analysis ? state.analysis.archetype : ARCHETYPES.TITAN_CRUSHER;
-  ctx.fillStyle = arch.bgTint;
+  const bgTint = dna?.palette?.bg || arch.bgTint;
+  const gridColor = dna?.palette?.grid || arch.gridColor;
+  const style = dna?.biome || arch.bgStyle;
+
+  ctx.fillStyle = bgTint;
   ctx.fillRect(0, 0, W, H);
 
   const alpha = 0.07 + state.bgPulse * 0.16;
-  ctx.strokeStyle = `${arch.gridColor}${alpha})`;
+  ctx.strokeStyle = `${gridColor}${alpha})`;
   ctx.lineWidth = 1.2;
 
-  if (arch.bgStyle === "tunnel") {
+  if (style === "tunnel") {
     for (let i = 1; i <= 7; i++) {
       const s = ((i / 7 + (state.currentTime * 0.35) % (1 / 7)));
       const rw = W * s, rh = H * s;
       ctx.strokeRect((W - rw) / 2, (H - rh) / 2, rw, rh);
     }
-  } else if (arch.bgStyle === "vortex") {
+  } else if (style === "vortex") {
     for (let r = 80; r < Math.max(W, H); r += 90) {
       ctx.beginPath(); ctx.arc(W / 2, H / 2, r + state.bgPulse * 24, 0, Math.PI * 2); ctx.stroke();
     }
