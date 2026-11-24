@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JSAB Beat Studio — Generador Musical Reactivo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-deep: #060714;
+      --bg-panel: #0c0e22;
+      --bg-card: #121530;
+      --cyan: #00F0FF;
+      --pink: #FF1F71;
+      --yellow: #FFD166;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--bg-deep);
+      color: #e6ecff;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+    }
+
+    .font-display { font-family: 'Orbitron', 'Inter', sans-serif; }
+    .font-mono-tech { font-family: 'JetBrains Mono', monospace; }
+
+    .glow-cyan { box-shadow: 0 0 18px rgba(0, 240, 255, 0.28), inset 0 0 10px rgba(0, 240, 255, 0.1); }
+    .glow-pink { box-shadow: 0 0 20px rgba(255, 31, 113, 0.35), inset 0 0 12px rgba(255, 31, 113, 0.14); }
+    .text-glow-cyan { text-shadow: 0 0 12px rgba(0, 240, 255, 0.7); }
+    .text-glow-pink { text-shadow: 0 0 14px rgba(255, 31, 113, 0.8); }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #080a1a; }
+    ::-webkit-scrollbar-thumb { background: #232854; border-radius: 999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #363f80; }
+
+    #stageContainer {
+      background: radial-gradient(circle at center, #0d102b 0%, #050611 100%);
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    #gameCanvas {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+      border-radius: 12px;
+      box-shadow: 0 0 40px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      background-color: #060714;
+    }
+
+    @keyframes recPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.85); }
+    }
+    .rec-dot { animation: recPulse 1.1s infinite ease-in-out; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#060714] text-slate-100 select-none">
+
+  <!-- TOP HEADER -->
+  <header class="h-14 border-b border-slate-800/80 bg-[#090b1d]/90 backdrop-blur-md px-4 lg:px-6 flex items-center justify-between shrink-0 z-20">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF1F71] to-[#9b0d48] flex items-center justify-center glow-pink">
+        <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2L14.8 7.5L21 6.5L17.5 11.8L22 16.5L15.8 17.2L14 22.5L10.5 17.5L4.5 19L7.2 13.5L2.5 9.2L8.8 8.2L12 2Z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="font-display text-sm sm:text-base font-bold tracking-wider uppercase flex items-center gap-2">
+          <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
+          <span class="text-white">BEAT STUDIO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">PERFECT NO-HIT AI</span>
+        </h1>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 sm:gap-3">
+      <button id="btnDemoTrack" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 transition flex items-center gap-1.5 cursor-pointer">
+        <svg class="w-3.5 h-3.5 text-[#00F0FF]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></svg>
+        <span>Demo Boss</span>
+      </button>
+
+      <label for="audioFileInput" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/50 text-[#00F0FF] transition flex items-center gap-1.5 cursor-pointer glow-cyan">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        <span>Cargar Audio</span>
+      </label>
+      <input id="audioFileInput" type="file" accept="audio/*,video/mp4,.mp3,.wav,.ogg,.m4a,.mp4,.aac,.flac,.webm" class="hidden" />
+    </div>
+  </header>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+
+    <!-- LEFT SIDEBAR: CONTROLS & TELEMETRY -->
+    <aside class="w-full lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-r border-slate-800/80 bg-[#0b0d1f] p-4 flex flex-col gap-4 overflow-y-auto shrink-0">
+
+      <!-- Track Info Card -->
+      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Pista Activa</span>
+          <span id="trackStatusBadge" class="text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">Sin Audio</span>
+        </div>
+        <div id="trackNameDisplay" class="text-sm font-semibold text-white truncate mb-2">Carga un MP3, WAV, MP4 o usa Demo Boss</div>
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="rounded-lg bg-[#090b1a] p-2 border border-slate-800/70">
+            <div class="text-[10px] text-slate-400 font-mono-tech">BPM</div>
+            <div id="statBpm" class="text-sm font-bold text-[#00F0FF] font-mono-tech">--</div>
+          </div>
+          <div class="rounded-lg bg-[#090b1a] p-2 border border-slate-800/70">
+            <div class="text-[10px] text-slate-400 font-mono-tech">DURACIÓN</div>
+            <div id="statDuration" class="text-sm font-bold text-slate-200 font-mono-tech">0:00</div>
+          </div>
+          <div class="rounded-lg bg-[#090b1a] p-2 border border-slate-800/70">
+            <div class="text-[10px] text-slate-400 font-mono-tech">EVENTOS</div>
+            <div id="statEvents" class="text-sm font-bold text-[#FF1F71] font-mono-tech">0</div>
+          </div>
+        </div>
+        <!-- Song Fingerprint -->
+        <div id="songProfileBar" class="mt-2.5 pt-2.5 border-t border-slate-800/70 flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+          <span>ESTILO: <strong id="statStyle" class="text-slate-200">--</strong></span>
+          <span>SECCIÓN: <strong id="statSection" class="text-[#FFD166]">--</strong></span>
+        </div>
+      </div>
+
+      <!-- Format / Aspect Ratio Selector -->
+      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Formato de Video</span>
+          <span id="resolutionLabel" class="text-[10px] font-mono-tech text-[#00F0FF]">1280×720</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <button data-aspect="16:9" class="aspect-btn active-aspect px-2 py-2 rounded-lg text-xs font-semibold border border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF] transition flex flex-col items-center gap-1 cursor-pointer">
+            <span class="w-6 h-3.5 border-2 border-current rounded-sm"></span>
+            <span>16:9 YT</span>
+          </button>
+          <button data-aspect="9:16" class="aspect-btn px-2 py-2 rounded-lg text-xs font-semibold border border-slate-700 bg-[#090b1a] text-slate-300 hover:border-slate-500 transition flex flex-col items-center gap-1 cursor-pointer">
+            <span class="w-3.5 h-6 border-2 border-current rounded-sm"></span>
+            <span>9:16 Shorts</span>
+          </button>
+          <button data-aspect="1:1" class="aspect-btn px-2 py-2 rounded-lg text-xs font-semibold border border-slate-700 bg-[#090b1a] text-slate-300 hover:border-slate-500 transition flex flex-col items-center gap-1 cursor-pointer">
+            <span class="w-4.5 h-4.5 border-2 border-current rounded-sm"></span>
+            <span>1:1 Feed</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Boss Phase & Live Telemetry -->
+      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Estado de Blixer</span>
+          <span id="phaseBadge" class="text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">FASE 1</span>
+        </div>
+        <div id="phaseName" class="text-xs font-display font-bold text-white mb-2.5">DESPERTAR CORRUPTO</div>
+
+        <!-- Audio Bands -->
+        <div class="space-y-1.5">
+          <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+            <span class="w-12 text-slate-400">SUB-BASS</span>
+            <div class="flex-1 h-1.5 bg-[#090b1a] rounded-full overflow-hidden">
+              <div id="barBass" class="h-full bg-[#FF1F71] w-0 transition-all duration-75"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+            <span class="w-12 text-slate-400">MEDIOS</span>
+            <div class="flex-1 h-1.5 bg-[#090b1a] rounded-full overflow-hidden">
+              <div id="barMid" class="h-full bg-[#FFD166] w-0 transition-all duration-75"></div>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+            <span class="w-12 text-slate-400">AGUDOS</span>
+            <div class="flex-1 h-1.5 bg-[#090b1a] rounded-full overflow-hidden">
+              <div id="barHigh" class="h-full bg-[#00F0FF] w-0 transition-all duration-75"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video Export & Settings -->
+      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Exportar Video</span>
+          <span class="text-[10px] font-mono-tech text-slate-400">WebM / Audio Sync</span>
+        </div>
+
+        <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
+          <span>Mostrar HUD en Video</span>
+          <input id="toggleHud" type="checkbox" checked class="accent-[#00F0FF] w-4 h-4 rounded cursor-pointer" />
+        </label>
+
+        <button id="btnRecordVideo" disabled class="w-full py-2.5 px-3 rounded-lg text-xs font-display font-bold tracking-wider uppercase bg-gradient-to-r from-[#FF1F71] to-[#d9145c] hover:from-[#ff337e] hover:to-[#e61965] disabled:opacity-40 disabled:cursor-not-allowed text-white transition flex items-center justify-center gap-2 glow-pink cursor-pointer">
+          <span id="recIcon" class="w-2.5 h-2.5 rounded-full bg-white"></span>
+          <span id="recBtnText">Grabar Video Completo</span>
+        </button>
+        <p id="recHint" class="text-[10px] text-slate-400 leading-relaxed">
+          Graba desde el inicio hasta el final de la canción con audio sincronizado y descarga automática.
+        </p>
+      </div>
+
+    </aside>
+
+    <!-- CENTER STAGE & TIMELINE -->
+    <section class="flex-1 flex flex-col min-w-0 bg-[#060714]">
+
+      <!-- Stage -->
+      <div id="stageContainer" class="flex-1 p-3 sm:p-5 min-h-[320px]">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+
+        <!-- Empty State Overlay -->
+        <div id="emptyOverlay" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div class="bg-[#0c0e22]/90 backdrop-blur-md border border-slate-700/80 rounded-2xl p-6 max-w-md text-center shadow-2xl pointer-events-auto">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#00F0FF]/15 border border-[#00F0FF]/40 flex items-center justify-center text-[#00F0FF]">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h2 class="font-display text-base font-bold text-white mb-1.5">Listo para Sincronizar</h2>
+            <p class="text-xs text-slate-300 mb-4 leading-relaxed">
+              Carga cualquier canción (MP3, WAV, MP4 audio) o prueba el <strong class="text-[#00F0FF]">Demo Boss</strong>. Blixer analizará el ritmo, secciones y energía para generar un combate único mientras Cian esquiva sin recibir daño.
+            </p>
+            <div class="flex items-center justify-center gap-2">
+              <button id="overlayDemoBtn" class="px-4 py-2 rounded-lg text-xs font-semibold bg-[#00F0FF] text-[#060714] hover:bg-[#33f3ff] transition cursor-pointer">
+                Probar Demo Boss
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Playback & Timeline Bar -->
+      <div class="border-t border-slate-800/80 bg-[#090b1d] px-4 py-3 shrink-0">
+        <div class="flex items-center gap-3 mb-2">
+          <button id="btnPlayPause" disabled class="w-9 h-9 rounded-lg bg-[#00F0FF] hover:bg-[#33f3ff] disabled:opacity-40 disabled:cursor-not-allowed text-[#060714] flex items-center justify-center transition shrink-0 cursor-pointer">
+            <svg id="iconPlay" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg id="iconPause" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+          </button>
+
+          <button id="btnRestart" disabled class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 flex items-center justify-center transition shrink-0 cursor-pointer" title="Reiniciar">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </button>
+
+          <div class="font-mono-tech text-xs text-slate-300 shrink-0 w-24">
+            <span id="timeCurrent" class="text-[#00F0FF]">0:00</span>
+            <span class="text-slate-500">/</span>
+            <span id="timeTotal">0:00</span>
+          </div>
+
+          <!-- Interactive Timeline Canvas -->
+          <div class="flex-1 relative h-10 bg-[#060714] rounded-lg border border-slate-800 overflow-hidden cursor-pointer" id="timelineWrapper">
+            <canvas id="timelineCanvas" class="w-full h-full block"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      // =========================================================================
+      // 1. CONSTANTS & CONFIGURATION
+      // =========================================================================
+      const COLORS = {
+        bg: "#060714",
+        cyan: "#00F0FF",
+        pink: "#FF1F71",
+        pinkHot: "#FF4D8D",
+        yellow: "#FFD166",
+        purple: "#9D4EDD",
+        white: "#FFFFFF"
+      };
+
+      const ASPECT_PRESETS = {
+        "16:9": { w: 1280, h: 720, label: "1280×720" },
+        "9:16": { w: 720, h: 1280, label: "720×1280" },
+        "1:1":  { w: 1080, h: 1080, label: "1080×1080" }
+      };
+
+      const PHASES = [
+        { id: 1, name: "DESPERTAR CORRUPTO",   color: "#FF1F71", speedMul: 1.0,  scale: 1.0 },
+        { id: 2, name: "SOBRECARGA SÓNICA",    color: "#FF1F71", speedMul: 1.25, scale: 1.15 },
+        { id: 3, name: "ANIQUILACIÓN TOTAL",   color: "#FF0055", speedMul: 1.5,  scale: 1.32 },
+        { id: 4, name: "HIPERNOVA FINAL",      color: "#FF3377", speedMul: 1.75, scale: 1.48 }
+      ];
+
+      // =========================================================================
+      // 2. MATH & DRAWING UTILITIES (DRY)
+      // =========================================================================
+      const Utils = {
+        clamp: (v, min, max) => Math.max(min, Math.min(max, v)),
+        lerp: (a, b, t) => a + (b - a) * t,
+        distSq: (x1, y1, x2, y2) => (x2 - x1) ** 2 + (y2 - y1) ** 2,
+        pointToSegmentDist(px, py, x1, y1, x2, y2) {
+          const dx = x2 - x1, dy = y2 - y1;
+          const lenSq = dx * dx + dy * dy;
+          if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+          const t = Utils.clamp(((px - x1) * dx + (py - y1) * dy) / lenSq, 0, 1);
+          return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+        },
+        seededRandom(seed) {
+          let s = seed % 2147483647;
+          if (s <= 0) s += 2147483646;
+          return () => (s = (s * 16807) % 2147483647) / 2147483647;
+        },
+        formatTime(sec) {
+          if (!Number.isFinite(sec) || sec < 0) return "0:00";
+          const m = Math.floor(sec / 60);
+          const s = Math.floor(sec % 60);
+          return `${m}:${s.toString().padStart(2, "0")}`;
+        },
+        withGlow(ctx, color, blur, fn) {
+          ctx.save();
+          ctx.shadowColor = color;
+          ctx.shadowBlur = blur;
+          fn();
+          ctx.restore();
+        }
+      };
+
+      // =========================================================================
+      // 3. DOM REFERENCES & UI HELPERS
+      // =========================================================================
+      const dom = {
+        canvas: document.getElementById("gameCanvas"),
+        timelineCanvas: document.getElementById("timelineCanvas"),
+        timelineWrapper: document.getElementById("timelineWrapper"),
+        audioInput: document.getElementById("audioFileInput"),
+        btnDemo: document.getElementById("btnDemoTrack"),
+        overlayDemoBtn: document.getElementById("overlayDemoBtn"),
+        emptyOverlay: document.getElementById("emptyOverlay"),
+        btnPlayPause: document.getElementById("btnPlayPause"),
+        btnRestart: document.getElementById("btnRestart"),
+        iconPlay: document.getElementById("iconPlay"),
+        iconPause: document.getElementById("iconPause"),
+        btnRecord: document.getElementById("btnRecordVideo"),
+        recBtnText: document.getElementById("recBtnText"),
+        recIcon: document.getElementById("recIcon"),
+        toggleHud: document.getElementById("toggleHud"),
+        trackName: document.getElementById("trackNameDisplay"),
+        trackStatus: document.getElementById("trackStatusBadge"),
+        statBpm: document.getElementById("statBpm"),
+        statDuration: document.getElementById("statDuration"),
+        statEvents: document.getElementById("statEvents"),
+        statStyle: document.getElementById("statStyle"),
+        statSection: document.getElementById("statSection"),
+        phaseBadge: document.getElementById("phaseBadge"),
+        phaseName: document.getElementById("phaseName"),
+        barBass: document.getElementById("barBass"),
+        barMid: document.getElementById("barMid"),
+        barHigh: document.getElementById("barHigh"),
+        timeCurrent: document.getElementById("timeCurrent"),
+        timeTotal: document.getElementById("timeTotal"),
+        resolutionLabel: document.getElementById("resolutionLabel"),
+        toastContainer: document.getElementById("toastContainer"),
+        aspectBtns: document.querySelectorAll(".aspect-btn")
+      };
+      const ctx = dom.canvas.getContext("2d");
+      const tCtx = dom.timelineCanvas.getContext("2d");
+
+      function showToast(message, type = "info") {
+        const colors = {
+          info: "border-[#00F0FF]/50 bg-[#0c1528] text-[#00F0FF]",
+          success: "border-emerald-500/50 bg-[#0b1f1a] text-emerald-300",
+          error: "border-[#FF1F71]/60 bg-[#240b18] text-[#FF1F71]"
+        };
+        const el = document.createElement("div");
+        el.className = `px-4 py-2.5 rounded-xl border text-xs font-medium shadow-xl backdrop-blur-md transition-all duration-300 ${colors[type] || colors.info}`;
+        el.textContent = message;
+        dom.toastContainer.appendChild(el);
+        setTimeout(() => {
+          el.style.opacity = "0";
+          el.style.transform = "translateY(8px)";
+          setTimeout(() => el.remove(), 300);
+        }, 3200);
+      }
+
+      // =========================================================================
+      // 4. APPLICATION STATE
+      // =========================================================================
+      const state = {
+        aspect: "16:9",
+        width: 1280,
+        height: 720,
+        audioCtx: null,
+        audioBuffer: null,
+        sourceNode: null,
+        mediaDest: null,
+        isPlaying: false,
+        startTime: 0,
+        pauseOffset: 0,
+        currentTime: 0,
+        duration: 0,
+        trackTitle: "",
+        analysis: null,     // { frames, fps, bpm, profile, sections, beats }
+        schedule: [],       // Choreography events
+        nextEventIdx: 0,
+        isRecording: false,
+        mediaRecorder: null,
+        recordedChunks: [],
+        showHud: true,
+
+        // Live world
+        phase: 1,
+        shake: 0,
+        bgPulse: 0,
+        flashAlpha: 0,
+        vortexStrength: 0,
+        entities: [],       // Unified array of active attack instances
+        particles: [],
+        ambientParticles: [],
+        blixer: {
+          x: 640, y: 200, vx: 0, vy: 0,
+          baseR: 54, r: 54, rot: 0,
+          pulse: 0, mouthOpen: 0,
+          dashTarget: null, dashTimer: 0,
+          movePattern: "orbit"
+        },
+        cyan: {
+          x: 640, y: 520, vx: 0, vy: 0,
+          r: 13, rot: 0,
+          dashCooldown: 0, dashTimer: 0,
+          dashDirX: 0, dashDirY: 0,
+          trail: [], invuln: 0
+        }
+      };
+
+      // =========================================================================
+      // 5. AUDIO ENGINE & DEEP MUSICAL ANALYSIS
+      // =========================================================================
+      function ensureAudioContext() {
+        if (!state.audioCtx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          state.audioCtx = new AC();
+          state.mediaDest = state.audioCtx.createMediaStreamDestination();
+        }
+        if (state.audioCtx.state === "suspended") {
+          state.audioCtx.resume();
+        }
+        return state.audioCtx;
+      }
+
+      function generateDemoBossTrack() {
+        const ac = ensureAudioContext();
+        const duration = 68;
+        const sr = ac.sampleRate;
+        const len = Math.floor(sr * duration);
+        const buffer = ac.createBuffer(2, len, sr);
+        const L = buffer.getChannelData(0);
+        const R = buffer.getChannelData(1);
+
+        const bpm = 142;
+        const beatDur = 60 / bpm;
+        let seed = 1337;
+        const noise = () => {
+          seed = (seed * 16807) % 2147483647;
+          return (seed / 1073741823.5) - 1;
+        };
+
+        for (let i = 0; i < len; i++) {
+          const t = i / sr;
+          const beatPos = (t % beatDur) / beatDur;
+          const barIdx = Math.floor(t / (beatDur * 4));
+          const isDrop = (t >= 13.5 && t < 34) || (t >= 44 && t < 62);
+          const isBuildup = (t >= 9 && t < 13.5) || (t >= 39 && t < 44);
+
+          // Kick
+          let kick = 0;
+          if (t > 1.5 && t < 64) {
+            const kickEnv = Math.exp(-beatPos * 14);
+            const kickFreq = 50 + 110 * Math.exp(-beatPos * 26);
+            kick = Math.sin(2 * Math.PI * kickFreq * t) * kickEnv * (isDrop ? 0.95 : 0.65);
+          }
+
+          // Bassline
+          const bassNotes = [55, 55, 65.4, 73.4, 55, 55, 82.4, 73.4];
+          const noteFreq = bassNotes[barIdx % bassNotes.length];
+          const bassEnv = isDrop ? (0.5 + 0.5 * Math.sin(2 * Math.PI * (bpm / 60) * 2 * t)) : 0.35;
+          const bass = Math.tanh(Math.sin(2 * Math.PI * noteFreq * t) * 2.2) * bassEnv * (isDrop ? 0.55 : 0.25);
+
+          // Lead synth
+          const leadScale = [220, 261.6, 293.6, 329.6, 392, 440, 523.2];
+          const step = Math.floor(t / (beatDur / 2));
+          const leadFreq = leadScale[(step * 3 + barIdx) % leadScale.length] * (isDrop ? 2 : 1);
+          const leadEnv = Math.exp(-((t % (beatDur / 2)) / (beatDur / 2)) * 4.5);
+          const lead = (Math.sin(2 * Math.PI * leadFreq * t) + 0.4 * Math.sin(4 * Math.PI * leadFreq * t)) * leadEnv * (isDrop ? 0.32 : 0.16);
+
+          // Hi-hat / Snare
+          let perc = 0;
+          if (isDrop || isBuildup) {
+            const hatPos = (t % (beatDur / 2)) / (beatDur / 2);
+            perc = noise() * Math.exp(-hatPos * 22) * (isBuildup ? 0.35 : 0.22);
+          }
+
+          const master = (kick + bass + lead + perc) * 0.65;
+          L[i] = Utils.clamp(master, -0.95, 0.95);
+          R[i] = Utils.clamp(master * 0.98 + lead * 0.05, -0.95, 0.95);
+        }
+        return buffer;
+      }
+
+      function analyzeAudioBuffer(audioBuffer) {
+        const sr = audioBuffer.sampleRate;
+        const ch0 = audioBuffer.getChannelData(0);
+        const ch1 = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : ch0;
+        const duration = audioBuffer.duration;
+        const fps = 30;
+        const totalFrames = Math.ceil(duration * fps);
+        const hop = Math.floor(sr / fps);
+
+        const frames = new Array(totalFrames);
+        let prevEnergy = 0;
+
+        // Simple 3-band IIR/filterbank approximation per frame
+        let lp = 0, bp = 0;
+        const lpAlpha = 0.04;  // ~Sub-bass
+        const bpAlpha = 0.22;  // ~Mids
+
+        for (let f = 0; f < totalFrames; f++) {
+          const start = f * hop;
+          const end = Math.min(start + hop, ch0.length);
+          let sumSq = 0, bassSq = 0, midSq = 0, highSq = 0;
+          const count = Math.max(1, end - start);
+
+          for (let i = start; i < end; i += 2) {
+            const s = 0.5 * (ch0[i] + ch1[i]);
+            lp += lpAlpha * (s - lp);
+            bp += bpAlpha * (s - bp);
+            const low = lp;
+            const mid = bp - lp;
+            const high = s - bp;
+            sumSq += s * s;
+            bassSq += low * low;
+            midSq += mid * mid;
+            highSq += high * high;
+          }
+
+          const n = Math.max(1, count / 2);
+          const rms = Math.sqrt(sumSq / n);
+          const bass = Math.sqrt(bassSq / n);
+          const mid = Math.sqrt(midSq / n);
+          const high = Math.sqrt(highSq / n);
+          const onset = Math.max(0, rms - prevEnergy);
+          prevEnergy = rms * 0.7 + prevEnergy * 0.3;
+
+          frames[f] = { t: f / fps, rms, bass, mid, high, onset };
+        }
+
+        // Normalize bands by 97th percentile
+        const normBand = (key) => {
+          const sorted = frames.map(fr => fr[key]).sort((a, b) => a - b);
+          const p97 = sorted[Math.floor(sorted.length * 0.97)] || 0.001;
+          for (const fr of frames) fr[key] = Utils.clamp(fr[key] / p97, 0, 1.35);
+        };
+        ["rms", "bass", "mid", "high", "onset"].forEach(normBand);
+
+        // Beat & BPM detection via onset autocorrelation
+        const onsets = frames.map(fr => fr.onset);
+        let bestLag = 15, bestCorr = -1;
+        const minLag = Math.floor(fps * 60 / 185); // 185 BPM
+        const maxLag = Math.floor(fps * 60 / 70);  // 70 BPM
+        for (let lag = minLag; lag <= maxLag; lag++) {
+          let corr = 0;
+          for (let i = 0; i < onsets.length - lag; i++) {
+            corr += onsets[i] * onsets[i + lag];
+          }
+          if (corr > bestCorr) {
+            bestCorr = corr;
+            bestLag = lag;
+          }
+        }
+        const bpm = Math.round((60 * fps) / bestLag);
+
+        // Extract beat timestamps
+        const beats = [];
+        const beatStep = 60 / bpm;
+        let lastBeat = -1;
+        for (let f = 2; f < frames.length - 2; f++) {
+          const fr = frames[f];
+          if (fr.onset > 0.32 && fr.onset >= frames[f - 1].onset && fr.onset >= frames[f + 1].onset) {
+            if (fr.t - lastBeat >= beatStep * 0.45) {
+              beats.push({ t: fr.t, strength: Utils.clamp(fr.onset, 0.3, 1.2), bass: fr.bass, high: fr.high });
+              lastBeat = fr.t;
+            }
+          }
+        }
+
+        // Compute Song Fingerprint (determines combat personality!)
+        const avgBass = frames.reduce((s, f) => s + f.bass, 0) / frames.length;
+        const avgHigh = frames.reduce((s, f) => s + f.high, 0) / frames.length;
+        const avgRms = frames.reduce((s, f) => s + f.rms, 0) / frames.length;
+
+        let style = "EQUILIBRADO";
+        if (bpm >= 145 && avgBass > 0.45) style = "SPEEDCORE / BOSS RUSH";
+        else if (avgBass > avgHigh * 1.25) style = "HEAVY BASS / DUBSTEP";
+        else if (avgHigh > avgBass * 1.15) style = "BULLET HELL / SYNTH";
+        else if (bpm < 105) style = "ATMÓSFERA / PESADO";
+
+        // Section segmentation (rolling 4-second energy)
+        const win = fps * 4;
+        const sections = [];
+        for (let f = 0; f < frames.length; f += win) {
+          const slice = frames.slice(f, f + win);
+          const e = slice.reduce((s, x) => s + x.rms, 0) / slice.length;
+          const progress = f / frames.length;
+          let label = "VERSO";
+          if (progress < 0.12) label = "INTRO";
+          else if (progress > 0.88) label = "OUTRO";
+          else if (e > avgRms * 1.22) label = "DROP / CLÍMAX";
+          else if (e < avgRms * 0.72) label = "BREAKDOWN";
+          sections.push({ start: f / fps, end: (f + win) / fps, energy: e, label });
+        }
+
+        return {
+          frames, fps, bpm, beats, sections,
+          profile: { avgBass, avgHigh, avgRms, style }
+        };
+      }
+
+      // =========================================================================
+      // 6. DRY ATTACK REGISTRY (ALL JSAB ATTACKS + UNIFIED INTERFACE)
+      // =========================================================================
+      // Every entity has: update(dt, W, H), draw(ctx), getDanger(px, py, tAhead), checkCollision(px, py, r)
+      const AttackFactory = {
+        laser(x1, y1, x2, y2, width = 26, warnTime = 0.55, activeTime = 0.35) {
+          return {
+            type: "laser", x1, y1, x2, y2, width, warnTime, activeTime,
+            age: 0, dead: false,
+            update(dt) {
+              this.age += dt;
+              if (this.age >= this.warnTime + this.activeTime) this.dead = true;
+            },
+            isActive() { return this.age >= this.warnTime; },
+            getDanger(px, py, tAhead) {
+              const futureAge = this.age + tAhead;
+              if (futureAge > this.warnTime + this.activeTime) return 0;
+              const d = Utils.pointToSegmentDist(px, py, this.x1, this.y1, this.x2, this.y2);
+              const safeDist = this.width * 0.6 + 24;
+              if (d < safeDist) {
+                const urgency = this.isActive() ? 1.0 : Utils.clamp(this.age / this.warnTime, 0.2, 0.95);
+                return (1 - d / safeDist) * 140 * urgency;
+              }
+              return 0;
+            },
+            checkCollision(px, py, r) {
+              if (!this.isActive()) return false;
+              return Utils.pointToSegmentDist(px, py, this.x1, this.y1, this.x2, this.y2) < (this.width * 0.45 + r);
+            },
+            draw(ctx) {
+              if (!this.isActive()) {
+                const p = this.age / this.warnTime;
+                ctx.save();
+                ctx.strokeStyle = `rgba(255, 31, 113, ${0.25 + p * 0.55})`;
+                ctx.lineWidth = 2 + p * 3;
+                ctx.setLineDash([12, 10]);
+                ctx.beginPath();
+                ctx.moveTo(this.x1, this.y1);
+                ctx.lineTo(this.x2, this.y2);
+                ctx.stroke();
+                ctx.restore();
+              } else {
+                const t = (this.age - this.warnTime) / this.activeTime;
+                const w = this.width * (1 - t * 0.4);
+                Utils.withGlow(ctx, COLORS.pink, 22, () => {
+                  ctx.strokeStyle = COLORS.pink;
+                  ctx.lineWidth = w;
+                  ctx.lineCap = "round";
+                  ctx.beginPath();
+                  ctx.moveTo(this.x1, this.y1);
+                  ctx.lineTo(this.x2, this.y2);
+                  ctx.stroke();
+
+                  ctx.strokeStyle = COLORS.white;
+                  ctx.lineWidth = w * 0.35;
+                  ctx.stroke();
+                });
+              }
+            }
+          };
+        },
+
+        pulseBomb(x, y, maxR = 85, fuse = 0.65, bulletCount = 10, spiral = 0) {
+          return {
+            type: "pulseBomb", x, y, maxR, fuse, bulletCount, spiral,
+            age: 0, dead: false,
+            update(dt) {
+              this.age += dt;
+              if (this.age >= this.fuse) {
+                this.dead = true;
+                spawnParticles(this.x, this.y, COLORS.pink, 14, 90, 280);
+                for (let i = 0; i < this.bulletCount; i++) {
+                  const ang = (Math.PI * 2 * i) / this.bulletCount + this.spiral;
+                  const spd = 250 + (i % 2) * 55;
+                  state.entities.push(AttackFactory.bullet(this.x, this.y, Math.cos(ang) * spd, Math.sin(ang) * spd, 8));
+                }
+              }
+            },
+            getDanger(px, py) {
+              const d = Math.hypot(px - this.x, py - this.y);
+              if (d < this.maxR + 30) return (1 - d / (this.maxR + 30)) * 90 * (this.age / this.fuse);
+              return 0;
+            },
+            checkCollision() { return false; },
+            draw(ctx) {
+              const p = Utils.clamp(this.age / this.fuse, 0, 1);
+              ctx.save();
+              ctx.strokeStyle = `rgba(255, 31, 113, ${0.4 + p * 0.6})`;
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.arc(this.x, this.y, this.maxR * p, 0, Math.PI * 2);
+              ctx.stroke();
+
+              ctx.fillStyle = COLORS.pink;
+              ctx.beginPath();
+              ctx.arc(this.x, this.y, 10 + p * 12, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.restore();
+            }
+          };
+        },
+
+        shockwave(x, y, speed = 420, maxR = 950, thickness = 22) {
+          return {
+            type: "shockwave", x, y, speed, maxR, thickness,
+            r: 20, dead: false,
+            update(dt) {
+              this.r += this.speed * dt;
+              if (this.r >= this.maxR) this.dead = true;
+            },
+            getDanger(px, py, tAhead) {
+              const futureR = this.r + this.speed * tAhead;
+              const d = Math.hypot(px - this.x, py - this.y);
+              const band = Math.abs(d - futureR);
+              if (band < this.thickness + 28) return (1 - band / (this.thickness + 28)) * 120;
+              return 0;
+            },
+            checkCollision(px, py, pr) {
+              const d = Math.hypot(px - this.x, py - this.y);
+              return Math.abs(d - this.r) < (this.thickness * 0.45 + pr);
+            },
+            draw(ctx) {
+              const alpha = Utils.clamp(1 - this.r / this.maxR, 0.1, 1);
+              Utils.withGlow(ctx, COLORS.pink, 18, () => {
+                ctx.strokeStyle = `rgba(255, 31, 113, ${alpha})`;
+                ctx.lineWidth = this.thickness * alpha;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                ctx.stroke();
+              });
+            }
+          };
+        },
+
+        sweepBar(axis, pos, dir, speed, thickness = 36, gapCenter = null, gapSize = 150) {
+          return {
+            type: "sweepBar", axis, pos, dir, speed, thickness, gapCenter, gapSize,
+            dead: false,
+            update(dt, W, H) {
+              this.pos += this.dir * this.speed * dt;
+              const limit = this.axis === "x" ? W : H;
+              if (this.pos < -100 || this.pos > limit + 100) this.dead = true;
+            },
+            _inGap(px, py) {
+              if (this.gapCenter === null) return false;
+              const coord = this.axis === "x" ? py : px;
+              return Math.abs(coord - this.gapCenter) < this.gapSize * 0.5;
+            },
+            getDanger(px, py, tAhead) {
+              if (this._inGap(px, py)) return 0;
+              const futurePos = this.pos + this.dir * this.speed * tAhead;
+              const coord = this.axis === "x" ? px : py;
+              const d = Math.abs(coord - futurePos);
+              if (d < this.thickness + 45) return (1 - d / (this.thickness + 45)) * 135;
+              return 0;
+            },
+            checkCollision(px, py, r) {
+              if (this._inGap(px, py)) return false;
+              const coord = this.axis === "x" ? px : py;
+              return Math.abs(coord - this.pos) < (this.thickness * 0.5 + r);
+            },
+            draw(ctx, W, H) {
+              Utils.withGlow(ctx, COLORS.pink, 16, () => {
+                ctx.fillStyle = COLORS.pink;
+                if (this.axis === "x") {
+                  if (this.gapCenter !== null) {
+                    const gTop = this.gapCenter - this.gapSize * 0.5;
+                    const gBot = this.gapCenter + this.gapSize * 0.5;
+                    ctx.fillRect(this.pos - this.thickness / 2, 0, this.thickness, Math.max(0, gTop));
+                    ctx.fillRect(this.pos - this.thickness / 2, gBot, this.thickness, Math.max(0, H - gBot));
+                  } else {
+                    ctx.fillRect(this.pos - this.thickness / 2, 0, this.thickness, H);
+                  }
+                } else {
+                  if (this.gapCenter !== null) {
+                    const gLeft = this.gapCenter - this.gapSize * 0.5;
+                    const gRight = this.gapCenter + this.gapSize * 0.5;
+                    ctx.fillRect(0, this.pos - this.thickness / 2, Math.max(0, gLeft), this.thickness);
+                    ctx.fillRect(gRight, this.pos - this.thickness / 2, Math.max(0, W - gRight), this.thickness);
+                  } else {
+                    ctx.fillRect(0, this.pos - this.thickness / 2, W, this.thickness);
+                  }
+                }
+              });
+            }
+          };
+        },
+
+        sawblade(x, y, vx, vy, r = 24, life = 5.5) {
+          return {
+            type: "sawblade", x, y, vx, vy, r, life, age: 0, rot: 0, dead: false,
+            update(dt, W, H) {
+              this.age += dt;
+              this.rot += dt * 9;
+              this.x += this.vx * dt;
+              this.y += this.vy * dt;
+              if (this.x < this.r || this.x > W - this.r) this.vx *= -1;
+              if (this.y < this.r || this.y > H - this.r) this.vy *= -1;
+              if (this.age >= this.life) this.dead = true;
+            },
+            getDanger(px, py, tAhead) {
+              const fx = this.x + this.vx * tAhead;
+              const fy = this.y + this.vy * tAhead;
+              const d = Math.hypot(px - fx, py - fy);
+              if (d < this.r + 48) return (1 - d / (this.r + 48)) * 130;
+              return 0;
+            },
+            checkCollision(px, py, pr) {
+              return Math.hypot(px - this.x, py - this.y) < (this.r * 0.85 + pr);
+            },
+            draw(ctx) {
+              ctx.save();
+              ctx.translate(this.x, this.y);
+              ctx.rotate(this.rot);
+              Utils.withGlow(ctx, COLORS.pink, 14, () => {
+                ctx.fillStyle = COLORS.pink;
+                ctx.beginPath();
+                const teeth = 10;
+                for (let i = 0; i < teeth * 2; i++) {
+                  const rad = i % 2 === 0 ? this.r : this.r * 0.62;
+                  const a = (Math.PI * i) / teeth;
+                  if (i === 0) ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad);
+                  else ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.fillStyle = COLORS.bg;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.r * 0.28, 0, Math.PI * 2);
+                ctx.fill();
+              });
+              ctx.restore();
+            }
+          };
+        },
+
+        bullet(x, y, vx, vy, r = 8) {
+          return {
+            type: "bullet", x, y, vx, vy, r, dead: false,
+            update(dt, W, H) {
+              this.x += this.vx * dt;
+              this.y += this.vy * dt;
+              if (this.x < -40 || this.x > W + 40 || this.y < -40 || this.y > H + 40) this.dead = true;
+            },
+            getDanger(px, py, tAhead) {
+              const fx = this.x + this.vx * tAhead;
+              const fy = this.y + this.vy * tAhead;
+              const d = Math.hypot(px - fx, py - fy);
+              if (d < this.r + 36) return (1 - d / (this.r + 36)) * 115;
+              return 0;
+            },
+            checkCollision(px, py, pr) {
+              return Math.hypot(px - this.x, py - this.y) < (this.r * 0.85 + pr);
+            },
+            draw(ctx) {
+              Utils.withGlow(ctx, COLORS.pink, 10, () => {
+                ctx.fillStyle = COLORS.pink;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = COLORS.white;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.r * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+              });
+            }
+          };
+        }
+      };
+
+      // =========================================================================
+      // 7. CHOREOGRAPHY GENERATOR (SONG-SPECIFIC & VARIED)
+      // =========================================================================
+      function buildChoreographySchedule() {
+        const { analysis, duration } = state;
+        if (!analysis) return [];
+
+        const schedule = [];
+        const { beats, profile, bpm } = analysis;
+        const rng = Utils.seededRandom(Math.floor(bpm * 100 + profile.avgBass * 1000));
+
+        // Choose attack repertoire based on song fingerprint
+        const isBassHeavy = profile.avgBass > profile.avgHigh * 1.15;
+        const isFast = bpm >= 135;
+
+        beats.forEach((b, idx) => {
+          const progress = b.t / duration;
+          const phase = progress < 0.25 ? 1 : progress < 0.55 ? 2 : progress < 0.85 ? 3 : 4;
+
+          // Skip some beats in intro/outro for breathing room
+          if (progress < 0.08 && idx % 2 !== 0) return;
+          if (progress > 0.94 && idx % 2 !== 0) return;
+
+          const roll = rng();
+          let attack = "bulletRing";
+
+          if (phase === 1) {
+            attack = roll < 0.4 ? "laser" : roll < 0.75 ? "pulseBomb" : "shockwave";
+          } else if (phase === 2) {
+            if (isBassHeavy) {
+              attack = roll < 0.35 ? "shockwave" : roll < 0.65 ? "sweepBar" : roll < 0.85 ? "sawblade" : "laser";
+            } else {
+              attack = roll < 0.35 ? "laser" : roll < 0.65 ? "pulseBomb" : roll < 0.85 ? "bulletSpiral" : "sweepBar";
+            }
+          } else if (phase === 3) {
+            if (roll < 0.22) attack = "crossLaser";
+            else if (roll < 0.42) attack = "bossDash";
+            else if (roll < 0.62) attack = "sawblade";
+            else if (roll < 0.82) attack = "sweepBar";
+            else attack = "bulletSpiral";
+          } else {
+            // Phase 4: Hypernova
+            if (roll < 0.25) attack = "crossLaser";
+            else if (roll < 0.45) attack = "bossDash";
+            else if (roll < 0.65) attack = "pulseBomb";
+            else if (roll < 0.85) attack = "shockwave";
+            else attack = isFast ? "bulletSpiral" : "sweepBar";
+          }
+
+          schedule.push({
+            t: b.t,
+            phase,
+            strength: b.strength,
+            attack,
+            seed: rng()
+          });
+        });
+
+        return schedule;
+      }
+
+      function spawnScheduledEvent(ev) {
+        const W = state.width, H = state.height;
+        const bx = state.blixer.x, by = state.blixer.y;
+        const cx = state.cyan.x, cy = state.cyan.y;
+        const phase = ev.phase;
+        const spdMul = PHASES[phase - 1].speedMul;
+
+        state.blixer.pulse = 1.0;
+        state.bgPulse = Math.max(state.bgPulse, 0.55 * ev.strength);
+
+        switch (ev.attack) {
+          case "laser": {
+            const ang = Math.atan2(cy - by, cx - bx) + (ev.seed - 0.5) * 0.35;
+            const len = Math.max(W, H) * 1.4;
+            state.entities.push(AttackFactory.laser(
+              bx, by, bx + Math.cos(ang) * len, by + Math.sin(ang) * len,
+              24 + phase * 4, 0.55 / spdMul, 0.32
+            ));
+            break;
+          }
+          case "crossLaser": {
+            const baseAng = ev.seed * Math.PI;
+            const len = Math.max(W, H) * 1.4;
+            for (let i = 0; i < 4; i++) {
+              const a = baseAng + (Math.PI / 2) * i;
+              state.entities.push(AttackFactory.laser(
+                bx, by, bx + Math.cos(a) * len, by + Math.sin(a) * len,
+                22 + phase * 3, 0.6 / spdMul, 0.32
+              ));
+            }
+            break;
+          }
+          case "pulseBomb": {
+            const px = 100 + ev.seed * (W - 200);
+            const py = 120 + ((ev.seed * 7.3) % 1) * (H - 240);
+            state.entities.push(AttackFactory.pulseBomb(px, py, 80 + phase * 10, 0.65 / spdMul, 8 + phase * 2, ev.seed * Math.PI));
+            break;
+          }
+          case "shockwave": {
+            state.entities.push(AttackFactory.shockwave(bx, by, 380 * spdMul, Math.max(W, H) * 1.1, 22));
+            state.shake = Math.max(state.shake, 7);
+            break;
+          }
+          case "sweepBar": {
+            const axis = ev.seed > 0.5 ? "x" : "y";
+            const dir = ev.seed > 0.25 && ev.seed < 0.75 ? 1 : -1;
+            const startPos = dir === 1 ? -40 : (axis === "x" ? W + 40 : H + 40);
+            const gap = axis === "x" ? H * (0.25 + ev.seed * 0.5) : W * (0.25 + ev.seed * 0.5);
+            state.entities.push(AttackFactory.sweepBar(axis, startPos, dir, 360 * spdMul, 34, gap, 175));
+            break;
+          }
+          case "sawblade": {
+            const side = ev.seed > 0.5 ? 40 : W - 40;
+            const vx = (side < W / 2 ? 1 : -1) * (220 + ev.seed * 120) * spdMul;
+            const vy = (ev.seed - 0.5) * 320 * spdMul;
+            state.entities.push(AttackFactory.sawblade(side, 100 + ev.seed * (H - 200), vx, vy, 22 + phase * 2, 4.5));
+            break;
+          }
+          case "bulletSpiral": {
+            const count = 8 + phase * 2;
+            const base = ev.t * 3;
+            for (let i = 0; i < count; i++) {
+              const a = base + (Math.PI * 2 * i) / count;
+              const spd = 230 * spdMul;
+              state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * spd, Math.sin(a) * spd, 8));
+            }
+            break;
+          }
+          case "bossDash": {
+            state.blixer.dashTarget = {
+              x: 120 + ev.seed * (W - 240),
+              y: 120 + ((ev.seed * 3.7) % 1) * (H - 240)
+            };
+            state.blixer.dashTimer = 0.45;
+            state.shake = Math.max(state.shake, 10);
+            break;
+          }
+          default: {
+            for (let i = 0; i < 8; i++) {
+              const a = (Math.PI * 2 * i) / 8;
+              state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * 240, Math.sin(a) * 240, 8));
+            }
+          }
+        }
+      }
+
+      // =========================================================================
+      // 8. CYAN PERFECT NO-HIT AI
+      // =========================================================================
+      function evaluateDangerAt(px, py, tAhead) {
+        let danger = 0;
+        const W = state.width, H = state.height;
+        const margin = 42;
+        if (px < margin) danger += (margin - px) * 3.5;
+        if (px > W - margin) danger += (px - (W - margin)) * 3.5;
+        if (py < margin) danger += (margin - py) * 3.5;
+        if (py > H - margin) danger += (py - (H - margin)) * 3.5;
+
+        // Blixer body
+        const bd = Math.hypot(px - state.blixer.x, py - state.blixer.y);
+        if (bd < state.blixer.r + 50) danger += (1 - bd / (state.blixer.r + 50)) * 160;
+
+        // Unified entity danger
+        for (const ent of state.entities) {
+          danger += ent.getDanger(px, py, tAhead);
+        }
+        return danger;
+      }
+
+      function updateCyanAI(dt) {
+        const c = state.cyan;
+        const W = state.width, H = state.height;
+
+        if (c.dashCooldown > 0) c.dashCooldown -= dt;
+        if (c.invuln > 0) c.invuln -= dt;
+
+        // Active dash movement
+        if (c.dashTimer > 0) {
+          c.dashTimer -= dt;
+          const dashSpd = 980;
+          c.x = Utils.clamp(c.x + c.dashDirX * dashSpd * dt, 24, W - 24);
+          c.y = Utils.clamp(c.y + c.dashDirY * dashSpd * dt, 24, H - 24);
+          c.trail.push({ x: c.x, y: c.y, alpha: 0.9 });
+          return;
+        }
+
+        // Sample candidate directions
+        const speed = 420;
+        let bestX = 0, bestY = 0, bestScore = Infinity;
+        const dirs = 12;
+        for (let i = 0; i <= dirs; i++) {
+          const dx = i === dirs ? 0 : Math.cos((Math.PI * 2 * i) / dirs);
+          const dy = i === dirs ? 0 : Math.sin((Math.PI * 2 * i) / dirs);
+          const nx = Utils.clamp(c.x + dx * speed * 0.14, 24, W - 24);
+          const ny = Utils.clamp(c.y + dy * speed * 0.14, 24, H - 24);
+
+          let score = evaluateDangerAt(nx, ny, 0.14);
+          // Slight preference for staying near lower-center arena
+          score += Math.hypot(nx - W * 0.5, ny - H * 0.65) * 0.04;
+          if (score < bestScore) {
+            bestScore = score;
+            bestX = dx;
+            bestY = dy;
+          }
+        }
+
+        // Trigger Dash if current position is in imminent danger
+        const currentDanger = evaluateDangerAt(c.x, c.y, 0.05);
+        if (currentDanger > 75 && c.dashCooldown <= 0 && (bestX !== 0 || bestY !== 0)) {
+          c.dashTimer = 0.16;
+          c.dashCooldown = 0.42;
+          c.invuln = 0.22;
+          c.dashDirX = bestX;
+          c.dashDirY = bestY;
+          spawnParticles(c.x, c.y, COLORS.cyan, 8, 60, 180);
+          return;
+        }
+
+        c.vx = Utils.lerp(c.vx, bestX * speed, dt * 14);
+        c.vy = Utils.lerp(c.vy, bestY * speed, dt * 14);
+        c.x = Utils.clamp(c.x + c.vx * dt, 24, W - 24);
+        c.y = Utils.clamp(c.y + c.vy * dt, 24, H - 24);
+        c.rot = Math.atan2(c.vy, c.vx);
+
+        if (Math.hypot(c.vx, c.vy) > 40) {
+          c.trail.push({ x: c.x, y: c.y, alpha: 0.55 });
+        }
+        if (c.trail.length > 14) c.trail.shift();
+        for (const tr of c.trail) tr.alpha -= dt * 2.2;
+        c.trail = c.trail.filter(tr => tr.alpha > 0);
+      }
+
+      // =========================================================================
+      // 9. SIMULATION & RENDERING
+      // =========================================================================
+      function spawnParticles(x, y, color, count = 10, sMin = 60, sMax = 240) {
+        for (let i = 0; i < count; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const s = sMin + Math.random() * (sMax - sMin);
+          state.particles.push({
+            x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+            r: 2 + Math.random() * 3, color, life: 0.4 + Math.random() * 0.35, maxLife: 0.75
+          });
+        }
+      }
+
+      function resetWorldEntities() {
+        const W = state.width, H = state.height;
+        state.entities = [];
+        state.particles = [];
+        state.phase = 1;
+        state.shake = 0;
+        state.bgPulse = 0;
+        state.blixer.x = W * 0.5;
+        state.blixer.y = H * 0.28;
+        state.blixer.dashTarget = null;
+        state.cyan.x = W * 0.5;
+        state.cyan.y = H * 0.72;
+        state.cyan.vx = 0;
+        state.cyan.vy = 0;
+        state.cyan.trail = [];
+        state.cyan.invuln = 0;
+      }
+
+      function updateSimulation(dt) {
+        const W = state.width, H = state.height;
+        const t = state.currentTime;
+
+        // Current audio frame
+        let bass = 0, mid = 0, high = 0;
+        if (state.analysis) {
+          const idx = Utils.clamp(Math.floor(t * state.analysis.fps), 0, state.analysis.frames.length - 1);
+          const fr = state.analysis.frames[idx];
+          bass = fr.bass; mid = fr.mid; high = fr.high;
+          dom.barBass.style.width = `${Math.min(100, bass * 90)}%`;
+          dom.barMid.style.width = `${Math.min(100, mid * 90)}%`;
+          dom.barHigh.style.width = `${Math.min(100, high * 90)}%`;
+
+          // Update section label
+          const sec = state.analysis.sections.find(s => t >= s.start && t < s.end);
+          if (sec) dom.statSection.textContent = sec.label;
+        }
+
+        // Phase progression
+        const prog = state.duration > 0 ? t / state.duration : 0;
+        const newPhase = prog < 0.25 ? 1 : prog < 0.55 ? 2 : prog < 0.85 ? 3 : 4;
+        if (newPhase !== state.phase) {
+          state.phase = newPhase;
+          const pInfo = PHASES[newPhase - 1];
+          dom.phaseBadge.textContent = `FASE ${newPhase}`;
+          dom.phaseName.textContent = pInfo.name;
+          state.shake = 14;
+          spawnParticles(state.blixer.x, state.blixer.y, COLORS.pink, 30, 120, 420);
+        }
+
+        // Spawn scheduled events
+        while (state.nextEventIdx < state.schedule.length && state.schedule[state.nextEventIdx].t <= t) {
+          spawnScheduledEvent(state.schedule[state.nextEventIdx]);
+          state.nextEventIdx++;
+        }
+
+        // Blixer movement & beat reaction
+        const b = state.blixer;
+        const pInfo = PHASES[state.phase - 1];
+        b.rot += dt * (0.8 + state.phase * 0.45);
+        b.pulse = Math.max(0, b.pulse - dt * 3.5);
+        b.r = b.baseR * pInfo.scale * (1 + bass * 0.24 + b.pulse * 0.14);
+
+        if (b.dashTarget && b.dashTimer > 0) {
+          b.dashTimer -= dt;
+          b.x = Utils.lerp(b.x, b.dashTarget.x, dt * 10);
+          b.y = Utils.lerp(b.y, b.dashTarget.y, dt * 10);
+        } else {
+          const targetX = W * 0.5 + Math.sin(t * 1.1 * pInfo.speedMul) * (W * 0.26);
+          const targetY = H * 0.26 + Math.cos(t * 1.7 * pInfo.speedMul) * (H * 0.08);
+          b.x = Utils.lerp(b.x, targetX, dt * 3.5);
+          b.y = Utils.lerp(b.y, targetY, dt * 3.5);
+        }
+
+        // Update entities
+        for (const ent of state.entities) ent.update(dt, W, H);
+        state.entities = state.entities.filter(e => !e.dead);
+
+        // Update Cyan AI
+        updateCyanAI(dt);
+
+        // Particles
+        for (const p of state.particles) {
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.life -= dt;
+        }
+        state.particles = state.particles.filter(p => p.life > 0);
+
+        state.shake = Math.max(0, state.shake - dt * 28);
+        state.bgPulse = Math.max(0, state.bgPulse - dt * 2.5);
+      }
+
+      function renderFrame() {
+        const W = state.width, H = state.height;
+        ctx.save();
+        ctx.fillStyle = COLORS.bg;
+        ctx.fillRect(0, 0, W, H);
+
+        if (state.shake > 0.2) {
+          ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
+        }
+
+        // Reactive Grid
+        ctx.strokeStyle = `rgba(255, 31, 113, ${0.06 + state.bgPulse * 0.12})`;
+        ctx.lineWidth = 1;
+        const step = 64;
+        for (let x = 0; x < W; x += step) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+        }
+        for (let y = 0; y < H; y += step) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+        }
+
+        // Entities
+        for (const ent of state.entities) ent.draw(ctx, W, H);
+
+        // Particles
+        for (const p of state.particles) {
+          ctx.globalAlpha = Utils.clamp(p.life / p.maxLife, 0, 1);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+
+        // Blixer
+        drawBlixer();
+
+        // Cyan
+        drawCyan();
+
+        // Optional HUD
+        if (state.showHud) {
+          ctx.fillStyle = "rgba(255,255,255,0.75)";
+          ctx.font = "700 14px Orbitron, sans-serif";
+          ctx.fillText(`PHASE ${state.phase} • ${PHASES[state.phase - 1].name}`, 24, 34);
+          ctx.fillStyle = COLORS.cyan;
+          ctx.font = "600 12px 'JetBrains Mono', monospace";
+          ctx.fillText("PERFECT NO-HIT AI", 24, 54);
+        }
+
+        ctx.restore();
+      }
+
+      function drawBlixer() {
+        const b = state.blixer;
+        ctx.save();
+        ctx.translate(b.x, b.y);
+        ctx.rotate(b.rot);
+
+        Utils.withGlow(ctx, COLORS.pink, 28, () => {
+          ctx.fillStyle = COLORS.pink;
+          ctx.beginPath();
+          const spikes = 6 + state.phase * 2;
+          for (let i = 0; i < spikes * 2; i++) {
+            const rad = i % 2 === 0 ? b.r * 1.25 : b.r * 0.82;
+            const a = (Math.PI * i) / spikes;
+            if (i === 0) ctx.moveTo(Math.cos(a) * rad, Math.sin(a) * rad);
+            else ctx.lineTo(Math.cos(a) * rad, Math.sin(a) * rad);
+          }
+          ctx.closePath();
+          ctx.fill();
+        });
+
+        // Inner face
+        ctx.rotate(-b.rot);
+        ctx.fillStyle = "#1a0612";
+        ctx.beginPath();
+        ctx.arc(0, 0, b.r * 0.58, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes
+        ctx.fillStyle = COLORS.white;
+        const eyeOff = b.r * 0.22;
+        ctx.beginPath();
+        ctx.arc(-eyeOff, -b.r * 0.08, b.r * 0.12, 0, Math.PI * 2);
+        ctx.arc(eyeOff, -b.r * 0.08, b.r * 0.12, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Jagged mouth
+        ctx.strokeStyle = COLORS.pinkHot;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-eyeOff * 1.1, b.r * 0.2);
+        ctx.lineTo(-eyeOff * 0.4, b.r * 0.32);
+        ctx.lineTo(0, b.r * 0.2);
+        ctx.lineTo(eyeOff * 0.4, b.r * 0.32);
+        ctx.lineTo(eyeOff * 1.1, b.r * 0.2);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      function drawCyan() {
+        const c = state.cyan;
+        for (const tr of c.trail) {
+          ctx.fillStyle = `rgba(0, 240, 255, ${tr.alpha * 0.45})`;
+          ctx.fillRect(tr.x - c.r * 0.7, tr.y - c.r * 0.7, c.r * 1.4, c.r * 1.4);
+        }
+
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.rotate(c.rot);
+        Utils.withGlow(ctx, COLORS.cyan, 18, () => {
+          ctx.fillStyle = COLORS.cyan;
+          ctx.fillRect(-c.r, -c.r, c.r * 2, c.r * 2);
+          ctx.fillStyle = COLORS.white;
+          ctx.fillRect(-c.r * 0.4, -c.r * 0.4, c.r * 0.8, c.r * 0.8);
+        });
+        ctx.restore();
+      }
+
+      // =========================================================================
+      // 10. TIMELINE, PLAYBACK & RECORDING
+      // =========================================================================
+      function drawTimeline() {
+        const w = dom.timelineCanvas.width;
+        const h = dom.timelineCanvas.height;
+        tCtx.clearRect(0, 0, w, h);
+        if (!state.analysis) return;
+
+        const { frames } = state.analysis;
+        tCtx.fillStyle = "rgba(0, 240, 255, 0.28)";
+        const step = Math.max(1, Math.floor(frames.length / w));
+        for (let x = 0; x < w; x++) {
+          const f = frames[Math.min(frames.length - 1, x * step)];
+          const barH = Utils.clamp(f.rms * h * 0.85, 2, h);
+          tCtx.fillRect(x, h - barH, 1, barH);
+        }
+
+        const prog = state.duration > 0 ? state.currentTime / state.duration : 0;
+        const px = prog * w;
+        tCtx.fillStyle = COLORS.pink;
+        tCtx.fillRect(px - 1, 0, 2, h);
+      }
+
+      function stopAudioSource() {
+        if (state.sourceNode) {
+          try { state.sourceNode.stop(); } catch {}
+          state.sourceNode.disconnect();
+          state.sourceNode = null;
+        }
+      }
+
+      function startPlayback(offsetSec = state.pauseOffset) {
+        if (!state.audioBuffer) return;
+        const ac = ensureAudioContext();
+        stopAudioSource();
+
+        const src = ac.createBufferSource();
+        src.buffer = state.audioBuffer;
+        src.connect(ac.destination);
+        if (state.mediaDest) src.connect(state.mediaDest);
+
+        src.onended = () => {
+          if (state.isPlaying && state.currentTime >= state.duration - 0.15) {
+            state.isPlaying = false;
+            state.pauseOffset = 0;
+            updatePlayButtonUI();
+            if (state.isRecording) stopRecordingAndDownload();
+          }
+        };
+
+        src.start(0, offsetSec);
+        state.sourceNode = src;
+        state.startTime = ac.currentTime - offsetSec;
+        state.isPlaying = true;
+        updatePlayButtonUI();
+      }
+
+      function pausePlayback() {
+        if (!state.isPlaying) return;
+        state.pauseOffset = state.currentTime;
+        stopAudioSource();
+        state.isPlaying = false;
+        updatePlayButtonUI();
+      }
+
+      function updatePlayButtonUI() {
+        dom.iconPlay.classList.toggle("hidden", state.isPlaying);
+        dom.iconPause.classList.toggle("hidden", !state.isPlaying);
+      }
+
+      function loadAudioBuffer(buffer, title) {
+        pausePlayback();
+        state.audioBuffer = buffer;
+        state.duration = buffer.duration;
+        state.trackTitle = title;
+        state.pauseOffset = 0;
+        state.currentTime = 0;
+
+        state.analysis = analyzeAudioBuffer(buffer);
+        state.schedule = buildChoreographySchedule();
+        state.nextEventIdx = 0;
+        resetWorldEntities();
+
+        dom.emptyOverlay.classList.add("hidden");
+        dom.trackName.textContent = title;
+        dom.trackStatus.textContent = "Listo";
+        dom.trackStatus.className = "text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300";
+        dom.statBpm.textContent = state.analysis.bpm;
+        dom.statDuration.textContent = Utils.formatTime(state.duration);
+        dom.statEvents.textContent = state.schedule.length;
+        dom.statStyle.textContent = state.analysis.profile.style;
+        dom.timeTotal.textContent = Utils.formatTime(state.duration);
+        dom.btnPlayPause.disabled = false;
+        dom.btnRestart.disabled = false;
+        dom.btnRecord.disabled = false;
+
+        drawTimeline();
+        showToast(`Analizado: ${state.analysis.bpm} BPM • ${state.analysis.profile.style}`, "success");
+      }
+
+      // Recording
+      function startRecordingFullTrack() {
+        if (!state.audioBuffer || state.isRecording) return;
+        const stream = dom.canvas.captureStream(60);
+        if (state.mediaDest) {
+          state.mediaDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
+        }
+        const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus")
+          ? "video/webm;codecs=vp9,opus"
+          : "video/webm";
+
+        state.recordedChunks = [];
+        state.mediaRecorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
+        state.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) state.recordedChunks.push(e.data); };
+        state.mediaRecorder.onstop = () => {
+          const blob = new Blob(state.recordedChunks, { type: mime });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `jsab_${state.aspect.replace(":", "x")}_${Date.now()}.webm`;
+          a.click();
+          URL.revokeObjectURL(url);
+          showToast("Video exportado correctamente", "success");
+        };
+
+        state.isRecording = true;
+        dom.recIcon.classList.add("rec-dot");
+        dom.recBtnText.textContent = "Grabando... (Detener)";
+        state.pauseOffset = 0;
+        state.nextEventIdx = 0;
+        resetWorldEntities();
+        state.mediaRecorder.start();
+        startPlayback(0);
+      }
+
+      function stopRecordingAndDownload() {
+        if (!state.isRecording) return;
+        state.isRecording = false;
+        dom.recIcon.classList.remove("rec-dot");
+        dom.recBtnText.textContent = "Grabar Video Completo";
+        if (state.mediaRecorder && state.mediaRecorder.state !== "inactive") {
+          state.mediaRecorder.stop();
+        }
+      }
+
+      // =========================================================================
+      // 11. EVENT LISTENERS & MAIN LOOP
+      // =========================================================================
+      dom.audioInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          dom.trackStatus.textContent = "Analizando...";
+          const ac = ensureAudioContext();
+          const buf = await file.arrayBuffer();
+          const decoded = await ac.decodeAudioData(buf);
+          loadAudioBuffer(decoded, file.name);
+        } catch (err) {
+          showToast("Error al decodificar el audio", "error");
+        }
+      });
+
+      const loadDemo = () => {
+        const buf = generateDemoBossTrack();
+        loadAudioBuffer(buf, "Demo Boss — Corrupted Core (142 BPM)");
+        startPlayback(0);
+      };
+      dom.btnDemo.addEventListener("click", loadDemo);
+      dom.overlayDemoBtn.addEventListener("click", loadDemo);
+
+      dom.btnPlayPause.addEventListener("click", () => {
+        if (state.isPlaying) pausePlayback();
+        else startPlayback(state.pauseOffset);
+      });
+
+      dom.btnRestart.addEventListener("click", () => {
+        state.pauseOffset = 0;
+        state.nextEventIdx = 0;
+        resetWorldEntities();
+        startPlayback(0);
+      });
+
+      dom.btnRecord.addEventListener("click", () => {
+        if (state.isRecording) {
+          pausePlayback();
+          stopRecordingAndDownload();
+        } else {
+          startRecordingFullTrack();
+        }
+      });
+
+      dom.toggleHud.addEventListener("change", (e) => {
+        state.showHud = e.target.checked;
+      });
+
+      dom.aspectBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const aspect = btn.dataset.aspect;
+          const preset = ASPECT_PRESETS[aspect];
+          state.aspect = aspect;
+          state.width = preset.w;
+          state.height = preset.h;
+          dom.canvas.width = preset.w;
+          dom.canvas.height = preset.h;
+          dom.resolutionLabel.textContent = preset.label;
+
+          dom.aspectBtns.forEach(b => {
+            const active = b.dataset.aspect === aspect;
+            b.classList.toggle("border-[#00F0FF]", active);
+            b.classList.toggle("bg-[#00F0FF]/15", active);
+            b.classList.toggle("text-[#00F0FF]", active);
+            b.classList.toggle("border-slate-700", !active);
+            b.classList.toggle("bg-[#090b1a]", !active);
+            b.classList.toggle("text-slate-300", !active);
+          });
+          resetWorldEntities();
+        });
+      });
+
+      dom.timelineWrapper.addEventListener("click", (e) => {
+        if (!state.audioBuffer) return;
+        const rect = dom.timelineWrapper.getBoundingClientRect();
+        const ratio = Utils.clamp((e.clientX - rect.left) / rect.width, 0, 1);
+        const target = ratio * state.duration;
+        state.pauseOffset = target;
+        state.currentTime = target;
+        state.nextEventIdx = state.schedule.findIndex(ev => ev.t >= target);
+        if (state.nextEventIdx === -1) state.nextEventIdx = state.schedule.length;
+        resetWorldEntities();
+        if (state.isPlaying) startPlayback(target);
+        drawTimeline();
+      });
+
+      let lastNow = performance.now();
+      function mainLoop(now) {
+        const dt = Math.min(0.05, (now - lastNow) / 1000);
+        lastNow = now;
+
+        if (state.isPlaying && state.audioCtx) {
+          state.currentTime = state.audioCtx.currentTime - state.startTime;
+          dom.timeCurrent.textContent = Utils.formatTime(state.currentTime);
+          updateSimulation(dt);
+          drawTimeline();
+        }
+        renderFrame();
+        requestAnimationFrame(mainLoop);
+      }
+
+      const resizeTimeline = () => {
+        dom.timelineCanvas.width = dom.timelineWrapper.clientWidth || 400;
+        dom.timelineCanvas.height = dom.timelineWrapper.clientHeight || 40;
+        drawTimeline();
+      };
+      window.addEventListener("resize", resizeTimeline);
+      resizeTimeline();
+      requestAnimationFrame(mainLoop);
+    })();
+  </script>
+</body>
+</html>
