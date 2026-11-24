@@ -1,10 +1,10 @@
 import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
-import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=5";
-import { buildChoreographySchedule, spawnSetpieceEvent } from "./combat/choreography.js?v=5";
-import { updateCyanAI } from "./combat/cyanAI.js?v=5";
-import { renderFrame, drawTimeline } from "./render/renderer.js?v=5";
+import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=6";
+import { buildChoreographySchedule, spawnSetpieceEvent } from "./combat/choreography.js?v=6";
+import { updateCyanAI } from "./combat/cyanAI.js?v=6";
+import { renderFrame, drawTimeline } from "./render/renderer.js?v=6";
 
 const dom = {
   canvas: document.getElementById("gameCanvas"),
@@ -285,7 +285,25 @@ function updateSimulation(dt) {
   const t = state.currentTime;
 
   let bass = 0, mid = 0, high = 0;
-  if (state.analysis) {
+  if (state.liveAnalyser) {
+    const bins = new Uint8Array(state.liveAnalyser.frequencyBinCount);
+    state.liveAnalyser.getByteFrequencyData(bins);
+    const avg = (s, e) => {
+      let sum = 0;
+      for (let i = s; i < e; i++) sum += bins[i];
+      return sum / Math.max(1, (e - s) * 255);
+    };
+    bass = avg(0, 8);
+    mid = avg(8, 36);
+    high = avg(36, 96);
+    dom.barBass.style.width = `${Math.min(100, bass * 115)}%`;
+    dom.barMid.style.width = `${Math.min(100, mid * 115)}%`;
+    dom.barHigh.style.width = `${Math.min(100, high * 115)}%`;
+    if (bass > 0.62) {
+      state.zoomPunch = Math.max(state.zoomPunch, 0.024);
+      state.bgPulse = Math.max(state.bgPulse, 0.7);
+    }
+  } else if (state.analysis) {
     const idx = Utils.clamp(Math.floor(t * state.analysis.fps), 0, state.analysis.frames.length - 1);
     const fr = state.analysis.frames[idx];
     bass = fr.bass; mid = fr.mid; high = fr.high;

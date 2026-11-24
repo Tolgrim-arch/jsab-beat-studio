@@ -31,11 +31,14 @@ export function buildChoreographySchedule() {
 
     for (let step = 0; step < phraseLen && (i + step) < beats.length; step++) {
       const b = beats[i + step];
-      const leadTime = Math.min(0.65, beatDur * 0.95);
+      if (b.isSilent || sec.type === "SILENCE") continue; // JSAB dramatic pause before drops
+      const leadTime = b.isSyncopated ? Math.min(0.32, beatDur * 0.45) : Math.min(0.62, beatDur * 0.92);
       const spawnTime = Math.max(0.05, b.t - leadTime);
       schedule.push({
         spawnTime, impactTime: b.t, leadTime,
-        phase, step, setpiece, section: sec.type, beat: b, seed: rng()
+        phase, step,
+        setpiece: b.isSyncopated ? "SYNCOPATED_BURST" : setpiece,
+        section: sec.type, beat: b, seed: rng()
       });
     }
   }

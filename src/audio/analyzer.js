@@ -82,7 +82,7 @@ export function analyzeAudioBuffer(audioBuffer) {
   const hop = Math.floor(sr / fps);
 
   const frames = new Array(totalFrames);
-  let lp = 0, bp = 0;
+  let lp1 = 0, lp2 = 0, bp1 = 0, bp2 = 0;
   let prevBass = 0, prevMid = 0, prevHigh = 0;
 
   for (let f = 0; f < totalFrames; f++) {
@@ -93,11 +93,14 @@ export function analyzeAudioBuffer(audioBuffer) {
 
     for (let i = start; i < end; i += 2) {
       const s = 0.5 * (ch0[i] + ch1[i]);
-      lp += 0.038 * (s - lp);
-      bp += 0.22 * (s - bp);
-      const low = lp;
-      const mid = bp - lp;
-      const high = s - bp;
+      // 2-pole cascaded filters for sharper Sub-Bass / Mid / High separation
+      lp1 += 0.042 * (s - lp1);
+      lp2 += 0.042 * (lp1 - lp2);
+      bp1 += 0.24 * (s - bp1);
+      bp2 += 0.24 * (bp1 - bp2);
+      const low = lp2;
+      const mid = bp2 - lp2;
+      const high = s - bp2;
       sumSq += s * s;
       bassSq += low * low;
       midSq += mid * mid;
@@ -114,11 +117,11 @@ export function analyzeAudioBuffer(audioBuffer) {
     const snareOnset = Math.max(0, mid - prevMid);
     const highOnset = Math.max(0, high - prevHigh);
 
-    prevBass = bass * 0.65 + prevBass * 0.35;
-    prevMid = mid * 0.65 + prevMid * 0.35;
-    prevHigh = high * 0.65 + prevHigh * 0.35;
+    prevBass = bass * 0.62 + prevBass * 0.38;
+    prevMid = mid * 0.62 + prevMid * 0.38;
+    prevHigh = high * 0.62 + prevHigh * 0.38;
 
-    frames[f] = { t: f / fps, rms, bass, mid, high, kickOnset, snareOnset, highOnset, onset: kickOnset + snareOnset * 0.6 };
+    frames[f] = { t: f / fps, rms, bass, mid, high, kickOnset, snareOnset, highOnset, onset: kickOnset * 1.15 + snareOnset * 0.65 };
   }
 
   const normBand = (key) => {
@@ -128,6 +131,7 @@ export function analyzeAudioBuffer(audioBuffer) {
   };
   ["rms", "bass", "mid", "high", "kickOnset", "snareOnset", "highOnset", "onset"].forEach(normBand);
 
+  // BPM via autocorrelation
   const onsets = frames.map(fr => fr.onset);
   let bestLag = 14, bestCorr = -1;
   const minLag = Math.floor((fps * 60) / 185);
@@ -140,16 +144,47 @@ export function analyzeAudioBuffer(audioBuffer) {
   const bpm = Math.round((60 * fps) / bestLag);
   const beatDur = 60 / bpm;
 
+  // Exact Beat Phase Alignment (find offset in [0, beatDur) that maximizes onset alignment)
+  let bestOffset = 0, bestPhaseScore = -1;
+  const phaseSteps = 20;
+  for (let p = 0; p < phaseSteps; p++) {
+    const off = (p / phaseSteps) * beatDur;
+    let score = 0;
+    for (let t = off; t < duration; t += beatDur) {
+      const fIdx = Utils.clamp(Math.floor(t * fps), 0, frames.length - 1);
+      score += frames[fIdx].onset + frames[fIdx].kickOnset * 0.5;
+    }
+    if (score > bestPhaseScore) { bestPhaseScore = score; bestOffset = off; }
+  }
+
+  // Build phase-aligned beat grid + detect silences & syncopated off-beats
   const beats = [];
-  for (let t = 0.4; t < duration - 0.3; t += beatDur) {
+  for (let t = bestOffset; t < duration - 0.25; t += beatDur) {
+    if (t < 0.2) continue;
     const fIdx = Utils.clamp(Math.floor(t * fps), 0, frames.length - 1);
     const fr = frames[fIdx];
     beats.push({
       t, bass: fr.bass, mid: fr.mid, high: fr.high, rms: fr.rms,
-      isKick: fr.kickOnset > 0.25 || fr.bass > 0.55,
-      isSnare: fr.snareOnset > 0.28
+      isSilent: fr.rms < 0.08,
+      isKick: fr.kickOnset > 0.24 || fr.bass > 0.52,
+      isSnare: fr.snareOnset > 0.26,
+      isSyncopated: false
     });
+
+    // Check half-beat for strong syncopated snare/synth fill
+    const halfT = t + beatDur * 0.5;
+    if (halfT < duration - 0.25) {
+      const hIdx = Utils.clamp(Math.floor(halfT * fps), 0, frames.length - 1);
+      const hFr = frames[hIdx];
+      if (hFr.rms > 0.22 && (hFr.snareOnset > 0.58 || hFr.highOnset > 0.68)) {
+        beats.push({
+          t: halfT, bass: hFr.bass, mid: hFr.mid, high: hFr.high, rms: hFr.rms,
+          isSilent: false, isKick: false, isSnare: true, isSyncopated: true
+        });
+      }
+    }
   }
+  beats.sort((a, b) => a.t - b.t);
 
   const avgBass = frames.reduce((s, f) => s + f.bass, 0) / frames.length;
   const avgHigh = frames.reduce((s, f) => s + f.high, 0) / frames.length;
@@ -172,7 +207,8 @@ export function analyzeAudioBuffer(audioBuffer) {
     const prog = s / duration;
 
     let type = "VERSE";
-    if (prog < 0.1) type = "INTRO";
+    if (energy < 0.09) type = "SILENCE";
+    else if (prog < 0.1) type = "INTRO";
     else if (prog > 0.88) type = "OUTRO";
     else if (energy > avgRms * 1.18) type = "DROP";
     else if (energy > prevEnergy * 1.12 && energy < avgRms * 1.18) type = "BUILDUP";
@@ -181,7 +217,7 @@ export function analyzeAudioBuffer(audioBuffer) {
     sections.push({ start: s, end: e, energy, type });
   }
 
-  const baseAnalysis = { frames, fps, bpm, beatDur, beats, sections, archetype, profile: { avgBass, avgHigh, avgRms } };
+  const baseAnalysis = { frames, fps, bpm, beatDur, bestOffset, beats, sections, archetype, profile: { avgBass, avgHigh, avgRms } };
   baseAnalysis.dna = generateSongDNA(baseAnalysis, duration);
   return baseAnalysis;
 }
