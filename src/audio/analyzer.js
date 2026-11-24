@@ -180,5 +180,7 @@ export function analyzeAudioBuffer(audioBuffer) {
     sections.push({ start: s, end: e, energy, type });
   }
 
-  return { frames, fps, bpm, beatDur, beats, sections, archetype, profile: { avgBass, avgHigh, avgRms } };
+  const baseAnalysis = { frames, fps, bpm, beatDur, beats, sections, archetype, profile: { avgBass, avgHigh, avgRms } };
+  baseAnalysis.dna = generateSongDNA(baseAnalysis, duration);
+  return baseAnalysis;
 }

@@ -2,6 +2,8 @@ import { COLORS } from "../config.js";
 import { Utils } from "../utils.js";
 import { state, spawnParticles } from "../state.js";
 
+const dangerCol = () => state.analysis?.dna?.palette?.danger || COLORS.pink;
+
 export const AttackFactory = {
   laser(x1, y1, x2, y2, width = 26, leadTime = 0.45, activeTime = 0.28) {
     return {
@@ -36,8 +38,8 @@ export const AttackFactory = {
         } else {
           const t = (this.age - this.leadTime) / this.activeTime;
           const w = this.width * (1 - t * 0.45);
-          Utils.withGlow(ctx, COLORS.pink, 22, () => {
-            ctx.strokeStyle = COLORS.pink;
+          Utils.withGlow(ctx, dangerCol(), 22, () => {
+            ctx.strokeStyle = dangerCol();
             ctx.lineWidth = w;
             ctx.lineCap = "round";
             ctx.beginPath(); ctx.moveTo(this.x1, this.y1); ctx.lineTo(this.x2, this.y2); ctx.stroke();
@@ -80,8 +82,8 @@ export const AttackFactory = {
         if (!this.isActive()) {
           Utils.drawTelegraphLine(ctx, this.cx, this.cy, end.x, end.y, this.age / this.leadTime);
         } else {
-          Utils.withGlow(ctx, COLORS.pink, 20, () => {
-            ctx.strokeStyle = COLORS.pink;
+          Utils.withGlow(ctx, dangerCol(), 20, () => {
+            ctx.strokeStyle = dangerCol();
             ctx.lineWidth = this.width;
             ctx.lineCap = "round";
             ctx.beginPath(); ctx.moveTo(this.cx, this.cy); ctx.lineTo(end.x, end.y); ctx.stroke();
@@ -125,7 +127,7 @@ export const AttackFactory = {
           ctx.restore();
         } else {
           const a = 1 - (this.age - this.leadTime) / this.activeTime;
-          Utils.withGlow(ctx, COLORS.pink, 18, () => {
+          Utils.withGlow(ctx, dangerCol(), 18, () => {
             ctx.fillStyle = `rgba(255, 31, 113, ${a * 0.9})`;
             ctx.fillRect(this.x + 2, this.y + 2, this.w - 4, this.h - 4);
           });
@@ -184,8 +186,8 @@ export const AttackFactory = {
           else ctx.strokeRect(0, H - this.depth, W, this.depth);
           ctx.restore();
         }
-        Utils.withGlow(ctx, COLORS.pink, 20, () => {
-          ctx.fillStyle = COLORS.pink;
+        Utils.withGlow(ctx, dangerCol(), 20, () => {
+          ctx.fillStyle = dangerCol();
           ctx.fillRect(rc.x, rc.y, rc.w, rc.h);
         });
       }
@@ -201,7 +203,7 @@ export const AttackFactory = {
         if (!this.impacted && this.age >= this.leadTime) {
           this.impacted = true;
           state.shake = Math.max(state.shake, 13);
-          spawnParticles(this.x, this.y, COLORS.pink, 22, 120, 380);
+          spawnParticles(this.x, this.y, dangerCol(), 22, 120, 380);
           state.entities.push(AttackFactory.shockwave(this.x, this.y, 440, 460, 18));
         }
         if (this.age >= this.leadTime + 0.25) this.dead = true;
@@ -228,8 +230,8 @@ export const AttackFactory = {
           Utils.drawPolygon(ctx, 0, 0, 5, this.radius * 0.65, p * 0.4);
           ctx.fill();
         } else {
-          Utils.withGlow(ctx, COLORS.pink, 24, () => {
-            ctx.fillStyle = COLORS.pink;
+          Utils.withGlow(ctx, dangerCol(), 24, () => {
+            ctx.fillStyle = dangerCol();
             Utils.drawPolygon(ctx, 0, 0, 5, this.radius * 0.85, 0.4);
             ctx.fill();
           });
@@ -269,8 +271,8 @@ export const AttackFactory = {
         if (!this.isActive()) {
           Utils.drawTelegraphLine(ctx, this.x, this.baseY, this.x, this.baseY - this.maxH, this.age / this.leadTime);
         }
-        Utils.withGlow(ctx, COLORS.pink, 16, () => {
-          ctx.fillStyle = COLORS.pink;
+        Utils.withGlow(ctx, dangerCol(), 16, () => {
+          ctx.fillStyle = dangerCol();
           ctx.beginPath();
           ctx.moveTo(this.x - this.width / 2, this.baseY);
           ctx.lineTo(this.x, this.baseY - h);
@@ -308,11 +310,11 @@ export const AttackFactory = {
         return false;
       },
       draw(ctx) {
-        Utils.withGlow(ctx, COLORS.pink, 14, () => {
+        Utils.withGlow(ctx, dangerCol(), 14, () => {
           for (let i = this.history.length - 1; i >= 0; i--) {
             const pt = this.history[i];
             const rad = this.r * (1 - i * 0.08);
-            ctx.fillStyle = i === 0 ? COLORS.white : COLORS.pink;
+            ctx.fillStyle = i === 0 ? COLORS.white : dangerCol();
             Utils.drawPolygon(ctx, pt.x, pt.y, 3, rad, this.dir === 1 ? 0 : Math.PI);
             ctx.fill();
           }
@@ -329,7 +331,7 @@ export const AttackFactory = {
         this.age += dt;
         if (this.age >= this.leadTime) {
           this.dead = true;
-          spawnParticles(this.x, this.y, COLORS.pink, 14, 90, 290);
+          spawnParticles(this.x, this.y, dangerCol(), 14, 90, 290);
           for (let i = 0; i < this.bulletCount; i++) {
             const ang = (Math.PI * 2 * i) / this.bulletCount + this.spiral;
             const spd = 260 + (i % 2) * 55;
@@ -349,7 +351,7 @@ export const AttackFactory = {
         ctx.strokeStyle = `rgba(255, 31, 113, ${0.4 + p * 0.6})`;
         ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(this.x, this.y, this.maxR * p, 0, Math.PI * 2); ctx.stroke();
-        ctx.fillStyle = COLORS.pink;
+        ctx.fillStyle = dangerCol();
         ctx.beginPath(); ctx.arc(this.x, this.y, 10 + p * 14, 0, Math.PI * 2); ctx.fill();
         ctx.restore();
       }
@@ -374,7 +376,7 @@ export const AttackFactory = {
       },
       draw(ctx) {
         const alpha = Utils.clamp(1 - this.r / this.maxR, 0.1, 1);
-        Utils.withGlow(ctx, COLORS.pink, 18, () => {
+        Utils.withGlow(ctx, dangerCol(), 18, () => {
           ctx.strokeStyle = `rgba(255, 31, 113, ${alpha})`;
           ctx.lineWidth = this.thickness * alpha;
           ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.stroke();

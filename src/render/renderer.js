@@ -145,7 +145,7 @@ export function renderFrame(ctx) {
   }
   ctx.globalAlpha = 1;
 
-  drawBlixer(ctx);
+  drawProceduralBoss(ctx);
   drawCyan(ctx);
 
   if (state.flashAlpha > 0.01) {
