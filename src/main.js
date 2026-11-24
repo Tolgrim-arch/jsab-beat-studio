@@ -64,8 +64,11 @@ function showToast(message, type = "info") {
 function stopAudioSource() {
   if (state.sourceNode) {
     try { state.sourceNode.stop(); } catch {}
-    state.sourceNode.disconnect();
+    try { state.sourceNode.disconnect(); } catch {}
     state.sourceNode = null;
+  }
+  if (state.mediaEl) {
+    state.mediaEl.pause();
   }
 }
 
@@ -75,27 +78,34 @@ function updatePlayButtonUI() {
 }
 
 function startPlayback(offsetSec = state.pauseOffset) {
-  if (!state.audioBuffer) return;
+  if (!state.audioBuffer && !state.mediaEl) return;
   const ac = ensureAudioContext();
   stopAudioSource();
 
-  const src = ac.createBufferSource();
-  src.buffer = state.audioBuffer;
-  src.connect(ac.destination);
-  if (state.mediaDest) src.connect(state.mediaDest);
+  if (state.audioBuffer) {
+    const src = ac.createBufferSource();
+    src.buffer = state.audioBuffer;
+    src.connect(ac.destination);
+    if (state.mediaDest) src.connect(state.mediaDest);
 
-  src.onended = () => {
-    if (state.isPlaying && state.currentTime >= state.duration - 0.15) {
-      state.isPlaying = false;
-      state.pauseOffset = 0;
-      updatePlayButtonUI();
-      if (state.isRecording) stopRecordingAndDownload();
-    }
-  };
+    src.onended = () => {
+      if (state.isPlaying && state.currentTime >= state.duration - 0.15) {
+        state.isPlaying = false;
+        state.pauseOffset = 0;
+        updatePlayButtonUI();
+        if (state.isRecording) stopRecordingAndDownload();
+      }
+    };
 
-  src.start(0, offsetSec);
-  state.sourceNode = src;
-  state.startTime = ac.currentTime - offsetSec;
+    src.start(0, offsetSec);
+    state.sourceNode = src;
+    state.startTime = ac.currentTime - offsetSec;
+  } else if (state.mediaEl) {
+    state.mediaEl.currentTime = offsetSec;
+    state.mediaEl.play();
+    state.startTime = ac.currentTime - offsetSec;
+  }
+
   state.isPlaying = true;
   updatePlayButtonUI();
 }
@@ -258,6 +268,122 @@ dom.audioInput.addEventListener("change", async (e) => {
     loadAudioBuffer(decoded, file.name);
   } catch {
     showToast("Error al decodificar el audio", "error");
+  }
+});
+
+dom.demoBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const { buffer, title } = generateDemoTrack(btn.dataset.demo);
+    loadAudioBuffer(buffer, title);
+    startPlayback(0);
+  });
+});
+
+dom.btnPlayPause.addEventListener("click", () => {
+  if (state.isPlaying) pausePlayback();
+  else startPlayback(state.pauseOffset);
+});
+
+dom.btnRestart.addEventListener("click", () => {
+  state.pauseOffset = 0;
+  state.nextEventIdx = 0;
+  resetWorldEntities();
+  startPlayback(0);
+});
+
+dom.btnRecord.addEventListener("click", () => {
+  if (state.isRecording) { pausePlayback(); stopRecordingAndDownload(); }
+  else startRecordingFullTrack();
+});
+
+dom.toggleHud.addEventListener("change", (e) => { state.showHud = e.target.checked; });
+
+dom.aspectBtns.forEach(btn => {
+  btn.addEventListener("click", () => {
+    const aspect = btn.dataset.aspect;
+    const preset = ASPECT_PRESETS[aspect];
+    state.aspect = aspect;
+    state.width = preset.w;
+    state.height = preset.h;
+    dom.canvas.width = preset.w;
+    dom.canvas.height = preset.h;
+    dom.resolutionLabel.textContent = preset.label;
+
+    dom.aspectBtns.forEach(b => {
+      const active = b.dataset.aspect === aspect;
+      b.classList.toggle("border-[#00F0FF]", active);
+      b.classList.toggle("bg-[#00F0FF]/15", active);
+      b.classList.toggle("text-[#00F0FF]", active);
+      b.classList.toggle("border-slate-700", !active);
+      b.classList.toggle("bg-[#090b1a]", !active);
+      b.classList.toggle("text-slate-300", !active);
+    });
+    resetWorldEntities();
+  });
+});
+
+dom.timelineWrapper.addEventListener("click", (e) => {
+  if (!state.audioBuffer) return;
+  const rect = dom.timelineWrapper.getBoundingClientRect();
+  const target = Utils.clamp((e.clientX - rect.left) / rect.width, 0, 1) * state.duration;
+  state.pauseOffset = target;
+  state.currentTime = target;
+  state.nextEventIdx = state.schedule.findIndex(ev => ev.spawnTime >= target);
+  if (state.nextEventIdx === -1) state.nextEventIdx = state.schedule.length;
+  resetWorldEntities();
+  if (state.isPlaying) startPlayback(target);
+  drawTimeline(tCtx, dom.timelineCanvas);
+});
+
+let lastNow = performance.now();
+function mainLoop(now) {
+  const dt = Math.min(0.05, (now - lastNow) / 1000);
+  lastNow = now;
+  if (state.isPlaying && state.audioCtx) {
+    state.currentTime = state.audioCtx.currentTime - state.startTime;
+    dom.timeCurrent.textContent = Utils.formatTime(state.currentTime);
+    updateSimulation(dt);
+    drawTimeline(tCtx, dom.timelineCanvas);
+  }
+  renderFrame(ctx);
+  requestAnimationFrame(mainLoop);
+}
+
+const resizeTimeline = () => {
+  dom.timelineCanvas.width = dom.timelineWrapper.clientWidth || 400;
+  dom.timelineCanvas.height = dom.timelineWrapper.clientHeight || 40;
+  drawTimeline(tCtx, dom.timelineCanvas);
+};
+window.addEventListener("resize", resizeTimeline);
+resizeTimeline();
+requestAnimationFrame(mainLoop);
+(tCtx, dom.timelineCanvas);
+      showToast(`MP4 cargado (Live Sync) • ${state.analysis.archetype.label}`, "success");
+      resolve();
+    };
+    el.onerror = () => reject(new Error("Media load failed"));
+  });
+}
+
+// Event Listeners
+dom.audioInput.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  dom.trackStatus.textContent = "Analizando...";
+  try {
+    const ac = ensureAudioContext();
+    const buf = await file.arrayBuffer();
+    const decoded = await ac.decodeAudioData(buf.slice(0));
+    state.mediaEl = null;
+    state.liveAnalyser = null;
+    loadAudioBuffer(decoded, file.name);
+  } catch {
+    try {
+      await loadMediaElementFallback(file);
+    } catch {
+      dom.trackStatus.textContent = "Error";
+      showToast("No se pudo decodificar este formato de archivo", "error");
+    }
   }
 });
 
