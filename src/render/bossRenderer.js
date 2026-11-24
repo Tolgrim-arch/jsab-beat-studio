@@ -145,45 +145,90 @@ export function drawProceduralBoss(ctx) {
     ctx.arc(0, b.r * 0.22, b.r * 0.38, 0, Math.PI);
     ctx.fill();
   } else {
-    // Annihilate / Titan: Dark maroon/black octagonal face with glowing white eyes & huge jagged teeth!
+    // Annihilate / Titan: Dark maroon/black octagonal face with dynamic emotional expressions!
+    if (b.lookaheadCharge > 0.35) {
+      // Shrinking anticipation charge ring before a Drop!
+      ctx.save();
+      ctx.strokeStyle = COLORS.white;
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, 0, b.r * (2.2 - b.lookaheadCharge * 1.1), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     ctx.fillStyle = "#2A0716";
     Utils.drawPolygon(ctx, 0, 0, 8, b.r * 1.05, Math.PI / 8);
     ctx.fill();
     ctx.stroke();
 
-    // Glowing white eyes inside pink triangles
+    // Dynamic Eyes by Mood (smug / tense / frenzy / sad / blinking)
     const ang = Math.atan2(state.cyan.y - b.y, state.cyan.x - b.x);
-    const lx = Math.cos(ang) * 4, ly = Math.sin(ang) * 4;
-    [-1, 1].forEach(side => {
-      ctx.fillStyle = danger;
-      ctx.beginPath();
-      ctx.moveTo(side * b.r * 0.12, -b.r * 0.05);
-      ctx.lineTo(side * b.r * 0.65, -b.r * 0.28);
-      ctx.lineTo(side * b.r * 0.55, b.r * 0.08);
-      ctx.closePath(); ctx.fill();
+    const lx = Math.cos(ang) * 5, ly = Math.sin(ang) * 5;
+    const mood = b.mood || "smug";
 
-      ctx.fillStyle = COLORS.white;
-      ctx.beginPath();
-      ctx.arc(side * b.r * 0.38 + lx, -b.r * 0.08 + ly, b.r * 0.11, 0, Math.PI * 2);
-      ctx.fill();
+    [-1, 1].forEach(side => {
+      const ex = side * b.r * 0.36;
+      const ey = -b.r * 0.12;
+      if (b.isBlinking) {
+        ctx.strokeStyle = COLORS.white;
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.moveTo(ex - b.r * 0.16, ey);
+        ctx.lineTo(ex + b.r * 0.16, ey);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = danger;
+        ctx.beginPath();
+        if (mood === "frenzy") {
+          ctx.moveTo(side * b.r * 0.1, -b.r * 0.02);
+          ctx.lineTo(side * b.r * 0.68, -b.r * 0.34);
+          ctx.lineTo(side * b.r * 0.56, b.r * 0.12);
+        } else if (mood === "tense") {
+          ctx.arc(ex, ey, b.r * 0.22, 0, Math.PI * 2);
+        } else if (mood === "sad") {
+          ctx.arc(ex, ey + 4, b.r * 0.18, 0, Math.PI);
+        } else {
+          // smug half-lidded
+          ctx.rect(ex - b.r * 0.18, ey - b.r * 0.06, b.r * 0.36, b.r * 0.16);
+        }
+        ctx.closePath(); ctx.fill();
+
+        ctx.fillStyle = COLORS.white;
+        const pupilR = mood === "frenzy" ? b.r * 0.08 : b.r * 0.12;
+        ctx.beginPath();
+        ctx.arc(ex + lx, ey + ly, pupilR, 0, Math.PI * 2);
+        ctx.fill();
+      }
     });
 
-    // Huge jagged teeth mouth
-    const mOpen = 8 + b.mouthOpen * 22;
+    // Dynamic Mouth by Mood
+    const mOpen = 8 + b.mouthOpen * 24;
     ctx.fillStyle = "#040D14";
     ctx.strokeStyle = danger;
     ctx.lineWidth = 4;
     ctx.beginPath();
-    ctx.moveTo(-b.r * 0.68, b.r * 0.15);
-    ctx.lineTo(-b.r * 0.35, b.r * 0.15 + mOpen);
-    ctx.lineTo(0, b.r * 0.12);
-    ctx.lineTo(b.r * 0.35, b.r * 0.15 + mOpen);
-    ctx.lineTo(b.r * 0.68, b.r * 0.15);
-    ctx.lineTo(b.r * 0.45, b.r * 0.55 + mOpen * 0.5);
-    ctx.lineTo(-b.r * 0.45, b.r * 0.55 + mOpen * 0.5);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    if (mood === "smug") {
+      // Cocky crooked smirk
+      ctx.moveTo(-b.r * 0.45, b.r * 0.32);
+      ctx.quadraticCurveTo(0, b.r * 0.42, b.r * 0.52, b.r * 0.18);
+      ctx.stroke();
+    } else if (mood === "sad") {
+      ctx.arc(0, b.r * 0.48, b.r * 0.28, Math.PI * 1.15, Math.PI * 1.85);
+      ctx.stroke();
+    } else {
+      // Huge jagged roaring teeth (tense / frenzy)
+      ctx.moveTo(-b.r * 0.68, b.r * 0.15);
+      ctx.lineTo(-b.r * 0.35, b.r * 0.15 + mOpen);
+      ctx.lineTo(0, b.r * 0.12);
+      ctx.lineTo(b.r * 0.35, b.r * 0.15 + mOpen);
+      ctx.lineTo(b.r * 0.68, b.r * 0.15);
+      ctx.lineTo(b.r * 0.45, b.r * 0.55 + mOpen * 0.5);
+      ctx.lineTo(-b.r * 0.45, b.r * 0.55 + mOpen * 0.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
   }
 
   ctx.restore();

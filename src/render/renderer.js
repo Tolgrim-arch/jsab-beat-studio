@@ -96,7 +96,7 @@ export function renderFrame(ctx) {
     ctx.fillText(`PHASE ${state.phase} • ${PHASES[state.phase - 1].name}`, 24, 34);
     ctx.fillStyle = COLORS.cyan;
     ctx.font = "600 11px 'JetBrains Mono', monospace";
-    ctx.fillText(`SETPIECE: ${state.activeSetpiece.replace(/_/g, " ")}`, 24, 54);
+    ctx.fillText(`SETPIECE: ${state.activeSetpiece.replace(/_/g, " ")} • MOOD: ${(state.blixer.mood || "SMUG").toUpperCase()}`, 24, 54);
   }
 
   ctx.restore();
