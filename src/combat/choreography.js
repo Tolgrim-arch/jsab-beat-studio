@@ -196,15 +196,32 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
     }
 
     case "LYCANTHROPY_VINES": {
-      const sides = ["bottom", "top", "left", "right"];
-      const side = sides[ev.step % 4];
-      const isHoriz = side === "left" || side === "right";
-      const span = isHoriz ? H : W;
-      const maxD = (isHoriz ? W : H) * 0.34;
-      const count = 5 + Math.floor(ev.phase / 2);
-      for (let k = 0; k < count; k++) {
-        const pos = (span / (count + 1)) * (k + 1) + (ev.step % 2 === 0 ? 20 : -20);
-        state.entities.push(AttackFactory.lycanthropySpike(pos, maxD * (0.75 + ((k * 0.17 + ev.seed) % 0.4)), 76, lt, 0.42, side));
+      const mode = ev.phase % 3;
+      if (mode === 0) {
+        // V-Valley Stadium Wave (like rgwgw.PNG!)
+        const count = 9;
+        for (let k = 0; k < count; k++) {
+          const norm = Math.abs((k / (count - 1)) * 2 - 1); // 1 at edges, 0 at center
+          const pos = (W / count) * (k + 0.5);
+          state.entities.push(AttackFactory.lycanthropySpike(pos, H * (0.12 + norm * 0.34), W / count + 6, lt, 0.42, "bottom"));
+        }
+      } else if (mode === 1) {
+        // Traveling Sine Wave from top or bottom
+        const side = ev.step % 2 === 0 ? "bottom" : "top";
+        const count = 8;
+        for (let k = 0; k < count; k++) {
+          const wave = 0.5 + 0.5 * Math.sin(k * 0.8 + ev.step * 1.4);
+          const pos = (W / count) * (k + 0.5);
+          state.entities.push(AttackFactory.lycanthropySpike(pos, H * (0.14 + wave * 0.28), W / count + 4, lt, 0.4, side));
+        }
+      } else {
+        // Dual Lateral Pincer (left + right closing in)
+        const count = 5;
+        for (let k = 0; k < count; k++) {
+          const pos = (H / count) * (k + 0.5);
+          const d = W * (0.22 + ((k + ev.step) % 2) * 0.12);
+          state.entities.push(AttackFactory.lycanthropySpike(pos, d, H / count + 4, lt, 0.4, k % 2 === 0 ? "left" : "right"));
+        }
       }
       break;
     }
