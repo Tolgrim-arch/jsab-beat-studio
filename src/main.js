@@ -1,11 +1,11 @@
 import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
-import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=64";
-import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=66";
-import { updateCyanAI } from "./combat/cyanAI.js?v=71";
-import { renderFrame, drawTimeline } from "./render/renderer.js?v=71";
-import { initStudioControls } from "./ui/controls.js?v=71";
+import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=74";
+import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=74";
+import { updateCyanAI } from "./combat/cyanAI.js?v=74";
+import { renderFrame, drawTimeline } from "./render/renderer.js?v=74";
+import { initStudioControls } from "./ui/controls.js?v=74";
 
 const dom = {
   canvas: document.getElementById("gameCanvas"),
@@ -224,6 +224,11 @@ function loadAudioBuffer(buffer, title) {
   state.currentTime = 0;
 
   state.analysis = analyzeAudioBuffer(buffer);
+  state.liveBpm = state.analysis.bpm;
+  state.liveBeatDur = state.analysis.beatDur;
+  state.meterLabel = state.analysis.meter?.label || "4/4";
+  state.beatsPerBar = state.analysis.meter?.beatsPerBar || 4;
+  state.beatInBar = 0;
   state.schedule = buildChoreographySchedule();
   state.nextEventIdx = 0;
   resetWorldEntities();
@@ -232,7 +237,7 @@ function loadAudioBuffer(buffer, title) {
   dom.trackName.textContent = title;
   dom.trackStatus.textContent = "Sincronizado";
   dom.trackStatus.className = "text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300";
-  dom.statBpm.textContent = state.analysis.bpm;
+  dom.statBpm.textContent = `${state.liveBpm} • ${state.meterLabel}`;
   dom.statDuration.textContent = Utils.formatTime(state.duration);
   dom.statEvents.textContent = state.schedule.length;
   dom.statArchetype.textContent = state.analysis.archetype.label;
@@ -242,7 +247,7 @@ function loadAudioBuffer(buffer, title) {
   dom.btnRecord.disabled = false;
 
   drawTimeline(tCtx, dom.timelineCanvas);
-  showToast(`${state.analysis.bpm} BPM • Arquetipo: ${state.analysis.archetype.label}`, "success");
+  showToast(`${state.liveBpm} BPM (${state.meterLabel}) • ${state.analysis.archetype.label}`, "success");
 }
 
 function loadMediaElementFallback(file) {
@@ -432,10 +437,36 @@ function updateSimulation(dt) {
       const flux = bass - (state.livePrevBass || 0);
       state.livePrevBass = bass;
       if (state.liveBeatCooldown <= 0 && ((bass > 0.48 && flux > 0.065) || bass > 0.72)) {
-        state.liveBeatCooldown = 0.36;
+        // Continuous real-time BPM estimation from rolling inter-onset intervals (IOIs)
+        const nowSec = t;
+        if (!state.liveOnsetTimes) state.liveOnsetTimes = [];
+        state.liveOnsetTimes.push(nowSec);
+        if (state.liveOnsetTimes.length > 14) state.liveOnsetTimes.shift();
+
+        if (state.liveOnsetTimes.length >= 4) {
+          const iois = [];
+          for (let k = 1; k < state.liveOnsetTimes.length; k++) {
+            const d = state.liveOnsetTimes[k] - state.liveOnsetTimes[k - 1];
+            if (d >= 0.28 && d <= 0.92) iois.push(d);
+          }
+          if (iois.length >= 3) {
+            iois.sort((a, b) => a - b);
+            const med = iois[Math.floor(iois.length / 2)];
+            const estBpm = Utils.clamp(60 / med, 72, 188);
+            state.liveBpm = Math.round((state.liveBpm || estBpm) * 0.72 + estBpm * 0.28);
+            state.liveBeatDur = 60 / state.liveBpm;
+            if (dom.statBpm) dom.statBpm.textContent = `${state.liveBpm} • ${state.meterLabel || "4/4"}`;
+          }
+        }
+
+        const beatDurLive = state.liveBeatDur || 0.47;
+        state.liveBeatCooldown = Math.max(0.22, beatDurLive * 0.62);
         const pool = ATTACK_CATALOG.filter(a => !(state.disabledAttacks && state.disabledAttacks[a.id]));
         if (pool.length) {
-          const step = (state.liveStep || 0) % 4;
+          const mLen = state.beatsPerBar || 4;
+          const step = (state.liveStep || 0) % mLen;
+          const accentLevel = step === 0 ? "DOWNBEAT" : (mLen === 4 && step === 2) || (mLen === 6 && step === 3) ? "SECONDARY" : "WEAK";
+          const accentWeight = accentLevel === "DOWNBEAT" ? 1.0 : accentLevel === "SECONDARY" ? 0.8 : 0.52;
           if (step === 0 || !state.liveCurSetpiece) {
             state.liveCurSetpiece = pool[Math.floor(Math.random() * pool.length)].id;
           }
@@ -443,7 +474,13 @@ function updateSimulation(dt) {
             setpiece: state.liveCurSetpiece,
             phase: state.phase,
             step,
-            leadTime: 0.42,
+            beatInBar: step,
+            beatsPerBar: mLen,
+            accentLevel,
+            accentWeight,
+            localBpm: state.liveBpm || 128,
+            localBeatDur: beatDurLive,
+            leadTime: Math.min(0.52, beatDurLive * (accentLevel === "DOWNBEAT" ? 0.88 : 0.68)),
             section: bass > 0.66 ? "DROP" : "VERSE",
             seed: Math.random()
           }, dom.statSetpiece);
@@ -452,6 +489,21 @@ function updateSimulation(dt) {
       }
     }
   } else if (state.analysis) {
+    // Continuously read local BPM from tempoCurve at current playback time
+    const curve = state.analysis.tempoCurve;
+    if (curve && curve.length) {
+      let curTempo = curve[0];
+      for (let i = 1; i < curve.length; i++) {
+        if (curve[i].t <= t) curTempo = curve[i];
+        else break;
+      }
+      if (curTempo.bpm !== state.liveBpm) {
+        state.liveBpm = curTempo.bpm;
+        state.liveBeatDur = curTempo.beatDur;
+        if (dom.statBpm) dom.statBpm.textContent = `${state.liveBpm} • ${state.meterLabel || "4/4"}`;
+      }
+    }
+
     const idx = Utils.clamp(Math.floor(t * state.analysis.fps), 0, state.analysis.frames.length - 1);
     const fr = state.analysis.frames[idx];
     bass = fr.bass; mid = fr.mid; high = fr.high;

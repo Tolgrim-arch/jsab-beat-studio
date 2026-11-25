@@ -303,12 +303,15 @@ export function renderFrame(ctx) {
   }
 
   if (state.showHud) {
+    const mLen = state.beatsPerBar || 4;
+    const curBeat = state.beatInBar || 0;
+    const dots = Array.from({ length: mLen }, (_, i) => (i === curBeat ? "●" : "○")).join(" ");
     ctx.fillStyle = "rgba(255,255,255,0.85)";
     ctx.font = "700 14px Orbitron, sans-serif";
     ctx.fillText(`PHASE ${state.phase} • ${PHASES[state.phase - 1].name}`, 24, 34);
     ctx.fillStyle = COLORS.cyan;
     ctx.font = "600 11px 'JetBrains Mono', monospace";
-    ctx.fillText(`SETPIECE: ${state.activeSetpiece.replace(/_/g, " ")} • MOOD: ${(state.blixer.mood || "SMUG").toUpperCase()}`, 24, 54);
+    ctx.fillText(`SETPIECE: ${state.activeSetpiece.replace(/_/g, " ")} • ${state.liveBpm || 128} BPM [${state.meterLabel || "4/4"}] ${dots}`, 24, 54);
   }
 
   drawStudioOverlays(ctx, W, H);

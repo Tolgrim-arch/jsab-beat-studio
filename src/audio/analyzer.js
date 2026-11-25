@@ -174,18 +174,56 @@ export function analyzeAudioBuffer(audioBuffer) {
     }
   }
 
-  // BPM via autocorrelation on 100fps onset flux
+  // Global BPM via autocorrelation on 100fps onset flux
   const onsets = frames.map(fr => fr.onset);
-  let bestLag = Math.floor(fps * 0.46), bestCorr = -1;
-  const minLag = Math.floor((fps * 60) / 185);
-  const maxLag = Math.floor((fps * 60) / 72);
-  for (let lag = minLag; lag <= maxLag; lag++) {
-    let corr = 0;
-    for (let i = 0; i < onsets.length - lag; i += 2) corr += onsets[i] * onsets[i + lag];
-    if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
-  }
-  const bpm = Math.round((60 * fps) / bestLag);
+  const estimateBpmInSlice = (startIdx, endIdx, priorBpm = null) => {
+    const sliceLen = endIdx - startIdx;
+    if (sliceLen < fps * 2) return priorBpm || 128;
+    let bestLag = Math.floor((fps * 60) / (priorBpm || 128));
+    let bestCorr = -1;
+    const minLag = Math.floor((fps * 60) / 188);
+    const maxLag = Math.floor((fps * 60) / 72);
+    for (let lag = minLag; lag <= maxLag; lag++) {
+      let corr = 0;
+      const limit = endIdx - lag;
+      for (let i = startIdx; i < limit; i += 2) corr += onsets[i] * onsets[i + lag];
+      if (priorBpm) {
+        const candBpm = (60 * fps) / lag;
+        const ratio = candBpm / priorBpm;
+        // Soft Gaussian prior around global BPM to avoid octave jumps while allowing real tempo shifts
+        const dist = Math.abs(ratio - 1);
+        corr *= Math.exp(-dist * dist * 4.5);
+      }
+      if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
+    }
+    return Math.round(Utils.clamp((60 * fps) / bestLag, 72, 188));
+  };
+
+  const bpm = estimateBpmInSlice(0, onsets.length, null);
   const beatDur = 60 / bpm;
+
+  // Continuous local BPM curve (sliding 6s window every 1.5s, smoothed)
+  const tempoCurve = [];
+  const winFrames = Math.floor(fps * 6.0);
+  const stepFrames = Math.floor(fps * 1.5);
+  let smoothBpm = bpm;
+  for (let start = 0; start < onsets.length; start += stepFrames) {
+    const end = Math.min(onsets.length, start + winFrames);
+    const rawLocal = (end - start >= fps * 2.5) ? estimateBpmInSlice(start, end, bpm) : bpm;
+    smoothBpm = smoothBpm * 0.55 + rawLocal * 0.45;
+    const rounded = Math.round(smoothBpm);
+    tempoCurve.push({ t: start / fps, bpm: rounded, beatDur: 60 / rounded });
+  }
+  if (!tempoCurve.length) tempoCurve.push({ t: 0, bpm, beatDur });
+
+  const getLocalTempoAt = (t) => {
+    let best = tempoCurve[0];
+    for (let i = 1; i < tempoCurve.length; i++) {
+      if (tempoCurve[i].t <= t) best = tempoCurve[i];
+      else break;
+    }
+    return best;
+  };
 
   // Exact Beat Phase Alignment (32 phase steps)
   let bestOffset = 0, bestPhaseScore = -1;
@@ -200,37 +238,97 @@ export function analyzeAudioBuffer(audioBuffer) {
     if (score > bestPhaseScore) { bestPhaseScore = score; bestOffset = off; }
   }
 
-  // Merge phase-aligned grid (snapped to real peaks within ±85ms) + extra strong real peaks
-  const beats = [];
+  // Build adaptive beat grid following continuous local BPM + snapping to real peaks (±85ms)
+  const gridBeats = [];
   const usedPeakIdx = new Set();
-  for (let t = bestOffset; t < duration - 0.2; t += beatDur) {
-    if (t < 0.15) continue;
-    let bestP = -1, bestDist = 0.085;
-    for (let p = 0; p < realPeaks.length; p++) {
-      const d = Math.abs(realPeaks[p].t - t);
-      if (d < bestDist) { bestDist = d; bestP = p; }
-    }
-    const snappedT = bestP !== -1 ? realPeaks[bestP].t : t;
-    if (bestP !== -1) usedPeakIdx.add(bestP);
+  for (let t = bestOffset; t < duration - 0.2; ) {
+    const lt = getLocalTempoAt(t);
+    if (t >= 0.15) {
+      let bestP = -1, bestDist = 0.085;
+      for (let p = 0; p < realPeaks.length; p++) {
+        const d = Math.abs(realPeaks[p].t - t);
+        if (d < bestDist) { bestDist = d; bestP = p; }
+      }
+      const snappedT = bestP !== -1 ? realPeaks[bestP].t : t;
+      if (bestP !== -1) usedPeakIdx.add(bestP);
 
-    const fIdx = Utils.clamp(Math.floor(snappedT * fps), 0, frames.length - 1);
-    const fr = frames[fIdx];
-    beats.push({
-      t: snappedT, bass: fr.bass, mid: fr.mid, high: fr.high, rms: fr.rms,
-      isSilent: fr.rms < 0.07,
-      isKick: fr.kickOnset > 0.2 || fr.bass > 0.48,
-      isSnare: fr.snareOnset > 0.22,
-      isSyncopated: false
-    });
+      const fIdx = Utils.clamp(Math.floor(snappedT * fps), 0, frames.length - 1);
+      const fr = frames[fIdx];
+      gridBeats.push({
+        t: snappedT, bass: fr.bass, mid: fr.mid, high: fr.high, rms: fr.rms,
+        kickOnset: fr.kickOnset, snareOnset: fr.snareOnset, onset: fr.onset,
+        localBpm: lt.bpm, localBeatDur: lt.beatDur,
+        isSilent: fr.rms < 0.07,
+        isKick: fr.kickOnset > 0.2 || fr.bass > 0.48,
+        isSnare: fr.snareOnset > 0.22,
+        isSyncopated: false
+      });
+    }
+    t += lt.beatDur;
   }
 
-  // Add any remaining strong real musical impacts (fills, drops, syncopated kicks) so NO beat is missed!
+  // Rhythmic Meter / Time Signature Detection (4/4, 3/4, 6/8) + Downbeat Alignment
+  const METER_CANDIDATES = [
+    { beatsPerBar: 4, label: "4/4", template: [1.0, 0.45, 0.78, 0.48], prior: 1.06 },
+    { beatsPerBar: 3, label: "3/4", template: [1.0, 0.42, 0.48],       prior: 0.96 },
+    { beatsPerBar: 6, label: "6/8", template: [1.0, 0.36, 0.40, 0.78, 0.36, 0.40], prior: 0.95 }
+  ];
+
+  let bestMeter = { beatsPerBar: 4, label: "4/4", template: METER_CANDIDATES[0].template, downbeatOffset: 0 };
+  if (gridBeats.length >= 8) {
+    const energies = gridBeats.map(b => b.kickOnset * 1.45 + b.bass * 0.7 + b.rms * 0.55 + b.onset * 0.5);
+    const meanE = energies.reduce((a, x) => a + x, 0) / Math.max(1, energies.length);
+    let bestMeterScore = -Infinity;
+
+    for (const cand of METER_CANDIDATES) {
+      const m = cand.beatsPerBar;
+      for (let off = 0; off < m; off++) {
+        let weighted = 0, downSum = 0, downCnt = 0, otherSum = 0, otherCnt = 0;
+        for (let i = 0; i < gridBeats.length; i++) {
+          const pos = (i - off + m * 1000) % m;
+          const e = energies[i];
+          weighted += e * cand.template[pos];
+          if (pos === 0) { downSum += e; downCnt++; }
+          else { otherSum += e; otherCnt++; }
+        }
+        const downContrast = (downSum / Math.max(1, downCnt)) - (otherSum / Math.max(1, otherCnt));
+        const score = ((weighted / gridBeats.length) + downContrast * 0.95) * cand.prior / Math.max(0.05, meanE);
+        if (score > bestMeterScore) {
+          bestMeterScore = score;
+          bestMeter = { beatsPerBar: m, label: cand.label, template: cand.template, downbeatOffset: off };
+        }
+      }
+    }
+  }
+
+  // Tag every grid beat with barIndex, beatInBar, accentWeight, and accentLevel
+  const mLen = bestMeter.beatsPerBar;
+  const beats = gridBeats.map((b, idx) => {
+    const shifted = idx - bestMeter.downbeatOffset;
+    const barIndex = Math.max(0, Math.floor(shifted / mLen));
+    const beatInBar = ((shifted % mLen) + mLen) % mLen;
+    const baseWeight = bestMeter.template[beatInBar] ?? 0.5;
+    const dynamicBoost = Utils.clamp((b.kickOnset * 0.35 + b.bass * 0.2), 0, 0.35);
+    const accentWeight = Utils.clamp(baseWeight * 0.8 + dynamicBoost, 0.35, 1.0);
+    const accentLevel = beatInBar === 0
+      ? "DOWNBEAT"
+      : (baseWeight >= 0.72 ? "SECONDARY" : "WEAK");
+    return { ...b, barIndex, beatInBar, accentWeight, accentLevel };
+  });
+
+  // Add remaining strong syncopated real musical impacts (fills, drops, off-beat kicks)
   for (let p = 0; p < realPeaks.length; p++) {
     if (usedPeakIdx.has(p)) continue;
     const pk = realPeaks[p];
     if (pk.strength > 0.52 && pk.frame.rms > 0.16) {
+      const lt = getLocalTempoAt(pk.t);
       beats.push({
         t: pk.t, bass: pk.frame.bass, mid: pk.frame.mid, high: pk.frame.high, rms: pk.frame.rms,
+        localBpm: lt.bpm, localBeatDur: lt.beatDur,
+        barIndex: Math.floor(pk.t / (lt.beatDur * mLen)),
+        beatInBar: -1,
+        accentWeight: Utils.clamp(0.55 + pk.strength * 0.3, 0.55, 0.92),
+        accentLevel: "SYNCOPATED",
         isSilent: false, isKick: pk.frame.kickOnset > 0.28, isSnare: true, isSyncopated: true
       });
     }
@@ -247,8 +345,8 @@ export function analyzeAudioBuffer(audioBuffer) {
   else if (avgBass > avgHigh * 1.18) archetype = ARCHETYPES.TITAN_CRUSHER;
   else if (bpm < 108) archetype = ARCHETYPES.ABYSSAL_ECLIPSE;
 
-  // Fine-grained 4-beat section windows for fast instrument & rhythm change detection
-  const secWin = beatDur * 4;
+  // Fine-grained 1-measure (beatsPerBar) section windows for fast instrument & rhythm change detection
+  const secWin = beatDur * mLen;
   const sections = [];
   for (let s = 0; s < duration; s += secWin) {
     const e = Math.min(duration, s + secWin);
@@ -288,10 +386,12 @@ export function analyzeAudioBuffer(audioBuffer) {
     else if (energy > prevEnergy * 1.12 && energy < avgRms * 1.15) type = "BUILDUP";
     else if (energy < avgRms * 0.72) type = "BREAKDOWN";
 
-    sections.push({ start: s, end: e, energy, type, instrument, rhythm });
+    const lt = getLocalTempoAt(s);
+    sections.push({ start: s, end: e, energy, type, instrument, rhythm, localBpm: lt.bpm });
   }
 
-  const baseAnalysis = { frames, fps, bpm, beatDur, bestOffset, beats, sections, archetype, profile: { avgBass, avgHigh, avgRms } };
+  const meter = { beatsPerBar: bestMeter.beatsPerBar, label: bestMeter.label, downbeatOffset: bestMeter.downbeatOffset };
+  const baseAnalysis = { frames, fps, bpm, beatDur, tempoCurve, meter, bestOffset, beats, sections, archetype, profile: { avgBass, avgHigh, avgRms } };
   baseAnalysis.dna = generateSongDNA(baseAnalysis, duration);
   return baseAnalysis;
 }

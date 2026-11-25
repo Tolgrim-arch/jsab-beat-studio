@@ -27,7 +27,8 @@ export function buildChoreographySchedule() {
   const { analysis, duration } = state;
   if (!analysis) return [];
 
-  const { beats, beatDur, sections, archetype, bpm } = analysis;
+  const { beats, beatDur, sections, archetype, bpm, meter } = analysis;
+  const beatsPerBar = meter?.beatsPerBar || 4;
   const rng = Utils.seededRandom(Math.floor(bpm * 131 + analysis.profile.avgBass * 997));
   const schedule = [];
 
@@ -39,12 +40,27 @@ export function buildChoreographySchedule() {
     MELODIC_PAD: ["LYCANTHROPY_VINES", "ORB_RAIN", "BREAKDOWN_PULSE", "MANDALA_BLOOM"]
   };
 
+  const INSTANT_SETPIECES = new Set([
+    "BARRACUDA_SWARM", "ORB_RAIN", "WAVE_CORRIDOR",
+    "SAWBLADE_GAUNTLET", "MANDALA_BLOOM", "BREAKDOWN_PULSE", "SYNCOPATED_BURST"
+  ]);
+
+  // Group beats by detected measure (compás / barIndex) so phrases lock to real bars!
+  const barsMap = new Map();
+  for (const b of beats) {
+    const barIdx = Number.isFinite(b.barIndex) ? b.barIndex : Math.floor(b.t / (beatDur * beatsPerBar));
+    if (!barsMap.has(barIdx)) barsMap.set(barIdx, []);
+    barsMap.get(barIdx).push(b);
+  }
+
   let prevKey = "";
   let cycleIdx = 0;
-  const phraseLen = 4;
-  for (let i = 0; i < beats.length; i += phraseLen) {
-    const t = beats[i].t;
-    if (t < 0.5 || t > duration - 2.6) continue;
+  const sortedBars = [...barsMap.entries()].sort((a, b) => a[0] - b[0]);
+
+  for (const [barIdx, barBeats] of sortedBars) {
+    if (!barBeats.length) continue;
+    const t = barBeats[0].t;
+    if (t < 0.35 || t > duration - 2.2) continue;
 
     const sec = sections.find(s => t >= s.start && t < s.end) || { type: "VERSE", instrument: "SYNTH_LEAD", rhythm: "NORMAL" };
     const progress = t / duration;
@@ -59,7 +75,7 @@ export function buildChoreographySchedule() {
     const pool = INSTRUMENT_POOLS[sec.instrument] || archetype.setpieces;
     let setpiece = pool[(cycleIdx + Math.floor(rng() * pool.length)) % pool.length];
     if (sec.type === "DROP") {
-      setpiece = (i % 8 === 0) ? "DROP_EXPLOSION" : pool[cycleIdx % pool.length];
+      setpiece = (barIdx % 2 === 0) ? "DROP_EXPLOSION" : pool[cycleIdx % pool.length];
     } else if (sec.type === "BUILDUP") {
       setpiece = sec.rhythm === "DOUBLE_TIME" ? "BARRACUDA_SWARM" : "BUILDUP_LOCKON";
     } else if (sec.type === "BREAKDOWN" || sec.type === "INTRO") {
@@ -72,23 +88,38 @@ export function buildChoreographySchedule() {
       setpiece = heavyPool[cycleIdx % heavyPool.length];
     }
 
-    const INSTANT_SETPIECES = new Set([
-      "BARRACUDA_SWARM", "ORB_RAIN", "WAVE_CORRIDOR",
-      "SAWBLADE_GAUNTLET", "MANDALA_BLOOM", "BREAKDOWN_PULSE", "SYNCOPATED_BURST"
-    ]);
-
-    for (let step = 0; step < phraseLen && (i + step) < beats.length; step++) {
-      const b = beats[i + step];
+    for (const b of barBeats) {
       if (b.isSilent || sec.type === "SILENCE") continue;
+      const localBeatDur = b.localBeatDur || beatDur;
+      const localBpm = b.localBpm || bpm;
+      const beatInBar = Number.isFinite(b.beatInBar) && b.beatInBar >= 0 ? b.beatInBar : 0;
+      const accentLevel = b.accentLevel || (beatInBar === 0 ? "DOWNBEAT" : "WEAK");
+      const accentWeight = b.accentWeight ?? (accentLevel === "DOWNBEAT" ? 1.0 : accentLevel === "SECONDARY" ? 0.78 : 0.48);
+
+      // Keep weak beats cleaner in calm sections so strong accents stand out
+      if (accentLevel === "WEAK" && (sec.type === "INTRO" || sec.type === "BREAKDOWN") && b.rms < 0.28) continue;
+
       const chosenSetpiece = b.isSyncopated ? "SYNCOPATED_BURST" : setpiece;
       const isInstant = INSTANT_SETPIECES.has(chosenSetpiece);
-      const leadTime = isInstant ? 0 : Math.min(0.52, beatDur * 0.88);
+      const leadMul = accentLevel === "DOWNBEAT" ? 0.90 : accentLevel === "SECONDARY" ? 0.78 : 0.62;
+      const leadTime = isInstant ? 0 : Math.min(0.56, localBeatDur * leadMul);
       const spawnTime = Math.max(0.02, b.t - leadTime);
+
       schedule.push({
         spawnTime, impactTime: b.t, leadTime,
-        phase, step,
+        phase,
+        step: beatInBar,
+        beatInBar,
+        beatsPerBar,
+        barIndex: barIdx,
+        accentLevel,
+        accentWeight,
+        localBpm,
+        localBeatDur,
         setpiece: chosenSetpiece,
-        section: sec.type, beat: b, seed: rng()
+        section: sec.type,
+        beat: b,
+        seed: rng()
       });
     }
   }
@@ -101,9 +132,25 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   const W = state.width, H = state.height;
   const b = state.blixer;
   const cx = state.cyan.x, cy = state.cyan.y;
-  const spdMul = PHASES[ev.phase - 1].speedMul * (state.settings?.attackSpeed ?? 1);
+
+  // Dynamic BPM scaling: attack velocities & timings follow the live/local BPM
+  const curBpm = ev.localBpm || state.liveBpm || state.analysis?.bpm || 128;
+  const curBeatDur = ev.localBeatDur || state.liveBeatDur || (60 / curBpm);
+  const bpmScale = Utils.clamp(curBpm / 128, 0.68, 1.75);
+  const accentLevel = ev.accentLevel || (ev.step === 0 ? "DOWNBEAT" : "WEAK");
+  const accentWeight = ev.accentWeight ?? (accentLevel === "DOWNBEAT" ? 1.0 : accentLevel === "SECONDARY" ? 0.78 : 0.5);
+  const isDownbeat = accentLevel === "DOWNBEAT";
+  const isSecondary = accentLevel === "SECONDARY";
+  const isStrong = isDownbeat || isSecondary;
+
+  const spdMul = PHASES[ev.phase - 1].speedMul * (state.settings?.attackSpeed ?? 1) * bpmScale * (0.88 + accentWeight * 0.24);
   const lt = ev.leadTime;
   const danger = (state.customColors?.enabled ? state.customColors.danger : state.analysis?.dna?.palette?.danger) || "#FF1E6E";
+
+  // Update live measure telemetry
+  if (Number.isFinite(ev.beatInBar) && ev.beatInBar >= 0) state.beatInBar = ev.beatInBar;
+  if (ev.beatsPerBar) state.beatsPerBar = ev.beatsPerBar;
+  state.lastAccentLevel = accentLevel;
 
   // Filter disabled attacks (fallback to any enabled attack, or skip if all disabled)
   const disabled = state.disabledAttacks || {};
@@ -116,10 +163,13 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
 
   state.activeSetpiece = activeSetpiece;
   if (domSetpieceEl) domSetpieceEl.textContent = activeSetpiece.replace(/_/g, " ");
-  b.pulse = 1.0;
 
-  // Dramatic Boss Snap-Positioning on beat 0 of every phrase!
-  if (ev.step === 0) {
+  // Accentuated pulse, camera punch, and boss snap on strong beats of the measure!
+  b.pulse = Math.max(b.pulse, isDownbeat ? 1.0 : isSecondary ? 0.82 : 0.55);
+  if (isDownbeat) {
+    state.bgPulse = Math.max(state.bgPulse, 0.85 * accentWeight);
+    state.zoomPunch = Math.max(state.zoomPunch, 0.032 * accentWeight);
+    state.shake = Math.max(state.shake, 7 * accentWeight);
     const spots = [
       { x: W * 0.5, y: H * 0.5 },   // Center stage (JSAB Drop!)
       { x: W * 0.5, y: H * 0.22 },  // Top center
@@ -129,37 +179,42 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
     const pick = ev.section === "DROP" ? spots[0] : spots[Math.floor(ev.seed * spots.length)];
     b.targetX = pick.x;
     b.targetY = pick.y;
-    spawnParticles(b.x, b.y, danger, 14, 120, 360);
+    spawnParticles(b.x, b.y, danger, Math.round(12 + accentWeight * 10), 120 * bpmScale, 360 * bpmScale);
+  } else if (isSecondary) {
+    state.bgPulse = Math.max(state.bgPulse, 0.55 * accentWeight);
+    state.zoomPunch = Math.max(state.zoomPunch, 0.018 * accentWeight);
   }
 
   const bx = b.x, by = b.y;
   const len = Math.max(W, H) * 1.45;
+  const densityScale = (state.settings?.attackDensity ?? 1) * (isDownbeat ? 1.18 : isSecondary ? 1.0 : 0.72);
 
   switch (activeSetpiece) {
     case "DROP_EXPLOSION": {
-      if (ev.step === 0) {
-        state.flashAlpha = 0.45;
-        state.zoomPunch = 0.055;
-        state.shake = 16;
-        state.entities.push(AttackFactory.shockwave(bx, by, 520 * spdMul, len, 28));
+      if (isDownbeat) {
+        state.flashAlpha = Math.max(state.flashAlpha, 0.45 * accentWeight);
+        state.zoomPunch = Math.max(state.zoomPunch, 0.06 * accentWeight);
+        state.shake = Math.max(state.shake, 16 * accentWeight);
+        state.entities.push(AttackFactory.shockwave(bx, by, 520 * spdMul, len, 30));
       }
-      // 4 diagonal lasers + 16-bullet double ring
+      // 4 diagonal lasers on strong beats, 2 crisp lasers on weak beats
+      const laserCnt = isStrong ? 4 : 2;
       const baseA = ev.step * 0.38;
-      for (let k = 0; k < 4; k++) {
-        const a = baseA + (Math.PI / 2) * k;
-        state.entities.push(AttackFactory.laser(bx, by, bx + Math.cos(a) * len, by + Math.sin(a) * len, 28, lt, 0.26));
+      for (let k = 0; k < laserCnt; k++) {
+        const a = baseA + ((Math.PI * 2) / laserCnt) * k;
+        state.entities.push(AttackFactory.laser(bx, by, bx + Math.cos(a) * len, by + Math.sin(a) * len, isDownbeat ? 30 : 22, lt, Math.min(0.32, curBeatDur * 0.55)));
       }
-      const count = 14 + ev.phase * 2;
+      const count = Math.max(6, Math.round((12 + ev.phase * 2) * densityScale));
       for (let k = 0; k < count; k++) {
         const a = (Math.PI * 2 * k) / count + ev.step * 0.25;
         const spd = (k % 2 === 0 ? 310 : 220) * spdMul;
-        state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * spd, Math.sin(a) * spd, 8, "diamond"));
+        state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * spd, Math.sin(a) * spd, isDownbeat ? 9 : 7, "diamond"));
       }
-      if (ev.step === 2) {
+      if (isSecondary) {
         const isHoriz = ev.phase % 2 === 0;
         const thick = (isHoriz ? H : W) * 0.24;
         const targetPos = isHoriz ? H * 0.5 : W * 0.5;
-        state.entities.push(AttackFactory.megaBeam(isHoriz ? "y" : "x", targetPos, thick, lt, 0.44));
+        state.entities.push(AttackFactory.megaBeam(isHoriz ? "y" : "x", targetPos, thick, lt, Math.min(0.55, curBeatDur * 0.92)));
       }
       break;
     }
