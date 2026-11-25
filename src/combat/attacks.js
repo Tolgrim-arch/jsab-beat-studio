@@ -679,5 +679,147 @@ export const AttackFactory = {
         ctx.fill();
       }
     };
+  },
+
+  articulatedArms(duration = 4.2, speedMul = 1.0) {
+    const bgCol = () => (state.customColors?.enabled ? state.customColors.bg : state.analysis?.dna?.palette?.bg) || "#040D14";
+
+    const drawSpikedGear = (ctx, x, y, r, rot, col, isPalm) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.fillStyle = col;
+      // 8 outer triangular spikes
+      const spikes = 8;
+      for (let i = 0; i < spikes; i++) {
+        const a = (Math.PI * 2 * i) / spikes;
+        ctx.save();
+        ctx.rotate(a);
+        ctx.beginPath();
+        ctx.moveTo(r * 1.24, 0);
+        ctx.lineTo(r * 0.72, -r * 0.24);
+        ctx.lineTo(r * 0.72, r * 0.24);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      // Core circle
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.88, 0, Math.PI * 2);
+      ctx.fill();
+      // Hollow center + inner circle dot for the palm
+      if (isPalm) {
+        ctx.fillStyle = bgCol();
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.44, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.arc(0, 0, r * 0.21, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    };
+
+    return {
+      type: "articulatedArms", duration, speedMul, age: 0, dead: false,
+      update(dt) {
+        this.age += dt;
+        if (this.age >= this.duration) this.dead = true;
+      },
+      _computeSegments(t) {
+        const b = state.blixer;
+        const bx = b.x, by = b.y;
+        const baseR = (b.r || 60) * (state.settings?.bossScale ?? 1);
+        const extend = Math.min(Utils.clamp(t / 0.45, 0, 1), Utils.clamp((this.duration - t) / 0.45, 0, 1));
+        if (extend <= 0.02) return [];
+        const segs = [];
+        const w = t * 2.3 * this.speedMul;
+
+        [-1, 1].forEach((side) => {
+          const baseAngle = side > 0 ? 0 : Math.PI;
+          const shoulderAng = baseAngle + side * (Math.sin(w) * 0.58 + Math.cos(w * 0.5) * 0.22);
+          const bend1 = side * (Math.sin(w * 1.35 - 0.7) * 0.52);
+          const bend2 = side * (Math.sin(w * 1.35 - 1.4) * 0.48);
+          const bend3 = side * (Math.sin(w * 1.35 - 2.1) * 0.42);
+
+          // Small shoulder connector ball
+          const sx = bx + Math.cos(shoulderAng) * (baseR * 1.22 * extend);
+          const sy = by + Math.sin(shoulderAng) * (baseR * 1.22 * extend);
+          segs.push({ x: sx, y: sy, r: 9 * extend, kind: "ball", rot: 0 });
+
+          // 3 progressively larger 8-spike gears + 1 large hollow-center palm
+          const specs = [
+            { dist: 48, r: 22, ang: shoulderAng + bend1 * 0.4, kind: "gear", spin: 1.8 },
+            { dist: 64, r: 28, ang: shoulderAng + bend1, kind: "gear", spin: -2.2 },
+            { dist: 76, r: 34, ang: shoulderAng + bend1 + bend2, kind: "gear", spin: 2.5 },
+            { dist: 92, r: 46, ang: shoulderAng + bend1 + bend2 + bend3, kind: "palm", spin: -2.0 }
+          ];
+
+          let cx = sx, cy = sy;
+          let palmAng = shoulderAng;
+          specs.forEach((sp) => {
+            cx += Math.cos(sp.ang) * sp.dist * extend;
+            cy += Math.sin(sp.ang) * sp.dist * extend;
+            palmAng = sp.ang;
+            segs.push({ x: cx, y: cy, r: sp.r * extend, kind: sp.kind, rot: t * sp.spin * side });
+          });
+
+          // 3 simple ball fingers fanned around the outer edge of the palm
+          const fingerDist = 58 * extend;
+          [-0.58, 0, 0.58].forEach((off) => {
+            const fa = palmAng + off;
+            segs.push({
+              x: cx + Math.cos(fa) * fingerDist,
+              y: cy + Math.sin(fa) * fingerDist,
+              r: 13 * extend,
+              kind: "ball",
+              rot: 0
+            });
+          });
+        });
+        return segs;
+      },
+      getDanger(px, py, tAhead) {
+        const fa = this.age + tAhead;
+        if (fa >= this.duration) return 0;
+        const segs = this._computeSegments(fa);
+        let maxD = 0;
+        for (let i = 0; i < segs.length; i++) {
+          const s = segs[i];
+          const safe = s.r * 1.15 + 34;
+          const d = Math.hypot(px - s.x, py - s.y);
+          if (d < safe) {
+            const val = (1 - d / safe) * 165;
+            if (val > maxD) maxD = val;
+          }
+        }
+        return maxD;
+      },
+      checkCollision(px, py, r) {
+        if (this.age < 0.25 || this.age > this.duration - 0.25) return false;
+        const segs = this._computeSegments(this.age);
+        for (let i = 0; i < segs.length; i++) {
+          const s = segs[i];
+          if (Math.hypot(px - s.x, py - s.y) < (s.r * 0.88 + r)) return true;
+        }
+        return false;
+      },
+      draw(ctx) {
+        const segs = this._computeSegments(this.age);
+        const col = this.age < 0.08 ? COLORS.white : dangerCol();
+        for (let i = 0; i < segs.length; i++) {
+          const s = segs[i];
+          if (s.kind === "ball") {
+            ctx.fillStyle = col;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            drawSpikedGear(ctx, s.x, s.y, s.r, s.rot, col, s.kind === "palm");
+          }
+        }
+      }
+    };
   }
 };

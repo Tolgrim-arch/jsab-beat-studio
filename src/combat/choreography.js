@@ -1,7 +1,7 @@
 import { PHASES } from "../config.js";
 import { Utils } from "../utils.js";
 import { state, spawnParticles } from "../state.js";
-import { AttackFactory } from "./attacks.js?v=44";
+import { AttackFactory } from "./attacks.js?v=48";
 
 export function buildChoreographySchedule() {
   const { analysis, duration } = state;
@@ -126,6 +126,9 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
     }
 
     case "TWIN_HAND_SMASH": {
+      if (ev.step === 0 && !state.entities.some(e => e.type === "articulatedArms")) {
+        state.entities.push(AttackFactory.articulatedArms(Math.max(3.6, state.analysis.beatDur * 4.2), spdMul));
+      }
       // Simultaneous left + right hand slams + sweeping center laser
       const ty = H * (0.38 + ev.seed * 0.36);
       state.entities.push(AttackFactory.handSlam(W * 0.26, ty, 95 + ev.phase * 8, lt));
@@ -178,6 +181,9 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
 
     case "CLOSE_TO_ME_ORBS": {
       if (ev.step === 0) {
+        if (!state.entities.some(e => e.type === "articulatedArms")) {
+          state.entities.push(AttackFactory.articulatedArms(Math.max(4.0, state.analysis.beatDur * 4.5), spdMul));
+        }
         for (let k = 0; k < 4; k++) {
           const a = (Math.PI * 2 * k) / 4 + ev.seed * Math.PI;
           state.entities.push(AttackFactory.rotatingBeam(bx, by, a, (ev.seed > 0.5 ? 1 : -1) * 1.25 * spdMul, len * 0.7, 22, lt, state.analysis.beatDur * 3.8));
