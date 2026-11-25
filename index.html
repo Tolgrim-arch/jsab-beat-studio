@@ -3,47 +3,57 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v56 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v57 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/main.css?v=56" />
+  <link rel="stylesheet" href="styles/main.css?v=57" />
 </head>
-<body class="h-screen overflow-hidden flex flex-col bg-[#050611] text-slate-100 select-none">
+<body class="h-[100dvh] overflow-hidden flex flex-col bg-[#050611] text-slate-100 select-none">
 
   <!-- TOP HEADER -->
-  <header class="h-14 border-b border-slate-800/80 bg-[#090b1d]/95 backdrop-blur-md px-4 lg:px-5 flex items-center justify-between shrink-0 z-20">
-    <div class="flex items-center gap-3">
-      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF1F71] to-[#9b0d48] flex items-center justify-center glow-pink">
+  <header class="h-14 border-b border-slate-800/80 bg-[#090b1d]/95 backdrop-blur-md px-3 sm:px-4 lg:px-5 flex items-center justify-between shrink-0 z-20 gap-2">
+    <div class="flex items-center gap-2.5 min-w-0">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF1F71] to-[#9b0d48] flex items-center justify-center glow-pink shrink-0">
         <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 2L14.8 7.5L21 6.5L17.5 11.8L22 16.5L15.8 17.2L14 22.5L10.5 17.5L4.5 19L7.2 13.5L2.5 9.2L8.8 8.2L12 2Z"/>
         </svg>
       </div>
-      <div>
-        <h1 class="font-display text-sm sm:text-base font-bold tracking-wider uppercase flex items-center gap-2">
+      <div class="min-w-0">
+        <h1 class="font-display text-xs sm:text-base font-bold tracking-wider uppercase flex items-center gap-2 truncate">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v56 • STUDIO PRO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v57 • STUDIO PRO</span>
         </h1>
       </div>
     </div>
 
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
       <div class="hidden xl:flex items-center gap-1 bg-slate-900/90 border border-slate-800 rounded-lg p-1">
         <button data-demo="titan" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-[#FF1F71]/25 hover:text-[#FF1F71] transition cursor-pointer">Annihilate</button>
         <button data-demo="barracuda" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-[#00F0FF]/20 hover:text-[#00F0FF] transition cursor-pointer">Barracuda</button>
         <button data-demo="closetome" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-purple-500/25 hover:text-purple-300 transition cursor-pointer">Close To Me</button>
       </div>
 
+      <button id="btnCaptureTab" type="button" title="Escuchar audio en vivo de una pestaña (YouTube / Spotify)" class="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-[#FF1F71]/15 hover:bg-[#FF1F71]/25 border border-[#FF1F71]/45 text-[#FF4D8D] transition cursor-pointer">
+        <span>🎙️</span>
+        <span class="hidden md:inline">YouTube / Spotify</span>
+      </button>
+
+      <button id="btnMobilePanel" type="button" class="flex lg:hidden items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-mono-tech bg-slate-900 border border-slate-700/80 text-slate-200 cursor-pointer">
+        <span>🎛️</span>
+        <span>Panel</span>
+      </button>
+
       <button id="btnCinemaMode" type="button" title="Modo Cine (Tecla F)" class="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-mono-tech bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition cursor-pointer">
         <svg class="w-3.5 h-3.5 text-[#00F0FF]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/></svg>
         <span>Cine</span>
       </button>
 
-      <label for="audioFileInput" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/50 text-[#00F0FF] transition flex items-center gap-1.5 cursor-pointer glow-cyan">
+      <label for="audioFileInput" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/50 text-[#00F0FF] transition flex items-center gap-1.5 cursor-pointer glow-cyan">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-        <span>Cargar Audio</span>
+        <span class="hidden sm:inline">Cargar Audio</span>
       </label>
       <input id="audioFileInput" type="file" accept="audio/*,video/mp4,.mp3,.wav,.ogg,.m4a,.mp4,.aac,.flac,.webm" class="hidden" />
     </div>
@@ -52,8 +62,8 @@
   <!-- MAIN WORKSPACE -->
   <main class="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
 
-    <!-- TABBED STUDIO SIDEBAR -->
-    <aside id="studioSidebar" class="w-full lg:w-[350px] xl:w-[376px] border-b lg:border-b-0 lg:border-r border-slate-800/80 bg-[#0a0c1e] flex flex-col min-h-0 shrink-0 max-h-[44vh] lg:max-h-none">
+    <!-- TABBED STUDIO SIDEBAR (Bottom drawer on mobile, left sidebar on desktop) -->
+    <aside id="studioSidebar" class="order-2 lg:order-1 w-full lg:w-[350px] xl:w-[376px] border-t lg:border-t-0 lg:border-r border-slate-800/80 bg-[#0a0c1e] flex flex-col min-h-0 shrink-0 max-h-[45dvh] lg:max-h-none">
 
       <!-- 5-TAB NAVIGATION BAR -->
       <nav class="grid grid-cols-5 gap-1 p-2 border-b border-slate-800/80 bg-[#080a19] shrink-0">
@@ -366,8 +376,8 @@
     </aside>
 
     <!-- STAGE & TRANSPORT -->
-    <section class="flex-1 flex flex-col min-w-0 min-h-0 bg-[#050611]">
-      <div id="stageContainer" class="flex-1 p-3 sm:p-5 min-h-0">
+    <section class="order-1 lg:order-2 flex-1 flex flex-col min-w-0 min-h-[220px] bg-[#050611]">
+      <div id="stageContainer" class="flex-1 p-2 sm:p-4 lg:p-5 min-h-0">
         <canvas id="gameCanvas" width="1280" height="720"></canvas>
 
         <!-- Exit Cinema Mode Floating Button -->
@@ -383,32 +393,37 @@
         </div>
 
         <!-- Empty Welcome Overlay -->
-        <div id="emptyOverlay" class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
-          <div class="bg-[#0b0d22]/90 backdrop-blur-xl border border-slate-700/70 rounded-2xl p-6 max-w-xl w-full text-center shadow-2xl pointer-events-auto">
-            <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-[#00F0FF]/20 to-[#FF1F71]/20 border border-[#00F0FF]/40 flex items-center justify-center text-[#00F0FF]">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div id="emptyOverlay" class="absolute inset-0 flex items-center justify-center p-3 sm:p-4 pointer-events-none">
+          <div class="bg-[#0b0d22]/90 backdrop-blur-xl border border-slate-700/70 rounded-2xl p-4 sm:p-6 max-w-xl w-full text-center shadow-2xl pointer-events-auto max-h-full overflow-y-auto">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-2 sm:mb-3 rounded-2xl bg-gradient-to-br from-[#00F0FF]/20 to-[#FF1F71]/20 border border-[#00F0FF]/40 flex items-center justify-center text-[#00F0FF]">
+              <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <h2 class="font-display text-lg font-bold text-white mb-1.5">JSAB Beat Studio Pro</h2>
-            <p class="text-xs text-slate-300 mb-4 leading-relaxed">
-              Arrastra un <strong class="text-[#00F0FF]">MP3 / WAV / MP4</strong> aquí o elige una demo reactiva para generar coreografías con IA perfecta.
+            <h2 class="font-display text-base sm:text-lg font-bold text-white mb-1">JSAB Beat Studio Pro</h2>
+            <p class="text-[11px] sm:text-xs text-slate-300 mb-3 sm:mb-4 leading-relaxed">
+              Arrastra un <strong class="text-[#00F0FF]">MP3 / WAV / MP4</strong>, escucha <strong class="text-[#FF4D8D]">YouTube / Spotify</strong> en vivo o elige una demo:
             </p>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-3">
-              <button data-demo="titan" class="demo-btn p-3 rounded-xl text-left bg-[#FF1F71]/15 hover:bg-[#FF1F71]/25 border border-[#FF1F71]/40 transition cursor-pointer">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+              <button data-demo="titan" class="demo-btn p-2.5 sm:p-3 rounded-xl text-left bg-[#FF1F71]/15 hover:bg-[#FF1F71]/25 border border-[#FF1F71]/40 transition cursor-pointer">
                 <div class="text-xs font-display font-bold text-[#FF1F71]">Annihilate</div>
                 <div class="text-[10px] text-slate-300">Dubstep • Mega-Rayos</div>
               </button>
-              <button data-demo="barracuda" class="demo-btn p-3 rounded-xl text-left bg-[#00F0FF]/12 hover:bg-[#00F0FF]/22 border border-[#00F0FF]/40 transition cursor-pointer">
+              <button data-demo="barracuda" class="demo-btn p-2.5 sm:p-3 rounded-xl text-left bg-[#00F0FF]/12 hover:bg-[#00F0FF]/22 border border-[#00F0FF]/40 transition cursor-pointer">
                 <div class="text-xs font-display font-bold text-[#00F0FF]">Barracuda</div>
                 <div class="text-[10px] text-slate-300">Speedcore • Serpientes</div>
               </button>
-              <button data-demo="closetome" class="demo-btn p-3 rounded-xl text-left bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 transition cursor-pointer">
+              <button data-demo="closetome" class="demo-btn p-2.5 sm:p-3 rounded-xl text-left bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 transition cursor-pointer">
                 <div class="text-xs font-display font-bold text-purple-300">Close To Me</div>
                 <div class="text-[10px] text-slate-300">Synth • Brazos 8 Púas</div>
               </button>
             </div>
-            <label for="audioFileInput" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-slate-200 cursor-pointer transition">
-              <span>📁 Subir tu propia canción o video</span>
-            </label>
+            <div class="flex flex-wrap items-center justify-center gap-2">
+              <label for="audioFileInput" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-slate-200 cursor-pointer transition">
+                <span>📁 Subir MP3 / MP4</span>
+              </label>
+              <button id="btnCaptureTabOverlay" type="button" class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-[#FF1F71]/15 hover:bg-[#FF1F71]/25 border border-[#FF1F71]/45 text-[#FF4D8D] cursor-pointer transition">
+                <span>🎙️ Escuchar YouTube / Spotify</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -443,6 +458,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=56"></script>
+  <script type="module" src="src/main.js?v=57"></script>
 </body>
 </html>

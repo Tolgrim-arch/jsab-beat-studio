@@ -2,10 +2,10 @@ import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
 import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js";
-import { buildChoreographySchedule, spawnSetpieceEvent } from "./combat/choreography.js?v=56";
+import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=56";
 import { updateCyanAI } from "./combat/cyanAI.js";
 import { renderFrame, drawTimeline } from "./render/renderer.js?v=56";
-import { initStudioControls } from "./ui/controls.js?v=56";
+import { initStudioControls } from "./ui/controls.js?v=57";
 
 const dom = {
   canvas: document.getElementById("gameCanvas"),
@@ -62,6 +62,18 @@ function showToast(message, type = "info") {
   }, 3200);
 }
 
+function stopTabAudioCapture() {
+  if (state.liveTabStream) {
+    state.liveTabStream.getTracks().forEach(tr => tr.stop());
+    state.liveTabStream = null;
+  }
+  if (state.liveTabSource) {
+    try { state.liveTabSource.disconnect(); } catch {}
+    state.liveTabSource = null;
+  }
+  state.isLiveTab = false;
+}
+
 function stopAudioSource() {
   if (state.sourceNode) {
     try { state.sourceNode.stop(); } catch {}
@@ -70,6 +82,82 @@ function stopAudioSource() {
   }
   if (state.mediaEl) {
     state.mediaEl.pause();
+  }
+  stopTabAudioCapture();
+}
+
+async function startTabAudioCapture() {
+  if (!navigator.mediaDevices?.getDisplayMedia) {
+    showToast("Tu navegador no soporta captura de pestaña", "error");
+    return;
+  }
+  try {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+      audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+    });
+    const audioTracks = stream.getAudioTracks();
+    if (!audioTracks.length) {
+      stream.getTracks().forEach(t => t.stop());
+      showToast("Marca 'Compartir audio de la pestaña' para escuchar YouTube/Spotify", "error");
+      return;
+    }
+
+    pausePlayback();
+    const ac = ensureAudioContext();
+    const audioOnlyStream = new MediaStream(audioTracks);
+    const src = ac.createMediaStreamSource(audioOnlyStream);
+    const analyser = ac.createAnalyser();
+    analyser.fftSize = 256;
+    src.connect(analyser);
+    if (state.mediaDest) analyser.connect(state.mediaDest);
+
+    audioTracks[0].onended = () => {
+      if (state.isLiveTab) {
+        pausePlayback();
+        showToast("Captura de pestaña finalizada", "info");
+      }
+    };
+
+    state.audioBuffer = null;
+    state.mediaEl = null;
+    state.liveTabStream = stream;
+    state.liveTabSource = src;
+    state.liveAnalyser = analyser;
+    state.isLiveTab = true;
+    state.duration = 0;
+    state.trackTitle = "Audio de Pestaña (En Vivo)";
+    state.pauseOffset = 0;
+    state.currentTime = 0;
+    state.liveBeatCooldown = 0;
+    state.livePrevBass = 0;
+    state.liveStep = 0;
+
+    const dummyBuf = ac.createBuffer(1, Math.min(ac.sampleRate * 2, 44100), ac.sampleRate);
+    state.analysis = analyzeAudioBuffer(dummyBuf);
+    state.schedule = [];
+    state.nextEventIdx = 0;
+    resetWorldEntities();
+
+    dom.emptyOverlay.classList.add("hidden");
+    dom.trackName.textContent = "YouTube / Spotify (En Vivo)";
+    dom.trackStatus.textContent = "EN VIVO";
+    dom.trackStatus.className = "text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/25 text-[#FF4D8D]";
+    dom.statBpm.textContent = "LIVE";
+    dom.statDuration.textContent = "∞";
+    dom.statEvents.textContent = "AUTO";
+    dom.statArchetype.textContent = "LIVE AUDIO";
+    dom.timeTotal.textContent = "LIVE";
+    dom.btnPlayPause.disabled = false;
+    dom.btnRestart.disabled = true;
+    dom.btnRecord.disabled = false;
+
+    state.startTime = ac.currentTime;
+    state.isPlaying = true;
+    updatePlayButtonUI();
+    showToast("🎙️ Escuchando YouTube/Spotify en tiempo real", "success");
+  } catch {
+    showToast("Captura cancelada", "info");
   }
 }
 
@@ -303,6 +391,30 @@ function updateSimulation(dt) {
     if (bass > 0.62) {
       state.zoomPunch = Math.max(state.zoomPunch, 0.024);
       state.bgPulse = Math.max(state.bgPulse, 0.7);
+    }
+    if (state.isLiveTab) {
+      state.liveBeatCooldown = Math.max(0, (state.liveBeatCooldown || 0) - dt);
+      const flux = bass - (state.livePrevBass || 0);
+      state.livePrevBass = bass;
+      if (state.liveBeatCooldown <= 0 && ((bass > 0.48 && flux > 0.065) || bass > 0.72)) {
+        state.liveBeatCooldown = 0.36;
+        const pool = ATTACK_CATALOG.filter(a => !(state.disabledAttacks && state.disabledAttacks[a.id]));
+        if (pool.length) {
+          const step = (state.liveStep || 0) % 4;
+          if (step === 0 || !state.liveCurSetpiece) {
+            state.liveCurSetpiece = pool[Math.floor(Math.random() * pool.length)].id;
+          }
+          spawnSetpieceEvent({
+            setpiece: state.liveCurSetpiece,
+            phase: state.phase,
+            step,
+            leadTime: 0.42,
+            section: bass > 0.66 ? "DROP" : "VERSE",
+            seed: Math.random()
+          }, dom.statSetpiece);
+          state.liveStep = (state.liveStep || 0) + 1;
+        }
+      }
     }
   } else if (state.analysis) {
     const idx = Utils.clamp(Math.floor(t * state.analysis.fps), 0, state.analysis.frames.length - 1);
@@ -572,10 +684,13 @@ dom.aspectBtns.forEach(btn => {
   });
 });
 
-dom.timelineWrapper.addEventListener("click", (e) => {
+document.getElementById("btnCaptureTab")?.addEventListener("click", startTabAudioCapture);
+document.getElementById("btnCaptureTabOverlay")?.addEventListener("click", startTabAudioCapture);
+
+const scrubTimelineAt = (clientX) => {
   if (!state.audioBuffer && !state.mediaEl) return;
   const rect = dom.timelineWrapper.getBoundingClientRect();
-  const target = Utils.clamp((e.clientX - rect.left) / rect.width, 0, 1) * state.duration;
+  const target = Utils.clamp((clientX - rect.left) / rect.width, 0, 1) * state.duration;
   state.pauseOffset = target;
   state.currentTime = target;
   state.nextEventIdx = state.schedule.findIndex(ev => ev.spawnTime >= target);
@@ -583,7 +698,11 @@ dom.timelineWrapper.addEventListener("click", (e) => {
   resetWorldEntities();
   if (state.isPlaying) startPlayback(target);
   drawTimeline(tCtx, dom.timelineCanvas);
-});
+};
+dom.timelineWrapper.addEventListener("click", (e) => scrubTimelineAt(e.clientX));
+dom.timelineWrapper.addEventListener("touchstart", (e) => {
+  if (e.touches?.[0]) scrubTimelineAt(e.touches[0].clientX);
+}, { passive: true });
 
 let lastNow = performance.now();
 function mainLoop(now) {

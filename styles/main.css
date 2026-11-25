@@ -45,6 +45,17 @@ body.cinema-mode #studioSidebar {
   overflow: hidden;
   border-right-width: 0 !important;
 }
+@media (max-width: 1023px) {
+  body.mobile-panel-hidden #studioSidebar {
+    max-height: 0 !important;
+    min-height: 0 !important;
+    height: 0 !important;
+    overflow: hidden;
+    border-top-width: 0 !important;
+    border-bottom-width: 0 !important;
+    opacity: 0;
+  }
+}
 body.cinema-mode #btnExitCinema {
   opacity: 1;
   pointer-events: auto;

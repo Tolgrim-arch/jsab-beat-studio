@@ -538,12 +538,15 @@ export function initStudioControls(showToast) {
     if (savedTab && document.querySelector(`[data-studio-tab="${savedTab}"]`)) activateTab(savedTab);
   } catch {}
 
-  // 5. Cinema Mode
+  // 5. Cinema Mode & Mobile Panel Toggle
   const toggleCinema = () => {
     document.body.classList.toggle("cinema-mode");
   };
   document.getElementById("btnCinemaMode")?.addEventListener("click", toggleCinema);
   document.getElementById("btnExitCinema")?.addEventListener("click", toggleCinema);
+  document.getElementById("btnMobilePanel")?.addEventListener("click", () => {
+    document.body.classList.toggle("mobile-panel-hidden");
+  });
 
   // 6. Keyboard Shortcuts (ignoring text inputs)
   window.addEventListener("keydown", (e) => {
