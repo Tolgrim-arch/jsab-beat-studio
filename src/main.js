@@ -3,9 +3,9 @@ import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
 import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=64";
 import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=66";
-import { updateCyanAI } from "./combat/cyanAI.js?v=69";
-import { renderFrame, drawTimeline } from "./render/renderer.js?v=70";
-import { initStudioControls } from "./ui/controls.js?v=65";
+import { updateCyanAI } from "./combat/cyanAI.js?v=71";
+import { renderFrame, drawTimeline } from "./render/renderer.js?v=71";
+import { initStudioControls } from "./ui/controls.js?v=71";
 
 const dom = {
   canvas: document.getElementById("gameCanvas"),
