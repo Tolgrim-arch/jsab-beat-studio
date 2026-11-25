@@ -88,14 +88,30 @@ export function updateCyanAI(dt) {
     return;
   }
 
+  const prevVx = c.vx || 0, prevVy = c.vy || 0;
   c.vx = Utils.lerp(c.vx, bestX * speed, dt * 15);
   c.vy = Utils.lerp(c.vy, bestY * speed, dt * 15);
   c.x = Utils.clamp(c.x + c.vx * dt, 24, W - 24);
   c.y = Utils.clamp(c.y + c.vy * dt, 24, H - 24);
-  c.rot = Math.atan2(c.vy, c.vx);
+
+  const curSpd = Math.hypot(c.vx, c.vy);
+  const accel = Math.hypot(c.vx - prevVx, c.vy - prevVy) / Math.max(0.008, dt);
+  const prevRot = c.rot || 0;
+  if (curSpd > 8) {
+    c.rot = Math.atan2(c.vy, c.vx);
+  }
+  let dRot = (c.rot - prevRot);
+  while (dRot > Math.PI) dRot -= Math.PI * 2;
+  while (dRot < -Math.PI) dRot += Math.PI * 2;
+
+  // JSAB-authentic elastic squash & stretch + bending on every movement
+  const targetStretch = 1 + Utils.clamp(curSpd / speed, 0, 1) * 0.44 + Utils.clamp(accel / 4200, 0, 0.28);
+  c.squashVel = ((c.squashVel || 0) + (targetStretch - (c.squash || 1)) * 180 * dt) * Math.exp(-14 * dt);
+  c.squash = Utils.clamp((c.squash || 1) + c.squashVel * dt, 0.68, 1.85);
+  c.skew = Utils.lerp(c.skew || 0, Utils.clamp(dRot * 1.6, -0.38, 0.38), dt * 18);
 
   // Scattered blue squares when moving (spread out, not a solid line)
-  if (Math.hypot(c.vx, c.vy) > 60 && Math.random() < 0.65) {
+  if (curSpd > 60 && Math.random() < 0.65) {
     c.trail.push({
       x: c.x + (Math.random() - 0.5) * 22,
       y: c.y + (Math.random() - 0.5) * 22,

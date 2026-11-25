@@ -73,7 +73,10 @@ function drawCyan(ctx) {
     ctx.fillStyle = cyanCol;
     ctx.fillRect(-c.r * 1.8, -c.r * 0.42, c.r * 3.6, c.r * 0.84);
   } else {
-    ctx.scale(c.squash, 2 - c.squash);
+    const sx = Utils.clamp(c.squash || 1, 0.68, 1.85);
+    const sy = 1 / sx;
+    if (c.skew) ctx.transform(1, c.skew, 0, 1, 0, 0);
+    ctx.scale(sx, sy);
     ctx.fillStyle = cyanCol;
     ctx.fillRect(-c.r, -c.r, c.r * 2, c.r * 2);
   }
