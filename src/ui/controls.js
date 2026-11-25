@@ -122,23 +122,30 @@ export function initStudioControls(showToast) {
   const gifInput = document.getElementById("bossGifInput");
   const btnClearPng = document.getElementById("btnClearBossPng");
 
-  const handleImageUpload = (file) => {
+  const handleImageUpload = (file, inputEl) => {
     if (!file) return;
     state.customBoss.gifFrames = null;
 
-    // 1. Immediately mount image so Boss updates right away
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result;
-      mountBossImage(dataUrl, () => {
-        state.customBoss.dataUrl = dataUrl.length < 2_500_000 ? dataUrl : null;
-        savePrefs();
-        showToast(`Enemigo cargado: ${file.name}`, "success");
-      });
-    };
-    reader.readAsDataURL(file);
+    // 1. Instant display via ObjectURL (works for any size PNG or GIF!)
+    const objUrl = URL.createObjectURL(file);
+    mountBossImage(objUrl, () => {
+      showToast(`Enemigo cargado: ${file.name}`, "success");
+    });
 
-    // 2. Decode animated GIF frames in background
+    // 2. Save smaller images (<2MB) to localStorage in background
+    if (file.size < 2_000_000) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        state.customBoss.dataUrl = reader.result;
+        savePrefs();
+      };
+      reader.readAsDataURL(file);
+    } else {
+      state.customBoss.dataUrl = null;
+      savePrefs();
+    }
+
+    // 3. Decode animated GIF frames in background
     if (file.type === "image/gif" || file.name.toLowerCase().endsWith(".gif")) {
       file.arrayBuffer()
         .then(decodeAnimatedGif)
@@ -150,10 +157,12 @@ export function initStudioControls(showToast) {
         })
         .catch(() => {});
     }
+
+    if (inputEl) inputEl.value = "";
   };
 
-  pngInput?.addEventListener("change", (e) => handleImageUpload(e.target.files[0]));
-  gifInput?.addEventListener("change", (e) => handleImageUpload(e.target.files[0]));
+  pngInput?.addEventListener("change", (e) => handleImageUpload(e.target.files[0], pngInput));
+  gifInput?.addEventListener("change", (e) => handleImageUpload(e.target.files[0], gifInput));
 
   btnClearPng?.addEventListener("click", () => {
     state.customBoss.img = null;
