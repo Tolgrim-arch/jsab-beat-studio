@@ -125,19 +125,81 @@ export function drawProceduralBoss(ctx) {
     const tData = state.audioTelemetry || { sub: 0, bass: 0, lowMid: 0, mid: 0, high: 0 };
     const eqBands = [tData.sub || 0, tData.bass || 0, tData.lowMid || 0, tData.mid || 0, tData.high || 0];
 
+    // High-density 48-bar Symmetric Radial Spectrum Equalizer with Peak-Hold Caps
+    if (spStyle === "equalizer") {
+      const barCount = Math.max(32, spikes * 3);
+      if (!drawProceduralBoss._eqBars || drawProceduralBoss._eqBars.length !== barCount) {
+        drawProceduralBoss._eqBars = Array.from({ length: barCount }, () => ({ val: 0.08, peak: 0.12 }));
+      }
+      const eqBars = drawProceduralBoss._eqBars;
+      const t = state.currentTime || 0;
+      const dir = spAnim === "spinReverse" ? -1 : 1;
+      const baseRot = b.rot * 0.25 * spSpeed * dir;
+
+      ctx.save();
+      ctx.rotate(baseRot);
+      const baseRad = b.r * (1.16 * spread);
+      const barW = Math.max(2.2, ((Math.PI * 2 * baseRad) / barCount) * 0.56);
+
+      // Subtle inner glow ring anchoring the equalizer
+      ctx.beginPath();
+      ctx.arc(0, 0, baseRad - 1, 0, Math.PI * 2);
+      ctx.strokeStyle = finalCol;
+      ctx.globalAlpha = 0.35 + b.pulse * 0.35;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      for (let i = 0; i < barCount; i++) {
+        // Mirror bilaterally (Trap Nation / Monstercat symmetry)
+        const half = barCount / 2;
+        const symIdx = i < half ? i : (barCount - 1 - i);
+        const norm = symIdx / Math.max(1, half - 1); // 0 = bass/sub, 1 = high/synth
+        const bandF = norm * (eqBands.length - 1);
+        const b0 = eqBands[Math.floor(bandF)];
+        const b1 = eqBands[Math.min(eqBands.length - 1, Math.floor(bandF) + 1)];
+        const baseEnergy = b0 + (b1 - b0) * (bandF - Math.floor(bandF));
+        const ripple = 0.16 * Math.abs(Math.sin(t * 9.5 + symIdx * 0.65));
+        const target = Utils.clamp(baseEnergy * 1.15 + ripple * (0.3 + baseEnergy) + b.pulse * 0.22, 0.06, 1.35);
+
+        const st = eqBars[i];
+        st.val = target > st.val ? Utils.lerp(st.val, target, 0.45) : Utils.lerp(st.val, target, 0.16);
+        st.peak = st.val >= st.peak ? st.val : Math.max(st.val, st.peak - 0.018);
+
+        const a = (Math.PI * 2 * i) / barCount - Math.PI / 2;
+        const maxLen = b.r * 0.92 * spSize;
+        const len = Math.max(4, st.val * maxLen);
+        const peakDist = baseRad + st.peak * maxLen + 4;
+
+        ctx.save();
+        ctx.rotate(a);
+        ctx.beginPath();
+        ctx.roundRect(baseRad, -barW * 0.5, len, barW, barW * 0.45);
+        if (isOutline) {
+          ctx.strokeStyle = finalCol;
+          ctx.lineWidth = 1.6;
+          ctx.stroke();
+        } else {
+          ctx.fillStyle = finalCol;
+          ctx.fill();
+        }
+
+        // Floating white peak-hold cap
+        ctx.fillStyle = COLORS.white;
+        ctx.globalAlpha = 0.85;
+        ctx.beginPath();
+        ctx.roundRect(peakDist, -barW * 0.42, Math.max(2.5, barW * 0.65), barW * 0.84, 1.5);
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.restore();
+      return;
+    }
+
     const drawSingleSpike = (sizeMul = 1, idx = 0, total = spikes) => {
       const sz = b.r * spSize * sizeMul;
       ctx.beginPath();
-      if (spStyle === "equalizer") {
-        const bandF = (idx / Math.max(1, total)) * eqBands.length;
-        const b0 = eqBands[Math.floor(bandF) % eqBands.length];
-        const b1 = eqBands[(Math.floor(bandF) + 1) % eqBands.length];
-        const frac = bandF - Math.floor(bandF);
-        const energy = b0 + (b1 - b0) * frac;
-        const barLen = sz * (0.14 + energy * 0.52 + b.pulse * 0.14);
-        const barThick = Math.max(3, sz * 0.11);
-        ctx.roundRect(-sz * 0.06, -barThick * 0.5, barLen, barThick, barThick * 0.45);
-      } else if (spStyle === "needle") {
+      if (spStyle === "needle") {
         ctx.moveTo(sz * 0.42, 0);
         ctx.lineTo(-sz * 0.14, -sz * 0.08);
         ctx.lineTo(-sz * 0.14, sz * 0.08);
