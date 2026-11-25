@@ -4,7 +4,7 @@ import { state, spawnParticles, resetWorldEntities } from "./state.js";
 import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=64";
 import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=66";
 import { updateCyanAI } from "./combat/cyanAI.js?v=69";
-import { renderFrame, drawTimeline } from "./render/renderer.js?v=69";
+import { renderFrame, drawTimeline } from "./render/renderer.js?v=70";
 import { initStudioControls } from "./ui/controls.js?v=65";
 
 const dom = {
@@ -459,13 +459,15 @@ function updateSimulation(dt) {
     if (dom.barTension) dom.barTension.style.width = `${Math.min(100, (fr.tension || 0) * 90)}%`;
 
     if (state.phonkCooldown > 0) state.phonkCooldown -= dt;
-    if (fr.kickOnset > 0.48 && (state.phonkCooldown || 0) <= 0) {
+    if (fr.kickOnset > 0.45 && (state.phonkCooldown || 0) <= 0) {
       if (state.settings?.phonkMode) {
-        state.phonkCooldown = 0.18;
-        state.zoomPunch = Math.max(state.zoomPunch, 0.055);
-        state.velocityTimer = 0.045;
-        state.rgbSplit = 0.9;
-        state.shake = Math.max(state.shake, 9);
+        state.phonkCooldown = 0.16;
+        state.whipDir = -(state.whipDir || 1);
+        state.camTilt = state.whipDir * 0.048;
+        state.zoomPunch = Math.max(state.zoomPunch, 0.075);
+        state.velocityTimer = 0.05;
+        state.rgbSplit = 1.0;
+        state.shake = Math.max(state.shake, 11);
       } else {
         state.zoomPunch = Math.max(state.zoomPunch, 0.022);
       }
@@ -677,6 +679,8 @@ function updateSimulation(dt) {
 
   state.shake = Math.max(0, state.shake - dt * 30);
   state.zoomPunch = Utils.lerp(state.zoomPunch, 0, dt * 12);
+  state.camTilt = Utils.lerp(state.camTilt || 0, 0, dt * 11);
+  state.rgbSplit = Math.max(0, (state.rgbSplit || 0) - dt * 4.2);
   state.flashAlpha = Math.max(0, state.flashAlpha - dt * 2.2);
   state.bgPulse = Math.max(0, state.bgPulse - dt * 2.6);
 }

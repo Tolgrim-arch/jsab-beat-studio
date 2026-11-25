@@ -88,9 +88,11 @@ export function renderFrame(ctx) {
   ctx.save();
 
   const zoom = (state.zoomPunch || 0) * (state.settings?.zoomMul ?? 1);
-  if (zoom > 0.001) {
-    const z = 1 + zoom;
+  const tilt = state.settings?.phonkMode ? (state.camTilt || 0) : 0;
+  if (zoom > 0.001 || Math.abs(tilt) > 0.0005) {
+    const z = 1 + zoom + Math.abs(tilt) * 1.15;
     ctx.translate(W / 2, H / 2);
+    if (Math.abs(tilt) > 0.0005) ctx.rotate(tilt);
     ctx.scale(z, z);
     ctx.translate(-W / 2, -H / 2);
   }
@@ -138,23 +140,51 @@ export function renderFrame(ctx) {
   }
 
   if (state.settings?.phonkMode) {
-    // Pulsing dark cinematic vignette reacting to 808 bass
-    const vig = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.28, W / 2, H / 2, Math.max(W, H) * 0.72);
+    const sub = state.audioTelemetry?.sub || 0;
+    // 1. Pulsing dark cinematic vignette reacting to 808 sub-bass
+    const vig = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.24, W / 2, H / 2, Math.max(W, H) * 0.72);
     vig.addColorStop(0, "rgba(0,0,0,0)");
-    vig.addColorStop(1, `rgba(0,0,0,${0.55 + state.bgPulse * 0.25})`);
+    vig.addColorStop(1, `rgba(0,0,0,${0.6 + state.bgPulse * 0.25 + sub * 0.12})`);
     ctx.fillStyle = vig;
     ctx.fillRect(0, 0, W, H);
 
-    // RGB Split / Chromatic impact edge flash on hard kicks
+    // 2. Subtle VHS/CRT scanlines
+    ctx.fillStyle = "rgba(0, 0, 0, 0.14)";
+    for (let y = 0; y < H; y += 6) ctx.fillRect(0, y, W, 2);
+
+    // 3. Radial anime/phonk speed lines + RGB chromatic split on hard kicks
     if (state.rgbSplit > 0.08) {
       ctx.save();
       ctx.globalCompositeOperation = "screen";
-      ctx.fillStyle = `rgba(0, 240, 255, ${state.rgbSplit * 0.16})`;
-      ctx.fillRect(0, 0, 18 * state.rgbSplit, H);
-      ctx.fillStyle = `rgba(255, 30, 110, ${state.rgbSplit * 0.18})`;
-      ctx.fillRect(W - 18 * state.rgbSplit, 0, 18 * state.rgbSplit, H);
+      const s = state.rgbSplit;
+      ctx.fillStyle = `rgba(0, 240, 255, ${s * 0.22})`;
+      ctx.fillRect(0, 0, 26 * s, H);
+      ctx.fillStyle = `rgba(255, 30, 110, ${s * 0.24})`;
+      ctx.fillRect(W - 26 * s, 0, 26 * s, H);
+
+      // Radial speed lines bursting from edges
+      if (s > 0.22) {
+        ctx.strokeStyle = `rgba(255, 255, 255, ${s * 0.35})`;
+        ctx.lineWidth = 2;
+        const lines = 22;
+        const maxR = Math.hypot(W, H) * 0.55;
+        for (let i = 0; i < lines; i++) {
+          const a = (Math.PI * 2 * i) / lines + (state.currentTime || 0) * 1.4;
+          const rIn = maxR * (0.58 + (i % 3) * 0.08);
+          ctx.beginPath();
+          ctx.moveTo(W / 2 + Math.cos(a) * rIn, H / 2 + Math.sin(a) * rIn);
+          ctx.lineTo(W / 2 + Math.cos(a) * maxR, H / 2 + Math.sin(a) * maxR);
+          ctx.stroke();
+        }
+      }
       ctx.restore();
     }
+
+    // 4. Cinematic letterbox bars breathing with sub-bass
+    const barH = Math.max(18, H * (0.048 + sub * 0.025));
+    ctx.fillStyle = "#03040A";
+    ctx.fillRect(0, 0, W, barH);
+    ctx.fillRect(0, H - barH, W, barH);
   }
 
   if (state.flashAlpha > 0.01) {
