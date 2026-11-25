@@ -64,6 +64,154 @@ export const AttackFactory = {
     };
   },
 
+  megaBeam(axis = "y", pos = 360, thickness = 165, leadTime = 0.48, activeTime = 0.46) {
+    const bubbles = [];
+    for (let i = 0; i < 34; i++) {
+      const rRoll = Math.random();
+      bubbles.push({
+        along: Math.random(),
+        cross: (Math.random() - 0.5) * 0.86,
+        r: 7 + Math.random() * 22,
+        kind: rRoll < 0.48 ? "blackHole" : rRoll < 0.78 ? "whiteBubble" : "greyCore",
+        speed: (Math.random() > 0.5 ? 1 : -1) * (0.14 + Math.random() * 0.28),
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+    return {
+      type: "megaBeam", axis, pos, thickness, leadTime, activeTime, bubbles,
+      age: 0, dead: false, impacted: false,
+      update(dt) {
+        this.age += dt;
+        if (!this.impacted && this.age >= this.leadTime) {
+          this.impacted = true;
+          state.shake = Math.max(state.shake, 14);
+          state.zoomPunch = Math.max(state.zoomPunch, 0.032);
+        }
+        if (this.age >= this.leadTime + this.activeTime) this.dead = true;
+      },
+      isActive() { return this.age >= this.leadTime; },
+      getDanger(px, py, tAhead) {
+        const fa = this.age + tAhead;
+        if (fa > this.leadTime + this.activeTime) return 0;
+        const d = this.axis === "y" ? Math.abs(py - this.pos) : Math.abs(px - this.pos);
+        const safe = this.thickness * 0.52 + 34;
+        if (d < safe) {
+          const urg = this.isActive() ? 1.25 : Utils.clamp(fa / this.leadTime, 0.35, 1.05);
+          return (1 - d / safe) * 175 * urg;
+        }
+        return 0;
+      },
+      checkCollision(px, py, r) {
+        if (!this.isActive()) return false;
+        const t = (this.age - this.leadTime) / this.activeTime;
+        if (t > 0.9) return false;
+        const d = this.axis === "y" ? Math.abs(py - this.pos) : Math.abs(px - this.pos);
+        return d < (this.thickness * 0.45 + r);
+      },
+      draw(ctx) {
+        const W = state.width, H = state.height;
+        const isH = this.axis === "y";
+        const span = isH ? W : H;
+        ctx.save();
+        if (!this.isActive()) {
+          // Stage 1: Wide low-opacity telegraph band + crisp edge guides
+          const p = Utils.clamp(this.age / this.leadTime, 0, 1);
+          const half = this.thickness * 0.5;
+          ctx.fillStyle = dangerCol();
+          ctx.globalAlpha = 0.14 + p * 0.2;
+          if (isH) ctx.fillRect(0, this.pos - half, W, this.thickness);
+          else ctx.fillRect(this.pos - half, 0, this.thickness, H);
+
+          ctx.globalAlpha = 0.35 + p * 0.45;
+          ctx.fillStyle = dangerCol();
+          if (isH) {
+            ctx.fillRect(0, this.pos - half, W, 3);
+            ctx.fillRect(0, this.pos + half - 3, W, 3);
+          } else {
+            ctx.fillRect(this.pos - half, 0, 3, H);
+            ctx.fillRect(this.pos + half - 3, 0, 3, H);
+          }
+        } else {
+          const activeAge = this.age - this.leadTime;
+          const t = Utils.clamp(activeAge / this.activeTime, 0, 1);
+          const isFlash = activeAge < 0.095;
+          const taper = t > 0.72 ? Utils.clamp(1 - (t - 0.72) / 0.28, 0.05, 1) : 1;
+          const curThick = this.thickness * (isFlash ? 1.08 : taper);
+          const half = curThick * 0.5;
+
+          // Clip to beam rect so boiling circles stay razor-sharp inside the beam
+          ctx.beginPath();
+          if (isH) ctx.rect(0, this.pos - half, W, curThick);
+          else ctx.rect(this.pos - half, 0, curThick, H);
+          ctx.clip();
+
+          // Beam body
+          ctx.fillStyle = isFlash ? "#FFD8EC" : dangerCol();
+          ctx.globalAlpha = isFlash ? 1 : Utils.clamp(1 - Math.max(0, t - 0.78) * 3.5, 0.2, 1);
+          if (isH) ctx.fillRect(0, this.pos - half, W, curThick);
+          else ctx.fillRect(this.pos - half, 0, curThick, H);
+
+          // Stage 2: Bright white core during impact flash
+          if (isFlash) {
+            const flashP = activeAge / 0.095;
+            ctx.fillStyle = COLORS.white;
+            ctx.globalAlpha = 0.85 * (1 - flashP * 0.5);
+            const coreH = curThick * 0.52;
+            if (isH) ctx.fillRect(0, this.pos - coreH * 0.5, W, coreH);
+            else ctx.fillRect(this.pos - coreH * 0.5, 0, coreH, H);
+          }
+
+          // Boiling holes & bubbles along the beam (Annihilate effect)
+          const spread = isFlash ? (0.3 + (activeAge / 0.095) * 0.7) : 1;
+          for (let i = 0; i < this.bubbles.length; i++) {
+            const b = this.bubbles[i];
+            const alongPos = (((b.along + activeAge * b.speed) % 1) + 1) % 1 * span;
+            const crossPos = this.pos + b.cross * curThick * spread;
+            const bx = isH ? alongPos : crossPos;
+            const by = isH ? crossPos : alongPos;
+            const pulse = 0.78 + 0.34 * Math.sin(activeAge * 26 + b.phase);
+            const br = Math.max(2, b.r * pulse * (isFlash ? 1.15 : taper));
+
+            ctx.beginPath();
+            ctx.arc(bx, by, br, 0, Math.PI * 2);
+            if (isFlash) {
+              // Impact flash: bright white/grey/dark-centered erupting bubbles
+              ctx.globalAlpha = 0.95;
+              ctx.fillStyle = b.kind === "blackHole" ? "#B8C0D0" : COLORS.white;
+              ctx.fill();
+              if (b.kind === "blackHole" && br > 6) {
+                ctx.beginPath();
+                ctx.arc(bx, by, br * 0.45, 0, Math.PI * 2);
+                ctx.fillStyle = "#181826";
+                ctx.fill();
+              }
+            } else {
+              // Active hot-pink beam: crisp black circular holes + white-rimmed grey bubbles
+              ctx.globalAlpha = 0.96;
+              if (b.kind === "blackHole") {
+                ctx.fillStyle = "#080712";
+                ctx.fill();
+              } else if (b.kind === "whiteBubble") {
+                ctx.fillStyle = COLORS.white;
+                ctx.fill();
+                if (br > 5) {
+                  ctx.beginPath();
+                  ctx.arc(bx, by, br * 0.62, 0, Math.PI * 2);
+                  ctx.fillStyle = "#9BA3B4";
+                  ctx.fill();
+                }
+              } else {
+                ctx.fillStyle = "#D4DAE6";
+                ctx.fill();
+              }
+            }
+          }
+        }
+        ctx.restore();
+      }
+    };
+  },
+
   rotatingBeam(cx, cy, startAngle, angVel, length, width = 24, leadTime = 0.5, activeTime = 1.6) {
     return {
       type: "rotatingBeam", cx, cy, angle: startAngle, angVel, length, width, leadTime, activeTime,

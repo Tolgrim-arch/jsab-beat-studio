@@ -1,7 +1,7 @@
 import { PHASES } from "../config.js";
 import { Utils } from "../utils.js";
 import { state, spawnParticles } from "../state.js";
-import { AttackFactory } from "./attacks.js";
+import { AttackFactory } from "./attacks.js?v=44";
 
 export function buildChoreographySchedule() {
   const { analysis, duration } = state;
@@ -102,6 +102,12 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
         const a = (Math.PI * 2 * k) / count + ev.step * 0.25;
         const spd = (k % 2 === 0 ? 310 : 220) * spdMul;
         state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * spd, Math.sin(a) * spd, 8, "diamond"));
+      }
+      if (ev.step === 2) {
+        const isHoriz = ev.phase % 2 === 0;
+        const thick = (isHoriz ? H : W) * 0.24;
+        const targetPos = isHoriz ? H * 0.5 : W * 0.5;
+        state.entities.push(AttackFactory.megaBeam(isHoriz ? "y" : "x", targetPos, thick, lt, 0.44));
       }
       break;
     }
@@ -263,11 +269,12 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
     }
 
     case "MEGA_MOUTH_BEAM": {
-      const ang = Math.atan2(cy - by, cx - bx);
-      state.entities.push(AttackFactory.laser(bx, by, bx + Math.cos(ang) * len, by + Math.sin(ang) * len, 84, lt, 0.42));
-      [-0.4, 0.4].forEach(off => {
-        state.entities.push(AttackFactory.laser(bx, by, bx + Math.cos(ang + off) * len, by + Math.sin(ang + off) * len, 26, lt, 0.34));
-      });
+      const isHoriz = (ev.step + ev.phase) % 2 === 0;
+      const thick = (isHoriz ? H : W) * 0.24;
+      const targetPos = isHoriz
+        ? Utils.clamp(cy, thick * 0.6, H - thick * 0.6)
+        : Utils.clamp(cx, thick * 0.6, W - thick * 0.6);
+      state.entities.push(AttackFactory.megaBeam(isHoriz ? "y" : "x", targetPos, thick, lt, 0.46));
       break;
     }
 
