@@ -52,16 +52,14 @@ export function updateCyanAI(dt) {
 
   const currentDanger = evaluateDangerAt(c.x, c.y, 0.05);
   if (currentDanger > 72 && c.dashCooldown <= 0 && (bestX !== 0 || bestY !== 0)) {
-    c.dashTimer = 0.17;
+    c.dashTimer = 0.16;
     c.dashCooldown = 0.36;
     c.invuln = 0.24;
-    c.squash = 1.45;
+    c.squash = 1.6;
     c.dashDirX = bestX;
     c.dashDirY = bestY;
-    if (Math.hypot(c.x - state.blixer.x, c.y - state.blixer.y) < 260) {
-      state.blixer.annoyedTimer = 0.55;
-    }
-    spawnParticles(c.x, c.y, COLORS.cyan, 10, 80, 220);
+    c.rot = Math.atan2(bestY, bestX);
+    c.dashRing = { x: c.x, y: c.y, r: c.r * 1.4, maxR: c.r * 4.8, alpha: 0.95 };
     return;
   }
 
@@ -71,10 +69,21 @@ export function updateCyanAI(dt) {
   c.y = Utils.clamp(c.y + c.vy * dt, 24, H - 24);
   c.rot = Math.atan2(c.vy, c.vx);
 
-  if (Math.hypot(c.vx, c.vy) > 55) {
-    c.trail.push({ x: c.x, y: c.y, alpha: 0.4, size: c.r * (0.65 + Math.random() * 0.35) });
+  if (c.dashRing) {
+    c.dashRing.r += dt * 420;
+    c.dashRing.alpha -= dt * 5.2;
+    if (c.dashRing.alpha <= 0) c.dashRing = null;
   }
-  if (c.trail.length > 10) c.trail.shift();
-  for (const tr of c.trail) tr.alpha -= dt * 2.8;
+
+  if (Math.hypot(c.vx, c.vy) > 55) {
+    c.trail.push({
+      x: c.x + (Math.random() - 0.5) * 10,
+      y: c.y + (Math.random() - 0.5) * 10,
+      alpha: 0.9,
+      size: 3 + Math.random() * 3.5
+    });
+  }
+  if (c.trail.length > 14) c.trail.shift();
+  for (const tr of c.trail) tr.alpha -= dt * 3.2;
   c.trail = c.trail.filter(tr => tr.alpha > 0.02);
 }

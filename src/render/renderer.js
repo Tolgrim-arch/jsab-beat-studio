@@ -40,33 +40,42 @@ function drawCyan(ctx) {
   const c = state.cyan;
   const cyanCol = getCyanColor();
 
-  // Crisp 40% max-opacity squares left behind ONLY while moving
-  for (const tr of c.trail) {
+  // Solid expanding cyan circle on Dash (just like ergrgerg.PNG!)
+  if (c.dashRing) {
     ctx.save();
-    ctx.globalAlpha = Math.min(0.4, tr.alpha);
+    ctx.globalAlpha = Utils.clamp(c.dashRing.alpha, 0, 1);
     ctx.fillStyle = cyanCol;
-    const sz = tr.size || c.r * 0.75;
-    ctx.fillRect(tr.x - sz, tr.y - sz, sz * 2, sz * 2);
+    ctx.beginPath();
+    ctx.arc(c.dashRing.x, c.dashRing.y, c.dashRing.r, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
   }
 
-  if (c.dashTimer > 0) {
-    const p = 1 - c.dashTimer / 0.17;
+  // Small solid BLUE (#0077FF) squares left behind ONLY while moving
+  for (const tr of c.trail) {
     ctx.save();
-    ctx.strokeStyle = COLORS.white;
-    ctx.lineWidth = 3 * (1 - p);
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, c.r * (1.5 + p * 3.2), 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.globalAlpha = Utils.clamp(tr.alpha, 0, 1);
+    ctx.fillStyle = "#0077FF";
+    const sz = tr.size || 4;
+    ctx.fillRect(tr.x - sz, tr.y - sz, sz * 2, sz * 2);
     ctx.restore();
   }
 
   ctx.save();
   ctx.translate(c.x, c.y);
   ctx.rotate(c.rot);
-  ctx.scale(c.squash, 2 - c.squash);
-  ctx.fillStyle = c.dashTimer > 0 ? COLORS.white : cyanCol;
-  ctx.fillRect(-c.r, -c.r, c.r * 2, c.r * 2);
+
+  if (c.dashTimer > 0) {
+    // Stretched pure WHITE rectangle with cyan core during dash
+    ctx.fillStyle = COLORS.white;
+    ctx.fillRect(-c.r * 2.4, -c.r * 0.72, c.r * 4.8, c.r * 1.44);
+    ctx.fillStyle = cyanCol;
+    ctx.fillRect(-c.r * 1.8, -c.r * 0.42, c.r * 3.6, c.r * 0.84);
+  } else {
+    ctx.scale(c.squash, 2 - c.squash);
+    ctx.fillStyle = cyanCol;
+    ctx.fillRect(-c.r, -c.r, c.r * 2, c.r * 2);
+  }
   ctx.restore();
 }
 
