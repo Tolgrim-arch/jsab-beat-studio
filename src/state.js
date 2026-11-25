@@ -62,6 +62,7 @@ export const state = {
     handsLayer: "behind", // "behind" | "above"
     flashIntensity: 0.72  // 0 to 1
   },
+  disabledAttacks: {},
   entities: [],
   particles: [],
   blixer: {

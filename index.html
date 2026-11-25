@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v53 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v54 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/main.css?v=53" />
+  <link rel="stylesheet" href="styles/main.css?v=54" />
 </head>
 <body class="h-screen overflow-hidden flex flex-col bg-[#050611] text-slate-100 select-none">
 
@@ -24,7 +24,7 @@
         <h1 class="font-display text-sm sm:text-base font-bold tracking-wider uppercase flex items-center gap-2">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v53 • STUDIO PRO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v54 • STUDIO PRO</span>
         </h1>
       </div>
     </div>
@@ -55,8 +55,8 @@
     <!-- TABBED STUDIO SIDEBAR -->
     <aside id="studioSidebar" class="w-full lg:w-[350px] xl:w-[376px] border-b lg:border-b-0 lg:border-r border-slate-800/80 bg-[#0a0c1e] flex flex-col min-h-0 shrink-0 max-h-[44vh] lg:max-h-none">
 
-      <!-- 4-TAB NAVIGATION BAR -->
-      <nav class="grid grid-cols-4 gap-1 p-2 border-b border-slate-800/80 bg-[#080a19] shrink-0">
+      <!-- 5-TAB NAVIGATION BAR -->
+      <nav class="grid grid-cols-5 gap-1 p-2 border-b border-slate-800/80 bg-[#080a19] shrink-0">
         <button type="button" data-studio-tab="track" class="studio-tab active py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
           <span class="text-sm leading-none">🎵</span>
           <span>Track</span>
@@ -69,9 +69,13 @@
           <span class="text-sm leading-none">👾</span>
           <span>Jefe</span>
         </button>
+        <button type="button" data-studio-tab="combat" class="studio-tab py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
+          <span class="text-sm leading-none">⚔️</span>
+          <span>Combate</span>
+        </button>
         <button type="button" data-studio-tab="fx" class="studio-tab py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
           <span class="text-sm leading-none">🎛️</span>
-          <span>FX & Video</span>
+          <span>FX</span>
         </button>
       </nav>
 
@@ -287,7 +291,22 @@
           </div>
         </div>
 
-        <!-- PANEL 4: FX, CAMERA & EXPORT -->
+        <!-- PANEL 4: COMBAT ATTACKS & MODES -->
+        <div data-studio-panel="combat" class="hidden space-y-3">
+          <div class="studio-card p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">Repertorio de Combate</span>
+              <span id="attackEnabledCount" class="text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#00F0FF]/15 text-[#00F0FF]">16/16</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button id="btnEnableAllAttacks" type="button" class="py-1.5 px-2 rounded-lg bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/40 text-[10px] font-semibold text-[#00F0FF] cursor-pointer transition">Habilitar Todos</button>
+              <button id="btnDisableAllAttacks" type="button" class="py-1.5 px-2 rounded-lg bg-[#FF1F71]/15 hover:bg-[#FF1F71]/25 border border-[#FF1F71]/40 text-[10px] font-semibold text-[#FF1F71] cursor-pointer transition">Deshabilitar Todos</button>
+            </div>
+            <div id="attackToggleList" class="space-y-1.5"></div>
+          </div>
+        </div>
+
+        <!-- PANEL 5: FX, CAMERA & EXPORT -->
         <div data-studio-panel="fx" class="hidden space-y-3">
           <div class="studio-card p-3.5 space-y-2.5 text-[10px] font-mono-tech">
             <label class="flex items-center justify-between px-3 py-2 rounded-xl bg-[#FF1F71]/12 border border-[#FF1F71]/35 text-[11px] font-semibold text-[#FF4D8D] cursor-pointer">
@@ -420,6 +439,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=53"></script>
+  <script type="module" src="src/main.js?v=54"></script>
 </body>
 </html>

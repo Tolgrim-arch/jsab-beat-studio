@@ -3,6 +3,25 @@ import { Utils } from "../utils.js";
 import { state, spawnParticles } from "../state.js";
 import { AttackFactory } from "./attacks.js?v=52";
 
+export const ATTACK_CATALOG = [
+  { id: "DROP_EXPLOSION",    icon: "💥", name: "Explosión Drop",       desc: "Onda de choque, 4 láseres en cruz, anillo de diamantes y Mega-Rayo." },
+  { id: "MEGA_MOUTH_BEAM",   icon: "⚡", name: "Mega-Rayo Annihilate", desc: "Haz gigante horizontal o vertical con burbujas hirvientes y agujeros negros." },
+  { id: "CLOCKWORK_LASERS",  icon: "🌀", name: "Tornado 4 Brazos",     desc: "El jefe al centro gira 4 brazos de engranajes como tornado + láseres radiales." },
+  { id: "CLOSE_TO_ME_ORBS",  icon: "🦾", name: "Brazos 8 Púas",        desc: "2 brazos articulados con palma hueca, rayos giratorios y bombas de pulso." },
+  { id: "LYCANTHROPY_VINES", icon: "🌋", name: "Suite Lycanthropy",    desc: "Olas de lava, gusano de engranajes gigante, jaula dentada y fuente de esporas." },
+  { id: "ORB_RAIN",          icon: "⚙️", name: "Lluvia Engranajes",    desc: "Olas de lava bajas con lluvia de mini-engranajes de 8 púas y orbes." },
+  { id: "TWIN_HAND_SMASH",   icon: "👊", name: "Golpe de Manos",       desc: "Aplastamientos laterales con manos gigantes, brazos y láser horizontal." },
+  { id: "HYDRAULIC_CRUSH",   icon: "🗜️", name: "Pistones Prensa",      desc: "Pistones hidráulicos cerrando los bordes + láser divisor." },
+  { id: "BARRACUDA_SWARM",   icon: "🐍", name: "Serpientes Zig-Zag",   desc: "3 serpientes Barracuda paralelas + ráfaga de triángulos." },
+  { id: "BUILDUP_LOCKON",    icon: "🎯", name: "Láseres Sniper",       desc: "3 láseres fijando a Cian + bombas de pulso cronometradas." },
+  { id: "CHECKERBOARD_DANCE",icon: "🏁", name: "Tablero Mortal",       desc: "Zonas de peligro en patrón ajedrez alternándose con el beat." },
+  { id: "WAVE_CORRIDOR",     icon: "🚧", name: "Barras Corredor",      desc: "Barras que barren la arena dejando un único pasillo seguro." },
+  { id: "SAWBLADE_GAUNTLET", icon: "🪚", name: "Sierras Rebotantes",   desc: "Sierras circulares rebotando por toda la pantalla." },
+  { id: "MANDALA_BLOOM",     icon: "🌸", name: "Flor Mandala",         desc: "Anillos giratorios de triángulos brotando desde el jefe." },
+  { id: "SYNCOPATED_BURST",  icon: "💎", name: "Ráfaga Sincopada",     desc: "Abanico rápido de diamantes disparado en contratiempos." },
+  { id: "BREAKDOWN_PULSE",   icon: "💫", name: "Pulso de Calma",       desc: "Onda de choque suave y anillo de 8 orbes para partes tranquilas." }
+];
+
 export function buildChoreographySchedule() {
   const { analysis, duration } = state;
   if (!analysis) return [];
@@ -62,8 +81,17 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   const lt = ev.leadTime;
   const danger = state.analysis?.dna?.palette?.danger || "#FF1E6E";
 
-  state.activeSetpiece = ev.setpiece;
-  if (domSetpieceEl) domSetpieceEl.textContent = ev.setpiece.replace(/_/g, " ");
+  // Filter disabled attacks (fallback to any enabled attack, or skip if all disabled)
+  const disabled = state.disabledAttacks || {};
+  let activeSetpiece = ev.setpiece;
+  if (disabled[activeSetpiece]) {
+    const enabledPool = ATTACK_CATALOG.filter(a => !disabled[a.id]);
+    if (!enabledPool.length) return;
+    activeSetpiece = enabledPool[Math.floor(ev.seed * enabledPool.length) % enabledPool.length].id;
+  }
+
+  state.activeSetpiece = activeSetpiece;
+  if (domSetpieceEl) domSetpieceEl.textContent = activeSetpiece.replace(/_/g, " ");
   b.pulse = 1.0;
 
   // Dramatic Boss Snap-Positioning on beat 0 of every phrase!
@@ -83,7 +111,7 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   const bx = b.x, by = b.y;
   const len = Math.max(W, H) * 1.45;
 
-  switch (ev.setpiece) {
+  switch (activeSetpiece) {
     case "DROP_EXPLOSION": {
       if (ev.step === 0) {
         state.flashAlpha = 0.45;

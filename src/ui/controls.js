@@ -1,4 +1,5 @@
 import { state } from "../state.js";
+import { ATTACK_CATALOG } from "../combat/choreography.js?v=54";
 
 const STORAGE_KEY = "jsab_studio_prefs_v1";
 
@@ -7,6 +8,7 @@ function savePrefs() {
     const payload = {
       customColors: state.customColors,
       settings: state.settings,
+      disabledAttacks: state.disabledAttacks || {},
       customBoss: {
         frame: state.customBoss.frame,
         frameWidth: state.customBoss.frameWidth,
@@ -79,6 +81,7 @@ function loadPrefs() {
     const data = JSON.parse(raw);
     if (data.customColors) Object.assign(state.customColors, data.customColors);
     if (data.settings) Object.assign(state.settings, data.settings);
+    if (data.disabledAttacks) state.disabledAttacks = { ...data.disabledAttacks };
     if (data.customBoss) {
       Object.assign(state.customBoss, data.customBoss);
       if (data.customBoss.dataUrl) {
@@ -596,4 +599,78 @@ export function initStudioControls(showToast) {
       }
     });
   }
+
+  // 8. Combat Attack Toggles + Custom CSS Tooltips
+  const attackListEl = document.getElementById("attackToggleList");
+  const attackCountEl = document.getElementById("attackEnabledCount");
+
+  const renderAttackToggles = () => {
+    if (!attackListEl) return;
+    const disabled = state.disabledAttacks || {};
+    const enabledCount = ATTACK_CATALOG.filter(a => !disabled[a.id]).length;
+    if (attackCountEl) attackCountEl.textContent = `${enabledCount}/${ATTACK_CATALOG.length}`;
+
+    attackListEl.innerHTML = "";
+    ATTACK_CATALOG.forEach((atk) => {
+      const isEnabled = !disabled[atk.id];
+      const row = document.createElement("div");
+      row.className = `flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg border transition ${
+        isEnabled
+          ? "bg-[#070917] border-slate-700/80"
+          : "bg-[#070917]/50 border-slate-800/50 opacity-60"
+      }`;
+
+      const label = document.createElement("label");
+      label.className = "flex-1 min-w-0 flex items-center gap-2 cursor-pointer";
+
+      const chk = document.createElement("input");
+      chk.type = "checkbox";
+      chk.checked = isEnabled;
+      chk.className = "accent-[#00F0FF] w-3.5 h-3.5 rounded cursor-pointer shrink-0";
+      chk.addEventListener("change", () => {
+        if (chk.checked) delete state.disabledAttacks[atk.id];
+        else state.disabledAttacks[atk.id] = true;
+        savePrefs();
+        renderAttackToggles();
+      });
+
+      const icon = document.createElement("span");
+      icon.className = "text-xs shrink-0";
+      icon.textContent = atk.icon;
+
+      const name = document.createElement("span");
+      name.className = "text-[11px] font-medium text-slate-200 truncate";
+      name.textContent = atk.name;
+
+      label.appendChild(chk);
+      label.appendChild(icon);
+      label.appendChild(name);
+
+      // Dedicated CSS Tooltip Component
+      const tip = document.createElement("div");
+      tip.className = "jsab-tooltip shrink-0";
+      tip.innerHTML = `<button type="button" class="jsab-tooltip-trigger" aria-label="Descripción">?</button><div class="jsab-tooltip-box"><strong>${atk.icon} ${atk.name}</strong><br>${atk.desc}</div>`;
+
+      row.appendChild(label);
+      row.appendChild(tip);
+      attackListEl.appendChild(row);
+    });
+  };
+
+  document.getElementById("btnEnableAllAttacks")?.addEventListener("click", () => {
+    state.disabledAttacks = {};
+    savePrefs();
+    renderAttackToggles();
+    showToast("Todos los ataques habilitados", "success");
+  });
+
+  document.getElementById("btnDisableAllAttacks")?.addEventListener("click", () => {
+    state.disabledAttacks = {};
+    ATTACK_CATALOG.forEach(a => { state.disabledAttacks[a.id] = true; });
+    savePrefs();
+    renderAttackToggles();
+    showToast("Todos los ataques deshabilitados", "info");
+  });
+
+  renderAttackToggles();
 }
