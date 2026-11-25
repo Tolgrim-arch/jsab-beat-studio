@@ -59,6 +59,14 @@ function mountBossImage(src, onReady) {
   }
   el.onload = () => {
     state.customBoss.img = el;
+    const thumb = document.getElementById("bossPreviewThumb");
+    if (thumb) {
+      thumb.innerHTML = "";
+      const img = document.createElement("img");
+      img.src = src;
+      img.className = "w-full h-full object-cover";
+      thumb.appendChild(img);
+    }
     if (onReady) onReady();
   };
   el.src = src;
@@ -476,8 +484,11 @@ export function initStudioControls(showToast) {
     if (!input) return;
 
     const apply = (val, persist = true) => {
-      const clamped = Math.max(Number(input.min), Math.min(Number(input.max), val));
+      const min = Number(input.min), max = Number(input.max);
+      const clamped = Math.max(min, Math.min(max, val));
       input.value = clamped;
+      const pct = max > min ? ((clamped - min) / (max - min)) * 100 : 0;
+      input.style.setProperty("--pct", `${pct}%`);
       target[key] = clamped;
       if (label) label.textContent = fmt(clamped);
       if (persist) savePrefs();
@@ -485,6 +496,7 @@ export function initStudioControls(showToast) {
 
     // Sync UI to loaded localStorage value on startup
     if (Number.isFinite(target[key])) apply(target[key], false);
+    else apply(Number(input.value), false);
 
     input.addEventListener("input", () => apply(Number(input.value)));
     document.querySelector(`[data-step-dec="${id}"]`)?.addEventListener("click", () => apply(Number(input.value) - step));
@@ -498,6 +510,90 @@ export function initStudioControls(showToast) {
       state.settings.phonkMode = phonkEl.checked;
       savePrefs();
       showToast(phonkEl.checked ? "⚡ Modo TikTok / Phonk Edit ACTIVADO" : "Modo Phonk desactivado", "info");
+    });
+  }
+
+  // Reset boss thumb on clear
+  btnClearPng?.addEventListener("click", () => {
+    const thumb = document.getElementById("bossPreviewThumb");
+    if (thumb) thumb.textContent = "👾";
+  });
+
+  // 4. Studio Sidebar Tabs (with persistence)
+  const TAB_KEY = "jsab_active_tab_v1";
+  const tabBtns = document.querySelectorAll("[data-studio-tab]");
+  const tabPanels = document.querySelectorAll("[data-studio-panel]");
+  const activateTab = (tabName) => {
+    tabBtns.forEach(b => b.classList.toggle("active", b.dataset.studioTab === tabName));
+    tabPanels.forEach(p => p.classList.toggle("hidden", p.dataset.studioPanel !== tabName));
+    try { localStorage.setItem(TAB_KEY, tabName); } catch {}
+  };
+  tabBtns.forEach(b => b.addEventListener("click", () => activateTab(b.dataset.studioTab)));
+  try {
+    const savedTab = localStorage.getItem(TAB_KEY);
+    if (savedTab && document.querySelector(`[data-studio-tab="${savedTab}"]`)) activateTab(savedTab);
+  } catch {}
+
+  // 5. Cinema Mode
+  const toggleCinema = () => {
+    document.body.classList.toggle("cinema-mode");
+  };
+  document.getElementById("btnCinemaMode")?.addEventListener("click", toggleCinema);
+  document.getElementById("btnExitCinema")?.addEventListener("click", toggleCinema);
+
+  // 6. Keyboard Shortcuts (ignoring text inputs)
+  window.addEventListener("keydown", (e) => {
+    const tag = document.activeElement?.tagName;
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+    if (e.code === "Space") {
+      e.preventDefault();
+      document.getElementById("btnPlayPause")?.click();
+    } else if (e.key === "r" || e.key === "R") {
+      document.getElementById("btnRestart")?.click();
+    } else if (e.key === "f" || e.key === "F") {
+      toggleCinema();
+    } else if (e.key === "h" || e.key === "H") {
+      const hud = document.getElementById("toggleHud");
+      if (hud) { hud.checked = !hud.checked; hud.dispatchEvent(new Event("change")); }
+    } else if (e.key === "1") {
+      document.querySelector('[data-aspect="16:9"]')?.click();
+    } else if (e.key === "2") {
+      document.querySelector('[data-aspect="9:16"]')?.click();
+    } else if (e.key === "3") {
+      document.querySelector('[data-aspect="1:1"]')?.click();
+    }
+  });
+
+  // 7. Drag & Drop onto Stage (Audio/Video or Boss PNG/GIF)
+  const stage = document.getElementById("stageContainer");
+  if (stage) {
+    ["dragenter", "dragover"].forEach(evt => {
+      stage.addEventListener(evt, (e) => {
+        e.preventDefault();
+        stage.classList.add("drag-over");
+      });
+    });
+    ["dragleave", "drop"].forEach(evt => {
+      stage.addEventListener(evt, (e) => {
+        e.preventDefault();
+        if (evt === "dragleave" && stage.contains(e.relatedTarget)) return;
+        stage.classList.remove("drag-over");
+      });
+    });
+    stage.addEventListener("drop", (e) => {
+      const file = e.dataTransfer?.files?.[0];
+      if (!file) return;
+      if (file.type.startsWith("image/") || /\.(png|gif|webp)$/i.test(file.name)) {
+        handleImageUpload(file, null);
+      } else {
+        const audioInput = document.getElementById("audioFileInput");
+        if (audioInput) {
+          const dt = new DataTransfer();
+          dt.items.add(file);
+          audioInput.files = dt.files;
+          audioInput.dispatchEvent(new Event("change"));
+        }
+      }
     });
   }
 }

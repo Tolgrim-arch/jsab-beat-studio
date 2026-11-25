@@ -3,17 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v52 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v53 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="styles/main.css?v=53" />
 </head>
-<body class="h-screen overflow-hidden flex flex-col bg-[#060714] text-slate-100 select-none">
+<body class="h-screen overflow-hidden flex flex-col bg-[#050611] text-slate-100 select-none">
 
   <!-- TOP HEADER -->
-  <header class="h-14 border-b border-slate-800/80 bg-[#090b1d]/90 backdrop-blur-md px-4 lg:px-6 flex items-center justify-between shrink-0 z-20">
+  <header class="h-14 border-b border-slate-800/80 bg-[#090b1d]/95 backdrop-blur-md px-4 lg:px-5 flex items-center justify-between shrink-0 z-20">
     <div class="flex items-center gap-3">
       <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-[#FF1F71] to-[#9b0d48] flex items-center justify-center glow-pink">
         <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
@@ -24,17 +24,22 @@
         <h1 class="font-display text-sm sm:text-base font-bold tracking-wider uppercase flex items-center gap-2">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">v52 • MODULAR</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v53 • STUDIO PRO</span>
         </h1>
       </div>
     </div>
 
     <div class="flex items-center gap-2">
-      <div class="hidden sm:flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 rounded-lg p-1">
-        <button data-demo="titan" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-[#FF1F71]/25 hover:text-[#FF1F71] transition cursor-pointer">Demo: Annihilate</button>
-        <button data-demo="barracuda" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-[#00F0FF]/20 hover:text-[#00F0FF] transition cursor-pointer">Demo: Barracuda</button>
-        <button data-demo="closetome" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-purple-500/25 hover:text-purple-300 transition cursor-pointer">Demo: Close To Me</button>
+      <div class="hidden xl:flex items-center gap-1 bg-slate-900/90 border border-slate-800 rounded-lg p-1">
+        <button data-demo="titan" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-[#FF1F71]/25 hover:text-[#FF1F71] transition cursor-pointer">Annihilate</button>
+        <button data-demo="barracuda" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-[#00F0FF]/20 hover:text-[#00F0FF] transition cursor-pointer">Barracuda</button>
+        <button data-demo="closetome" class="demo-btn px-2.5 py-1 rounded text-[11px] font-semibold text-slate-200 hover:bg-purple-500/25 hover:text-purple-300 transition cursor-pointer">Close To Me</button>
       </div>
+
+      <button id="btnCinemaMode" type="button" title="Modo Cine (Tecla F)" class="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-mono-tech bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-slate-300 hover:text-white transition cursor-pointer">
+        <svg class="w-3.5 h-3.5 text-[#00F0FF]" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/></svg>
+        <span>Cine</span>
+      </button>
 
       <label for="audioFileInput" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/50 text-[#00F0FF] transition flex items-center gap-1.5 cursor-pointer glow-cyan">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -46,303 +51,366 @@
 
   <!-- MAIN WORKSPACE -->
   <main class="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-    <aside class="w-full lg:w-80 xl:w-96 border-b lg:border-b-0 lg:border-r border-slate-800/80 bg-[#0b0d1f] p-4 flex flex-col gap-3.5 overflow-y-auto shrink-0">
-      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
-        <div class="flex items-center justify-between mb-1.5">
-          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">ADN Musical</span>
-          <span id="trackStatusBadge" class="text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">Sin Audio</span>
-        </div>
-        <div id="trackNameDisplay" class="text-sm font-semibold text-white truncate mb-2.5">Carga MP3/WAV/MP4 o elige una Demo</div>
 
-        <div class="grid grid-cols-3 gap-2 text-center mb-2.5">
-          <div class="rounded-lg bg-[#090b1a] p-2 border border-slate-800/70">
-            <div class="text-[10px] text-slate-400 font-mono-tech">BPM</div>
-            <div id="statBpm" class="text-sm font-bold text-[#00F0FF] font-mono-tech">--</div>
-          </div>
-          <div class="rounded-lg bg-[#090b1a] p-2 border border-slate-800/70">
-            <div class="text-[10px] text-slate-400 font-mono-tech">DURACIÓN</div>
-            <div id="statDuration" class="text-sm font-bold text-slate-200 font-mono-tech">0:00</div>
-          </div>
-          <div class="rounded-lg bg-[#090b1a] p-2 border border-slate-800/70">
-            <div class="text-[10px] text-slate-400 font-mono-tech">SETPIECES</div>
-            <div id="statEvents" class="text-sm font-bold text-[#FF1F71] font-mono-tech">0</div>
-          </div>
-        </div>
+    <!-- TABBED STUDIO SIDEBAR -->
+    <aside id="studioSidebar" class="w-full lg:w-[350px] xl:w-[376px] border-b lg:border-b-0 lg:border-r border-slate-800/80 bg-[#0a0c1e] flex flex-col min-h-0 shrink-0 max-h-[44vh] lg:max-h-none">
 
-        <div class="space-y-1 pt-2 border-t border-slate-800/70 text-[10px] font-mono-tech text-slate-400">
-          <div class="flex justify-between"><span>ARQUETIPO:</span><strong id="statArchetype" class="text-[#00F0FF]">--</strong></div>
-          <div class="flex justify-between"><span>SECCIÓN:</span><strong id="statSection" class="text-[#FFD166]">--</strong></div>
-          <div class="flex justify-between"><span>COREOGRAFÍA:</span><strong id="statSetpiece" class="text-[#FF1F71]">--</strong></div>
-        </div>
-      </div>
-
-      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
-        <div class="flex items-center justify-between mb-2">
-          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Formato de Video</span>
-          <span id="resolutionLabel" class="text-[10px] font-mono-tech text-[#00F0FF]">1280×720</span>
-        </div>
-        <div class="grid grid-cols-3 gap-2">
-          <button data-aspect="16:9" class="aspect-btn px-2 py-2 rounded-lg text-xs font-semibold border border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF] transition flex flex-col items-center gap-1 cursor-pointer">
-            <span class="w-6 h-3.5 border-2 border-current rounded-sm"></span><span>16:9 YT</span>
-          </button>
-          <button data-aspect="9:16" class="aspect-btn px-2 py-2 rounded-lg text-xs font-semibold border border-slate-700 bg-[#090b1a] text-slate-300 hover:border-slate-500 transition flex flex-col items-center gap-1 cursor-pointer">
-            <span class="w-3.5 h-6 border-2 border-current rounded-sm"></span><span>9:16 Shorts</span>
-          </button>
-          <button data-aspect="1:1" class="aspect-btn px-2 py-2 rounded-lg text-xs font-semibold border border-slate-700 bg-[#090b1a] text-slate-300 hover:border-slate-500 transition flex flex-col items-center gap-1 cursor-pointer">
-            <span class="w-4 h-4 border-2 border-current rounded-sm"></span><span>1:1 Feed</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
-        <div class="flex items-center justify-between mb-1.5">
-          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Transformación Blixer</span>
-          <span id="phaseBadge" class="text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">FASE 1</span>
-        </div>
-        <div id="phaseName" class="text-xs font-display font-bold text-white mb-2.5">SEMILLA CORRUPTA</div>
-
-        <div class="space-y-1.5">
-          <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-            <span class="w-12 text-slate-400">KICK</span>
-            <div class="flex-1 h-1.5 bg-[#090b1a] rounded-full overflow-hidden">
-              <div id="barBass" class="h-full bg-[#FF1F71] w-0 transition-all duration-75"></div>
-            </div>
-          </div>
-          <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-            <span class="w-12 text-slate-400">SNARE</span>
-            <div class="flex-1 h-1.5 bg-[#090b1a] rounded-full overflow-hidden">
-              <div id="barMid" class="h-full bg-[#FFD166] w-0 transition-all duration-75"></div>
-            </div>
-          </div>
-          <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-            <span class="w-12 text-slate-400">SYNTH</span>
-            <div class="flex-1 h-1.5 bg-[#090b1a] rounded-full overflow-hidden">
-              <div id="barHigh" class="h-full bg-[#00F0FF] w-0 transition-all duration-75"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ACCORDION 1: COLORES TOTALES -->
-      <details class="studio-acc rounded-xl bg-[#121530] border border-slate-800/90 p-3.5" open>
-        <summary class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-300">
-          <span>🎨 Colores Totales</span>
-          <span class="acc-arrow text-[#00F0FF]">▸</span>
-        </summary>
-        <p class="text-[10px] text-slate-400 mt-1.5 mb-2.5 leading-relaxed">Personaliza el color de cada elemento en tiempo real o usa Auto ADN.</p>
-        <div class="grid grid-cols-5 gap-1.5 text-center text-[9px] font-mono-tech text-slate-300 mb-2">
-          <label class="flex flex-col items-center gap-1 cursor-pointer"><input id="colorBg" type="color" value="#040D14" class="w-7 h-5 rounded bg-transparent border border-slate-700 cursor-pointer" /><span>Fondo</span></label>
-          <label class="flex flex-col items-center gap-1 cursor-pointer"><input id="colorDanger" type="color" value="#FF1E6E" class="w-7 h-5 rounded bg-transparent border border-slate-700 cursor-pointer" /><span>Jefe</span></label>
-          <label class="flex flex-col items-center gap-1 cursor-pointer"><input id="colorCyan" type="color" value="#00F0FF" class="w-7 h-5 rounded bg-transparent border border-slate-700 cursor-pointer" /><span>Cian</span></label>
-          <label class="flex flex-col items-center gap-1 cursor-pointer"><input id="colorTrail" type="color" value="#0077FF" class="w-7 h-5 rounded bg-transparent border border-slate-700 cursor-pointer" /><span>Estela</span></label>
-          <label class="flex flex-col items-center gap-1 cursor-pointer"><input id="colorEq" type="color" value="#00F0FF" class="w-7 h-5 rounded bg-transparent border border-slate-700 cursor-pointer" /><span>EQ</span></label>
-        </div>
-        <button id="btnResetColors" class="w-full py-1 rounded bg-slate-800/80 hover:bg-slate-700 text-[10px] font-mono-tech text-[#00F0FF] cursor-pointer">Restaurar Auto ADN</button>
-
-        <div class="mt-3 pt-2.5 border-t border-slate-800/80 space-y-2">
-          <div class="flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
-            <span>MIS PALETAS</span>
-            <span id="colorPresetCount" class="text-slate-500">0</span>
-          </div>
-          <div class="flex gap-1.5">
-            <input id="colorPresetName" type="text" maxlength="24" placeholder="Nombre de paleta..." class="flex-1 min-w-0 bg-[#090b1a] border border-slate-700/80 focus:border-[#00F0FF] outline-none rounded px-2 py-1 text-[10px] text-slate-200 placeholder:text-slate-500" />
-            <button id="btnSaveColorPreset" class="px-2.5 py-1 rounded bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/40 text-[10px] font-semibold text-[#00F0FF] cursor-pointer shrink-0">Guardar</button>
-          </div>
-          <div id="colorPresetsList" class="space-y-1.5 max-h-36 overflow-y-auto pr-0.5"></div>
-        </div>
-      </details>
-
-      <!-- ACCORDION 2: ENEMIGO PNG + PERSONALIZACIÓN TOTAL -->
-      <details class="studio-acc rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
-        <summary class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-300">
-          <span>🖼️ Enemigo, Marco, Púas y Manos</span>
-          <span class="acc-arrow text-[#00F0FF]">▸</span>
-        </summary>
-        <p class="text-[10px] text-slate-400 mt-1.5 mb-2.5 leading-relaxed">Sube un PNG como jefe y personaliza su marco, púas adaptables, manos y flash.</p>
-        <div class="space-y-2.5 text-[10px] font-mono-tech">
-          <div class="flex gap-1.5">
-            <label for="bossPngInput" class="flex-1 text-center py-1.5 rounded-lg bg-[#FF1F71]/15 hover:bg-[#FF1F71]/25 border border-[#FF1F71]/40 text-[#FF1F71] text-[10px] font-semibold cursor-pointer">Subir PNG</label>
-            <input id="bossPngInput" type="file" accept=".png,image/png,.webp,image/webp" class="hidden" />
-            <label for="bossGifInput" class="flex-1 text-center py-1.5 rounded-lg bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/40 text-[#00F0FF] text-[10px] font-semibold cursor-pointer">Subir GIF</label>
-            <input id="bossGifInput" type="file" accept=".gif,image/gif" class="hidden" />
-            <button id="btnClearBossPng" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 cursor-pointer">✕</button>
-          </div>
-
-          <div class="pt-1 space-y-1.5">
-            <div class="flex gap-1.5">
-              <input id="tenorSearchInput" type="text" placeholder="Buscar en GIPHY o pegar URL .gif..." class="flex-1 min-w-0 bg-[#090b1a] border border-slate-700/80 focus:border-[#00F0FF] outline-none rounded px-2 py-1 text-[10px] text-slate-200 placeholder:text-slate-500" />
-              <button id="btnTenorSearch" type="button" class="px-2.5 py-1 rounded bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/40 text-[10px] font-semibold text-[#00F0FF] cursor-pointer shrink-0">Buscar</button>
-            </div>
-            <div class="flex gap-1.5 items-center">
-              <input id="giphyApiKeyInput" type="password" placeholder="GIPHY API Key (gratis en developers.giphy.com)" class="flex-1 min-w-0 bg-[#090b1a] border border-slate-800/80 focus:border-[#00F0FF] outline-none rounded px-2 py-0.5 text-[9px] text-slate-300 placeholder:text-slate-500" />
-            </div>
-            <div id="tenorResultsGrid" class="hidden grid grid-cols-4 gap-1.5 max-h-40 overflow-y-auto p-1 rounded-lg bg-[#090b1a] border border-slate-800/80"></div>
-          </div>
-          <div class="flex items-center justify-between text-slate-300">
-            <span>MARCO PNG:</span>
-            <select id="bossFrameSelect" class="bg-[#090b1a] border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200">
-              <option value="circle">Circular</option>
-              <option value="square">Cubo / Cuadrado</option>
-              <option value="hexagon">Hexagonal</option>
-              <option value="triangle">Triangular</option>
-              <option value="none">Sin Marco</option>
-            </select>
-          </div>
-          <div class="flex items-center justify-between text-slate-300">
-            <span>PÚAS:</span>
-            <select id="bossSpikesSelect" class="bg-[#090b1a] border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200">
-              <option value="phase3">En medio (Fase 3+)</option>
-              <option value="always">Desde el inicio</option>
-              <option value="never">Sin púas</option>
-            </select>
-          </div>
-          <div class="flex items-center justify-between text-slate-300">
-            <span>FORMA PÚAS:</span>
-            <select id="bossSpikesShapeSelect" class="bg-[#090b1a] border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200">
-              <option value="auto">Auto (según marco)</option>
-              <option value="circle">Circular</option>
-              <option value="square">Cúbico / Cuadrado</option>
-              <option value="hexagon">Hexagonal</option>
-              <option value="triangle">Triangular</option>
-            </select>
-          </div>
-          <div class="flex items-center justify-between text-slate-300">
-            <span>CAPA PÚAS:</span>
-            <select id="bossSpikesLayerSelect" class="bg-[#090b1a] border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200">
-              <option value="behind">Detrás del cuerpo</option>
-              <option value="above">Adelante del cuerpo</option>
-            </select>
-          </div>
-          <div class="flex items-center justify-between text-slate-300">
-            <span>MANOS:</span>
-            <select id="bossHandsSelect" class="bg-[#090b1a] border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200">
-              <option value="auto">Auto ADN</option>
-              <option value="square">Cuadrados</option>
-              <option value="circle">Círculos</option>
-              <option value="triangle">Triángulos</option>
-              <option value="claws">Garras</option>
-              <option value="none">Sin manos</option>
-            </select>
-          </div>
-          <div class="flex items-center justify-between text-slate-300">
-            <span>CAPA MANOS:</span>
-            <select id="bossHandsLayerSelect" class="bg-[#090b1a] border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200">
-              <option value="behind">Detrás del cuerpo</option>
-              <option value="above">Encima del cuerpo</option>
-            </select>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-slate-300">GROSOR MARCO</span><span id="valFrameWidth" class="text-[#00F0FF]">6px</span></div>
-            <div class="flex items-center gap-1.5"><button data-step-dec="sliderFrameWidth" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderFrameWidth" type="range" min="0" max="16" step="1" value="6" class="studio-slider flex-1" /><button data-step-inc="sliderFrameWidth" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-slate-300">CANTIDAD PÚAS</span><span id="valSpikeCount" class="text-[#00F0FF]">12</span></div>
-            <div class="flex items-center gap-1.5"><button data-step-dec="sliderSpikeCount" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSpikeCount" type="range" min="4" max="20" step="2" value="12" class="studio-slider flex-1" /><button data-step-inc="sliderSpikeCount" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-slate-300">FLASH AL BEAT</span><span id="valFlashInt" class="text-[#00F0FF]">72%</span></div>
-            <div class="flex items-center gap-1.5"><button data-step-dec="sliderFlashInt" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderFlashInt" type="range" min="0" max="1" step="0.1" value="0.72" class="studio-slider flex-1" /><button data-step-inc="sliderFlashInt" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
-          </div>
-        </div>
-      </details>
-
-      <!-- ACCORDION 3: RITMO, CÁMARA Y EFECTOS -->
-      <details class="studio-acc rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
-        <summary class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-300">
-          <span>🎛️ Ritmo, Jefe y Cámara</span>
-          <span class="acc-arrow text-[#00F0FF]">▸</span>
-        </summary>
-        <p class="text-[10px] text-slate-400 mt-1.5 mb-3 leading-relaxed">Ajusta precisión de beats, tamaño del jefe, temblor, zoom y ecualizador con las flechas.</p>
-        <label class="flex items-center justify-between mb-3 px-2.5 py-2 rounded-lg bg-[#FF1F71]/10 border border-[#FF1F71]/35 text-[11px] font-semibold text-[#FF4D8D] cursor-pointer">
-          <span>⚡ Modo TikTok / Phonk Edit</span>
-          <input id="togglePhonk" type="checkbox" class="accent-[#FF1F71] w-4 h-4 rounded cursor-pointer" />
-        </label>
-        <div class="space-y-2.5 text-[10px] font-mono-tech">
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-slate-300">OFFSET BEATS</span><span id="valSync" class="text-[#00F0FF]">0ms</span></div>
-            <div class="flex items-center gap-1.5"><button data-step-dec="sliderSync" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSync" type="range" min="-200" max="200" step="10" value="0" class="studio-slider flex-1" /><button data-step-inc="sliderSync" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-slate-300">TAMAÑO JEFE</span><span id="valBoss" class="text-[#00F0FF]">1.0x</span></div>
-            <div class="flex items-center gap-1.5"><button data-step-dec="sliderBoss" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderBoss" type="range" min="0.6" max="1.6" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderBoss" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-slate-300">VELOCIDAD ATAQUES</span><span id="valSpeed" class="text-[#00F0FF]">1.0x</span></div>
-            <div class="flex items-center gap-1.5"><button data-step-dec="sliderSpeed" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSpeed" type="range" min="0.5" max="2.0" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderSpeed" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-slate-300">SCREEN SHAKE</span><span id="valShake" class="text-[#00F0FF]">1.0x</span></div>
-            <div class="flex items-center gap-1.5"><button data-step-dec="sliderShake" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderShake" type="range" min="0" max="2.0" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderShake" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-slate-300">ZOOM PUNCH</span><span id="valZoom" class="text-[#00F0FF]">1.0x</span></div>
-            <div class="flex items-center gap-1.5"><button data-step-dec="sliderZoom" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderZoom" type="range" min="0" max="2.0" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderZoom" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
-          </div>
-          <div>
-            <div class="flex justify-between mb-1"><span class="text-slate-300">OPACIDAD EQ</span><span id="valEqAlpha" class="text-[#00F0FF]">14%</span></div>
-            <div class="flex items-center gap-1.5"><button data-step-dec="sliderEqAlpha" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderEqAlpha" type="range" min="0" max="0.6" step="0.05" value="0.14" class="studio-slider flex-1" /><button data-step-inc="sliderEqAlpha" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
-          </div>
-        </div>
-      </details>
-
-      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5 space-y-2.5">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Exportar Video</span>
-          <span class="text-[10px] font-mono-tech text-slate-400">WebM 60fps</span>
-        </div>
-
-        <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
-          <span>Mostrar HUD en Video</span>
-          <input id="toggleHud" type="checkbox" checked class="accent-[#00F0FF] w-4 h-4 rounded cursor-pointer" />
-        </label>
-
-        <button id="btnRecordVideo" disabled class="w-full py-2.5 px-3 rounded-lg text-xs font-display font-bold tracking-wider uppercase bg-gradient-to-r from-[#FF1F71] to-[#d9145c] hover:from-[#ff337e] hover:to-[#e61965] disabled:opacity-40 disabled:cursor-not-allowed text-white transition flex items-center justify-center gap-2 glow-pink cursor-pointer">
-          <span id="recIcon" class="w-2.5 h-2.5 rounded-full bg-white"></span>
-          <span id="recBtnText">Grabar Video Completo</span>
+      <!-- 4-TAB NAVIGATION BAR -->
+      <nav class="grid grid-cols-4 gap-1 p-2 border-b border-slate-800/80 bg-[#080a19] shrink-0">
+        <button type="button" data-studio-tab="track" class="studio-tab active py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
+          <span class="text-sm leading-none">🎵</span>
+          <span>Track</span>
         </button>
+        <button type="button" data-studio-tab="colors" class="studio-tab py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
+          <span class="text-sm leading-none">🎨</span>
+          <span>Colores</span>
+        </button>
+        <button type="button" data-studio-tab="boss" class="studio-tab py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
+          <span class="text-sm leading-none">👾</span>
+          <span>Jefe</span>
+        </button>
+        <button type="button" data-studio-tab="fx" class="studio-tab py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
+          <span class="text-sm leading-none">🎛️</span>
+          <span>FX & Video</span>
+        </button>
+      </nav>
+
+      <!-- TAB PANELS -->
+      <div class="flex-1 overflow-y-auto p-3.5 space-y-3">
+
+        <!-- PANEL 1: TRACK & FORMAT -->
+        <div data-studio-panel="track" class="space-y-3">
+          <div class="studio-card p-3.5">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">ADN Musical</span>
+              <span id="trackStatusBadge" class="text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">Sin Audio</span>
+            </div>
+            <div id="trackNameDisplay" class="text-sm font-semibold text-white truncate mb-3">Carga MP3/WAV/MP4 o elige una Demo</div>
+
+            <div class="grid grid-cols-3 gap-2 text-center mb-3">
+              <div class="rounded-xl bg-[#070917] p-2 border border-slate-800/80">
+                <div class="text-[9px] text-slate-400 font-mono-tech">BPM</div>
+                <div id="statBpm" class="text-sm font-bold text-[#00F0FF] font-mono-tech">--</div>
+              </div>
+              <div class="rounded-xl bg-[#070917] p-2 border border-slate-800/80">
+                <div class="text-[9px] text-slate-400 font-mono-tech">DURACIÓN</div>
+                <div id="statDuration" class="text-sm font-bold text-slate-200 font-mono-tech">0:00</div>
+              </div>
+              <div class="rounded-xl bg-[#070917] p-2 border border-slate-800/80">
+                <div class="text-[9px] text-slate-400 font-mono-tech">SETPIECES</div>
+                <div id="statEvents" class="text-sm font-bold text-[#FF1F71] font-mono-tech">0</div>
+              </div>
+            </div>
+
+            <div class="space-y-1.5 pt-2.5 border-t border-slate-800/70 text-[10px] font-mono-tech text-slate-400">
+              <div class="flex justify-between"><span>ARQUETIPO</span><strong id="statArchetype" class="text-[#00F0FF]">--</strong></div>
+              <div class="flex justify-between"><span>SECCIÓN</span><strong id="statSection" class="text-[#FFD166]">--</strong></div>
+              <div class="flex justify-between"><span>COREOGRAFÍA</span><strong id="statSetpiece" class="text-[#FF1F71]">--</strong></div>
+            </div>
+          </div>
+
+          <div class="studio-card p-3.5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">Formato de Escenario</span>
+              <span id="resolutionLabel" class="text-[10px] font-mono-tech text-[#00F0FF]">1280 × 720</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <button data-aspect="16:9" class="aspect-btn py-2 px-2 rounded-lg text-[11px] font-semibold border border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF] cursor-pointer transition">16:9<br><span class="text-[9px] opacity-75 font-normal">YouTube</span></button>
+              <button data-aspect="9:16" class="aspect-btn py-2 px-2 rounded-lg text-[11px] font-semibold border border-slate-700/80 bg-[#090b1a] text-slate-300 hover:border-slate-500 cursor-pointer transition">9:16<br><span class="text-[9px] opacity-75 font-normal">TikTok</span></button>
+              <button data-aspect="1:1" class="aspect-btn py-2 px-2 rounded-lg text-[11px] font-semibold border border-slate-700/80 bg-[#090b1a] text-slate-300 hover:border-slate-500 cursor-pointer transition">1:1<br><span class="text-[9px] opacity-75 font-normal">Feed</span></button>
+            </div>
+          </div>
+
+          <div class="studio-card p-3.5">
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">Telemetría en Vivo</span>
+              <span id="phaseBadge" class="text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">FASE 1</span>
+            </div>
+            <div id="phaseName" class="text-xs font-display font-bold text-white mb-2.5">CALMA INICIAL</div>
+            <div class="space-y-2">
+              <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+                <span class="w-12 text-slate-400">KICK</span>
+                <div class="flex-1 h-2 bg-[#070917] rounded-full overflow-hidden">
+                  <div id="barBass" class="h-full bg-[#FF1F71] w-0 transition-all duration-75 rounded-full"></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+                <span class="w-12 text-slate-400">SNARE</span>
+                <div class="flex-1 h-2 bg-[#070917] rounded-full overflow-hidden">
+                  <div id="barMid" class="h-full bg-[#FFD166] w-0 transition-all duration-75 rounded-full"></div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+                <span class="w-12 text-slate-400">SYNTH</span>
+                <div class="flex-1 h-2 bg-[#070917] rounded-full overflow-hidden">
+                  <div id="barHigh" class="h-full bg-[#00F0FF] w-0 transition-all duration-75 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="studio-card p-3 text-[10px] font-mono-tech text-slate-400 space-y-1">
+            <div class="text-slate-300 font-semibold mb-1">⌨️ Atajos Rápidos</div>
+            <div class="flex justify-between"><span>Play / Pausa</span><kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200">Espacio</kbd></div>
+            <div class="flex justify-between"><span>Reiniciar / Cine</span><span><kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200">R</kbd> <kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200">F</kbd></span></div>
+            <div class="flex justify-between"><span>Formatos</span><kbd class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200">1 / 2 / 3</kbd></div>
+          </div>
+        </div>
+
+        <!-- PANEL 2: COLORS & PALETTES -->
+        <div data-studio-panel="colors" class="hidden space-y-3">
+          <div class="studio-card p-3.5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">Colores Totales</span>
+              <button id="btnResetColors" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-mono-tech text-[#00F0FF] cursor-pointer">Auto ADN</button>
+            </div>
+            <p class="text-[10px] text-slate-400 mb-3 leading-relaxed">Personaliza cada elemento de la arena en tiempo real.</p>
+            <div class="grid grid-cols-5 gap-2 text-center text-[9px] font-mono-tech text-slate-300">
+              <label class="flex flex-col items-center gap-1.5 cursor-pointer"><input id="colorBg" type="color" value="#040D14" class="studio-swatch w-8 h-8 cursor-pointer" /><span>Fondo</span></label>
+              <label class="flex flex-col items-center gap-1.5 cursor-pointer"><input id="colorDanger" type="color" value="#FF1E6E" class="studio-swatch w-8 h-8 cursor-pointer" /><span>Jefe</span></label>
+              <label class="flex flex-col items-center gap-1.5 cursor-pointer"><input id="colorCyan" type="color" value="#00F0FF" class="studio-swatch w-8 h-8 cursor-pointer" /><span>Cian</span></label>
+              <label class="flex flex-col items-center gap-1.5 cursor-pointer"><input id="colorTrail" type="color" value="#0077FF" class="studio-swatch w-8 h-8 cursor-pointer" /><span>Estela</span></label>
+              <label class="flex flex-col items-center gap-1.5 cursor-pointer"><input id="colorEq" type="color" value="#00F0FF" class="studio-swatch w-8 h-8 cursor-pointer" /><span>EQ</span></label>
+            </div>
+          </div>
+
+          <div class="studio-card p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between text-[10px] font-mono-tech text-slate-400">
+              <span>MIS PALETAS GUARDADAS</span>
+              <span id="colorPresetCount" class="px-1.5 py-0.5 rounded-full bg-slate-800 text-[#00F0FF]">0</span>
+            </div>
+            <div class="flex gap-1.5">
+              <input id="colorPresetName" type="text" maxlength="24" placeholder="Nombre de paleta..." class="flex-1 min-w-0 bg-[#070917] border border-slate-700/80 focus:border-[#00F0FF] outline-none rounded-lg px-2.5 py-1.5 text-[11px] text-slate-200 placeholder:text-slate-500" />
+              <button id="btnSaveColorPreset" class="px-3 py-1.5 rounded-lg bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/40 text-[10px] font-semibold text-[#00F0FF] cursor-pointer shrink-0">Guardar</button>
+            </div>
+            <div id="colorPresetsList" class="space-y-1.5 max-h-64 overflow-y-auto pr-0.5"></div>
+          </div>
+        </div>
+
+        <!-- PANEL 3: BOSS CUSTOMIZATION & GIPHY -->
+        <div data-studio-panel="boss" class="hidden space-y-3">
+          <div class="studio-card p-3.5 space-y-2.5">
+            <div class="flex items-center gap-2.5">
+              <div id="bossPreviewThumb" class="w-11 h-11 rounded-xl bg-[#070917] border border-slate-700/80 flex items-center justify-center overflow-hidden shrink-0 text-lg">👾</div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">Cuerpo del Enemigo</div>
+                <div class="text-[10px] text-slate-400 truncate">PNG transparente, GIF o GIPHY</div>
+              </div>
+              <button id="btnClearBossPng" title="Restaurar jefe procedural" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 cursor-pointer shrink-0">✕</button>
+            </div>
+
+            <div class="flex gap-1.5">
+              <label for="bossPngInput" class="flex-1 text-center py-1.5 rounded-lg bg-[#FF1F71]/15 hover:bg-[#FF1F71]/25 border border-[#FF1F71]/40 text-[#FF1F71] text-[10px] font-semibold cursor-pointer">Subir PNG</label>
+              <input id="bossPngInput" type="file" accept=".png,image/png,.webp,image/webp" class="hidden" />
+              <label for="bossGifInput" class="flex-1 text-center py-1.5 rounded-lg bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/40 text-[#00F0FF] text-[10px] font-semibold cursor-pointer">Subir GIF</label>
+              <input id="bossGifInput" type="file" accept=".gif,image/gif" class="hidden" />
+            </div>
+
+            <div class="pt-1 space-y-1.5">
+              <div class="flex gap-1.5">
+                <input id="tenorSearchInput" type="text" placeholder="Buscar en GIPHY o pegar URL .gif..." class="flex-1 min-w-0 bg-[#070917] border border-slate-700/80 focus:border-[#00F0FF] outline-none rounded-lg px-2.5 py-1.5 text-[10px] text-slate-200 placeholder:text-slate-500" />
+                <button id="btnTenorSearch" type="button" class="px-2.5 py-1.5 rounded-lg bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/40 text-[10px] font-semibold text-[#00F0FF] cursor-pointer shrink-0">Buscar</button>
+              </div>
+              <input id="giphyApiKeyInput" type="password" placeholder="GIPHY API Key (developers.giphy.com)" class="w-full bg-[#070917] border border-slate-800/80 focus:border-[#00F0FF] outline-none rounded-lg px-2.5 py-1 text-[9px] text-slate-300 placeholder:text-slate-500" />
+              <div id="tenorResultsGrid" class="hidden grid grid-cols-4 gap-1.5 max-h-40 overflow-y-auto p-1.5 rounded-lg bg-[#070917] border border-slate-800/80"></div>
+            </div>
+          </div>
+
+          <div class="studio-card p-3.5 space-y-2.5 text-[10px] font-mono-tech">
+            <div class="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Marco, Púas y Manos</div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>MARCO PNG</span>
+              <select id="bossFrameSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                <option value="circle">Circular</option>
+                <option value="square">Cubo / Cuadrado</option>
+                <option value="hexagon">Hexagonal</option>
+                <option value="triangle">Triangular</option>
+                <option value="none">Sin Marco</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>PÚAS</span>
+              <select id="bossSpikesSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                <option value="phase3">En medio (Fase 3+)</option>
+                <option value="always">Desde el inicio</option>
+                <option value="never">Sin púas</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>FORMA PÚAS</span>
+              <select id="bossSpikesShapeSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                <option value="auto">Auto (según marco)</option>
+                <option value="circle">Circular</option>
+                <option value="square">Cúbico / Cuadrado</option>
+                <option value="hexagon">Hexagonal</option>
+                <option value="triangle">Triangular</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>CAPA PÚAS</span>
+              <select id="bossSpikesLayerSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                <option value="behind">Detrás del cuerpo</option>
+                <option value="above">Adelante del cuerpo</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>MANOS</span>
+              <select id="bossHandsSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                <option value="auto">Auto ADN</option>
+                <option value="square">Cuadrados</option>
+                <option value="circle">Círculos</option>
+                <option value="triangle">Triángulos</option>
+                <option value="claws">Garras</option>
+                <option value="none">Sin manos</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>CAPA MANOS</span>
+              <select id="bossHandsLayerSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                <option value="behind">Detrás del cuerpo</option>
+                <option value="above">Encima del cuerpo</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">GROSOR MARCO</span><span id="valFrameWidth" class="text-[#00F0FF]">6px</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderFrameWidth" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderFrameWidth" type="range" min="0" max="16" step="1" value="6" class="studio-slider flex-1" /><button data-step-inc="sliderFrameWidth" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">CANTIDAD PÚAS</span><span id="valSpikeCount" class="text-[#00F0FF]">12</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderSpikeCount" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSpikeCount" type="range" min="4" max="20" step="2" value="12" class="studio-slider flex-1" /><button data-step-inc="sliderSpikeCount" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">FLASH AL BEAT</span><span id="valFlashInt" class="text-[#00F0FF]">72%</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderFlashInt" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderFlashInt" type="range" min="0" max="1" step="0.1" value="0.72" class="studio-slider flex-1" /><button data-step-inc="sliderFlashInt" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL 4: FX, CAMERA & EXPORT -->
+        <div data-studio-panel="fx" class="hidden space-y-3">
+          <div class="studio-card p-3.5 space-y-2.5 text-[10px] font-mono-tech">
+            <label class="flex items-center justify-between px-3 py-2 rounded-xl bg-[#FF1F71]/12 border border-[#FF1F71]/35 text-[11px] font-semibold text-[#FF4D8D] cursor-pointer">
+              <span>⚡ Modo TikTok / Phonk Edit</span>
+              <input id="togglePhonk" type="checkbox" class="accent-[#FF1F71] w-4 h-4 rounded cursor-pointer" />
+            </label>
+
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">OFFSET BEATS</span><span id="valSync" class="text-[#00F0FF]">0ms</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderSync" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSync" type="range" min="-200" max="200" step="10" value="0" class="studio-slider flex-1" /><button data-step-inc="sliderSync" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">TAMAÑO JEFE</span><span id="valBoss" class="text-[#00F0FF]">1.0x</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderBoss" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderBoss" type="range" min="0.6" max="1.6" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderBoss" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">VELOCIDAD ATAQUES</span><span id="valSpeed" class="text-[#00F0FF]">1.0x</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderSpeed" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSpeed" type="range" min="0.5" max="2.0" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderSpeed" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">SCREEN SHAKE</span><span id="valShake" class="text-[#00F0FF]">1.0x</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderShake" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderShake" type="range" min="0" max="2.0" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderShake" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">ZOOM PUNCH</span><span id="valZoom" class="text-[#00F0FF]">1.0x</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderZoom" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderZoom" type="range" min="0" max="2.0" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderZoom" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">OPACIDAD EQ</span><span id="valEqAlpha" class="text-[#00F0FF]">14%</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderEqAlpha" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderEqAlpha" type="range" min="0" max="0.6" step="0.05" value="0.14" class="studio-slider flex-1" /><button data-step-inc="sliderEqAlpha" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+          </div>
+
+          <div class="studio-card p-3.5 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">Exportar Video</span>
+              <span class="text-[10px] font-mono-tech text-[#00F0FF]">WebM 60fps</span>
+            </div>
+
+            <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
+              <span>Mostrar HUD en Video</span>
+              <input id="toggleHud" type="checkbox" checked class="accent-[#00F0FF] w-4 h-4 rounded cursor-pointer" />
+            </label>
+
+            <button id="btnRecordVideo" disabled class="w-full py-2.5 px-3 rounded-xl text-xs font-display font-bold tracking-wider uppercase bg-gradient-to-r from-[#FF1F71] to-[#d9145c] hover:from-[#ff337e] hover:to-[#e61965] disabled:opacity-40 disabled:cursor-not-allowed text-white transition flex items-center justify-center gap-2 glow-pink cursor-pointer">
+              <span id="recIcon" class="w-2.5 h-2.5 rounded-full bg-white"></span>
+              <span id="recBtnText">Grabar Video Completo</span>
+            </button>
+          </div>
+        </div>
+
       </div>
     </aside>
 
-    <section class="flex-1 flex flex-col min-w-0 min-h-0 bg-[#060714]">
+    <!-- STAGE & TRANSPORT -->
+    <section class="flex-1 flex flex-col min-w-0 min-h-0 bg-[#050611]">
       <div id="stageContainer" class="flex-1 p-3 sm:p-5 min-h-0">
         <canvas id="gameCanvas" width="1280" height="720"></canvas>
 
-        <div id="emptyOverlay" class="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div class="bg-[#0c0e22]/92 backdrop-blur-md border border-slate-700/80 rounded-2xl p-6 max-w-lg text-center shadow-2xl pointer-events-auto">
-            <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-[#00F0FF]/15 border border-[#00F0FF]/40 flex items-center justify-center text-[#00F0FF]">
+        <!-- Exit Cinema Mode Floating Button -->
+        <button id="btnExitCinema" type="button" class="opacity-0 pointer-events-none -translate-y-2 transition-all duration-200 absolute top-4 right-4 z-30 px-3 py-1.5 rounded-lg bg-[#090b1d]/85 hover:bg-[#090b1d] border border-slate-700/80 text-[11px] font-mono-tech text-slate-200 backdrop-blur-md cursor-pointer shadow-lg">
+          Salir Cine (F)
+        </button>
+
+        <!-- Drag & Drop Overlay -->
+        <div id="dropOverlay" class="opacity-0 pointer-events-none transition-opacity duration-150 absolute inset-4 z-40 rounded-2xl border-2 border-dashed border-[#00F0FF] bg-[#060818]/85 backdrop-blur-md flex flex-col items-center justify-center gap-2 text-center p-6">
+          <div class="text-3xl">⚡</div>
+          <div class="font-display text-sm font-bold text-[#00F0FF]">SUELTA AQUÍ TU ARCHIVO</div>
+          <div class="text-xs text-slate-300">Audio/Video (MP3, WAV, MP4) o Imagen/GIF para el Jefe</div>
+        </div>
+
+        <!-- Empty Welcome Overlay -->
+        <div id="emptyOverlay" class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+          <div class="bg-[#0b0d22]/90 backdrop-blur-xl border border-slate-700/70 rounded-2xl p-6 max-w-xl w-full text-center shadow-2xl pointer-events-auto">
+            <div class="w-12 h-12 mx-auto mb-3 rounded-2xl bg-gradient-to-br from-[#00F0FF]/20 to-[#FF1F71]/20 border border-[#00F0FF]/40 flex items-center justify-center text-[#00F0FF]">
               <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             </div>
-            <h2 class="font-display text-base font-bold text-white mb-1.5">JSAB Beat Studio v2 — Sincronización Real</h2>
+            <h2 class="font-display text-lg font-bold text-white mb-1.5">JSAB Beat Studio Pro</h2>
             <p class="text-xs text-slate-300 mb-4 leading-relaxed">
-              Cada canción genera un <strong class="text-[#00F0FF]">ADN Musical</strong> distinto con bioma propio y coreografías de <strong class="text-[#FF1F71]">Barracuda, Close To Me, Lycanthropy y Annihilate</strong>. Todos los ataques se anticipan antes del beat e impactan en el golpe exacto.
+              Arrastra un <strong class="text-[#00F0FF]">MP3 / WAV / MP4</strong> aquí o elige una demo reactiva para generar coreografías con IA perfecta.
             </p>
-            <div class="flex flex-wrap items-center justify-center gap-2">
-              <button data-demo="titan" class="demo-btn px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#FF1F71] text-white hover:bg-[#ff3881] transition cursor-pointer">Annihilate (Dubstep)</button>
-              <button data-demo="barracuda" class="demo-btn px-3.5 py-2 rounded-lg text-xs font-semibold bg-[#00F0FF] text-[#060714] hover:bg-[#33f3ff] transition cursor-pointer">Barracuda (Speedcore)</button>
-              <button data-demo="closetome" class="demo-btn px-3.5 py-2 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-500 transition cursor-pointer">Close To Me (Synth)</button>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-3">
+              <button data-demo="titan" class="demo-btn p-3 rounded-xl text-left bg-[#FF1F71]/15 hover:bg-[#FF1F71]/25 border border-[#FF1F71]/40 transition cursor-pointer">
+                <div class="text-xs font-display font-bold text-[#FF1F71]">Annihilate</div>
+                <div class="text-[10px] text-slate-300">Dubstep • Mega-Rayos</div>
+              </button>
+              <button data-demo="barracuda" class="demo-btn p-3 rounded-xl text-left bg-[#00F0FF]/12 hover:bg-[#00F0FF]/22 border border-[#00F0FF]/40 transition cursor-pointer">
+                <div class="text-xs font-display font-bold text-[#00F0FF]">Barracuda</div>
+                <div class="text-[10px] text-slate-300">Speedcore • Serpientes</div>
+              </button>
+              <button data-demo="closetome" class="demo-btn p-3 rounded-xl text-left bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/40 transition cursor-pointer">
+                <div class="text-xs font-display font-bold text-purple-300">Close To Me</div>
+                <div class="text-[10px] text-slate-300">Synth • Brazos 8 Púas</div>
+              </button>
             </div>
+            <label for="audioFileInput" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800/80 hover:bg-slate-700 border border-slate-600/60 text-slate-200 cursor-pointer transition">
+              <span>📁 Subir tu propia canción o video</span>
+            </label>
           </div>
         </div>
       </div>
 
-      <div class="border-t border-slate-800/80 bg-[#090b1d] px-4 py-3 shrink-0">
+      <!-- TRANSPORT & TIMELINE BAR -->
+      <div class="border-t border-slate-800/80 bg-[#090b1d]/95 backdrop-blur-md px-4 py-2.5 shrink-0">
         <div class="flex items-center gap-3">
-          <button id="btnPlayPause" disabled class="w-9 h-9 rounded-lg bg-[#00F0FF] hover:bg-[#33f3ff] disabled:opacity-40 disabled:cursor-not-allowed text-[#060714] flex items-center justify-center transition shrink-0 cursor-pointer">
-            <svg id="iconPlay" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            <svg id="iconPause" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-          </button>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button id="btnPlayPause" disabled class="w-9 h-9 rounded-xl bg-[#00F0FF] hover:bg-[#33f3ff] disabled:opacity-40 disabled:cursor-not-allowed text-[#060714] flex items-center justify-center transition cursor-pointer glow-cyan" title="Play / Pausa (Espacio)">
+              <svg id="iconPlay" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+              <svg id="iconPause" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </button>
 
-          <button id="btnRestart" disabled class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 flex items-center justify-center transition shrink-0 cursor-pointer" title="Reiniciar">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          </button>
+            <button id="btnRestart" disabled class="w-9 h-9 rounded-xl bg-slate-800/90 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-200 flex items-center justify-center transition cursor-pointer" title="Reiniciar (R)">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </button>
+          </div>
 
-          <div class="font-mono-tech text-xs text-slate-300 shrink-0 w-24">
+          <div class="font-mono-tech text-xs text-slate-300 shrink-0 w-24 tabular-nums">
             <span id="timeCurrent" class="text-[#00F0FF]">0:00</span>
             <span class="text-slate-500">/</span>
             <span id="timeTotal">0:00</span>
           </div>
 
-          <div class="flex-1 relative h-10 bg-[#060714] rounded-lg border border-slate-800 overflow-hidden cursor-pointer" id="timelineWrapper">
+          <div class="flex-1 relative h-10 bg-[#060714] rounded-xl border border-slate-800 overflow-hidden cursor-pointer" id="timelineWrapper">
             <canvas id="timelineCanvas" class="w-full h-full block"></canvas>
           </div>
         </div>
@@ -352,6 +420,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=52"></script>
+  <script type="module" src="src/main.js?v=53"></script>
 </body>
 </html>
