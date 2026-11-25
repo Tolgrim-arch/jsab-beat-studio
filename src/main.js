@@ -477,7 +477,8 @@ function updateSimulation(dt) {
   b.rightHand.x = Utils.lerp(b.rightHand.x, b.x + b.r * handSpread, dt * 8);
   b.rightHand.y = Utils.lerp(b.rightHand.y, b.y + 24 - handBounce, dt * 8);
 
-  for (const ent of state.entities) ent.update(dt, W, H);
+  const entDt = dt * (state.settings?.attackSpeed ?? 1);
+  for (const ent of state.entities) ent.update(entDt, W, H);
   state.entities = state.entities.filter(e => !e.dead);
 
   updateCyanAI(dt);
