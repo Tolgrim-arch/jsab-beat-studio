@@ -21,12 +21,35 @@ function savePrefs() {
   } catch {}
 }
 
+async function decodeAnimatedGif(arrayBuffer) {
+  if (typeof ImageDecoder === "undefined") return null;
+  try {
+    const decoder = new ImageDecoder({ data: arrayBuffer, type: "image/gif" });
+    await decoder.tracks.ready;
+    const track = decoder.tracks.selectedTrack;
+    const count = track.frameCount || 1;
+    if (count <= 1) return null;
+    const frames = [];
+    for (let i = 0; i < count; i++) {
+      const res = await decoder.decode({ frameIndex: i });
+      const bitmap = await createImageBitmap(res.image);
+      const durSec = Math.max(0.02, (res.image.duration || 80000) / 1_000_000);
+      res.image.close();
+      frames.push({ bitmap, dur: durSec });
+    }
+    return frames;
+  } catch {
+    return null;
+  }
+}
+
 function mountBossImage(src, onReady) {
   let el = document.getElementById("hiddenBossGifHost");
   if (!el) {
     el = document.createElement("img");
     el.id = "hiddenBossGifHost";
-    el.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:2px;height:2px;opacity:0.01;pointer-events:none;";
+    // Keep inside viewport at 0.01 opacity so browser never pauses GIF decoding
+    el.style.cssText = "position:fixed;left:0;top:0;width:4px;height:4px;opacity:0.01;pointer-events:none;z-index:-1;";
     document.body.appendChild(el);
   }
   el.onload = () => {
@@ -45,7 +68,16 @@ function loadPrefs() {
     if (data.settings) Object.assign(state.settings, data.settings);
     if (data.customBoss) {
       Object.assign(state.customBoss, data.customBoss);
-      if (data.customBoss.dataUrl) mountBossImage(data.customBoss.dataUrl);
+      if (data.customBoss.dataUrl) {
+        mountBossImage(data.customBoss.dataUrl);
+        if (data.customBoss.dataUrl.startsWith("data:image/gif")) {
+          fetch(data.customBoss.dataUrl)
+            .then(r => r.arrayBuffer())
+            .then(decodeAnimatedGif)
+            .then(frames => { if (frames) state.customBoss.gifFrames = frames; })
+            .catch(() => {});
+        }
+      }
     }
   } catch {}
 }
@@ -84,29 +116,41 @@ export function initStudioControls(showToast) {
     showToast("Colores restaurados a Auto ADN", "info");
   });
 
-  // 2. Custom PNG / Animated GIF Boss uploader & Selectors
+  // 2. Custom PNG & Animated GIF Boss uploaders
   const pngInput = document.getElementById("bossPngInput");
+  const gifInput = document.getElementById("bossGifInput");
   const btnClearPng = document.getElementById("btnClearBossPng");
 
-  pngInput?.addEventListener("change", (e) => {
-    const file = e.target.files[0];
+  const handleImageUpload = async (file) => {
     if (!file) return;
+    state.customBoss.gifFrames = null;
+    if (file.type === "image/gif" || file.name.toLowerCase().endsWith(".gif")) {
+      const ab = await file.arrayBuffer();
+      const frames = await decodeAnimatedGif(ab);
+      if (frames) state.customBoss.gifFrames = frames;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = reader.result;
       mountBossImage(dataUrl, () => {
         state.customBoss.dataUrl = dataUrl.length < 2_500_000 ? dataUrl : null;
         savePrefs();
-        showToast(`Enemigo PNG/GIF cargado: ${file.name}`, "success");
+        const fCount = state.customBoss.gifFrames ? ` (${state.customBoss.gifFrames.length} frames)` : "";
+        showToast(`Enemigo cargado: ${file.name}${fCount}`, "success");
       });
     };
     reader.readAsDataURL(file);
-  });
+  };
+
+  pngInput?.addEventListener("change", (e) => handleImageUpload(e.target.files[0]));
+  gifInput?.addEventListener("change", (e) => handleImageUpload(e.target.files[0]));
 
   btnClearPng?.addEventListener("click", () => {
     state.customBoss.img = null;
+    state.customBoss.gifFrames = null;
     state.customBoss.dataUrl = null;
     if (pngInput) pngInput.value = "";
+    if (gifInput) gifInput.value = "";
     savePrefs();
     showToast("Jefe restaurado a modo Procedural", "info");
   });

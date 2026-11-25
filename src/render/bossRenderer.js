@@ -150,6 +150,17 @@ export function drawProceduralBoss(ctx) {
       ctx.clip();
     }
 
+    // Select current animated GIF frame if decoded via ImageDecoder, else static/DOM img
+    let activeImg = cb.img;
+    if (cb.gifFrames && cb.gifFrames.length > 0) {
+      const totalDur = cb.gifFrames.reduce((s, f) => s + f.dur, 0) || 1;
+      let tMod = ((performance.now() / 1000) % totalDur);
+      for (const fr of cb.gifFrames) {
+        if (tMod <= fr.dur) { activeImg = fr.bitmap; break; }
+        tMod -= fr.dur;
+      }
+    }
+
     const scratch = drawProceduralBoss._scratch;
     if (scratch) {
       if (scratch.width !== drawSize || scratch.height !== drawSize) {
@@ -159,7 +170,7 @@ export function drawProceduralBoss(ctx) {
       const sCtx = scratch.getContext("2d");
       sCtx.clearRect(0, 0, drawSize, drawSize);
       sCtx.globalCompositeOperation = "source-over";
-      sCtx.drawImage(cb.img, 0, 0, drawSize, drawSize);
+      sCtx.drawImage(activeImg, 0, 0, drawSize, drawSize);
 
       // source-atop ONLY tints non-transparent pixels of the PNG/GIF!
       if (fInt > 0.01 && (flash || b.pulse > 0.35)) {
