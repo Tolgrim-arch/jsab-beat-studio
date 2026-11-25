@@ -113,9 +113,149 @@ export function initStudioControls(showToast) {
       const el = document.getElementById(id);
       if (el) el.value = defaults[key];
     });
+    activePresetId = null;
+    renderColorPresets();
     savePrefs();
     showToast("Colores restaurados a Auto ADN", "info");
   });
+
+  // 1b. Saved Color Presets (Save, Switch, Rename, Delete)
+  const PRESETS_KEY = "jsab_color_presets_v1";
+  let colorPresets = [];
+  let activePresetId = null;
+  try {
+    const rawP = localStorage.getItem(PRESETS_KEY);
+    if (rawP) colorPresets = JSON.parse(rawP);
+  } catch { colorPresets = []; }
+
+  const saveColorPresets = () => {
+    try { localStorage.setItem(PRESETS_KEY, JSON.stringify(colorPresets)); } catch {}
+  };
+
+  const applyColorPreset = (preset) => {
+    state.customColors.enabled = true;
+    Object.assign(state.customColors, preset.colors);
+    colorMap.forEach(([id, key]) => {
+      const el = document.getElementById(id);
+      if (el && preset.colors[key]) el.value = preset.colors[key];
+    });
+    activePresetId = preset.id;
+    savePrefs();
+    renderColorPresets();
+    showToast(`Paleta aplicada: ${preset.name}`, "success");
+  };
+
+  const renderColorPresets = () => {
+    const listEl = document.getElementById("colorPresetsList");
+    const countEl = document.getElementById("colorPresetCount");
+    if (countEl) countEl.textContent = String(colorPresets.length);
+    if (!listEl) return;
+    listEl.innerHTML = "";
+    if (!colorPresets.length) {
+      const empty = document.createElement("div");
+      empty.className = "text-[10px] text-slate-500 text-center py-1";
+      empty.textContent = "Sin paletas guardadas";
+      listEl.appendChild(empty);
+      return;
+    }
+    colorPresets.forEach((preset) => {
+      const isActive = preset.id === activePresetId;
+      const row = document.createElement("div");
+      row.className = `flex items-center gap-1.5 px-2 py-1.5 rounded-lg border transition ${
+        isActive
+          ? "bg-[#00F0FF]/10 border-[#00F0FF]/50"
+          : "bg-[#090b1a] border-slate-800/80 hover:border-slate-700"
+      }`;
+
+      const applyBtn = document.createElement("button");
+      applyBtn.type = "button";
+      applyBtn.className = "flex-1 min-w-0 flex items-center gap-1.5 text-left cursor-pointer";
+      applyBtn.title = "Aplicar paleta";
+
+      const dots = document.createElement("span");
+      dots.className = "flex items-center -space-x-1 shrink-0";
+      ["bg", "danger", "cyan", "trail", "eq"].forEach((k) => {
+        const d = document.createElement("span");
+        d.className = "w-2.5 h-2.5 rounded-full border border-slate-900 inline-block";
+        d.style.backgroundColor = preset.colors[k] || "#ffffff";
+        dots.appendChild(d);
+      });
+
+      const nameSpan = document.createElement("span");
+      nameSpan.className = "text-[10px] font-medium text-slate-200 truncate";
+      nameSpan.textContent = preset.name;
+
+      applyBtn.appendChild(dots);
+      applyBtn.appendChild(nameSpan);
+      applyBtn.addEventListener("click", () => applyColorPreset(preset));
+
+      const renameBtn = document.createElement("button");
+      renameBtn.type = "button";
+      renameBtn.className = "px-1.5 py-0.5 rounded bg-slate-800/80 hover:bg-slate-700 text-[10px] text-slate-300 cursor-pointer shrink-0";
+      renameBtn.title = "Renombrar paleta";
+      renameBtn.textContent = "✎";
+      renameBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const nextName = window.prompt("Nuevo nombre para la paleta:", preset.name);
+        if (nextName && nextName.trim()) {
+          preset.name = nextName.trim().slice(0, 24);
+          saveColorPresets();
+          renderColorPresets();
+          showToast(`Paleta renombrada a: ${preset.name}`, "info");
+        }
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "px-1.5 py-0.5 rounded bg-slate-800/80 hover:bg-[#FF1F71]/30 hover:text-[#FF1F71] text-[10px] text-slate-400 cursor-pointer shrink-0";
+      delBtn.title = "Borrar paleta";
+      delBtn.textContent = "✕";
+      delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        colorPresets = colorPresets.filter((p) => p.id !== preset.id);
+        if (activePresetId === preset.id) activePresetId = null;
+        saveColorPresets();
+        renderColorPresets();
+        showToast(`Paleta eliminada: ${preset.name}`, "info");
+      });
+
+      row.appendChild(applyBtn);
+      row.appendChild(renameBtn);
+      row.appendChild(delBtn);
+      listEl.appendChild(row);
+    });
+  };
+
+  const presetNameInput = document.getElementById("colorPresetName");
+  const saveCurrentPreset = () => {
+    const rawName = presetNameInput?.value?.trim();
+    const name = rawName || `Paleta ${colorPresets.length + 1}`;
+    const colors = {
+      bg: state.customColors.bg || "#040D14",
+      danger: state.customColors.danger || "#FF1E6E",
+      cyan: state.customColors.cyan || "#00F0FF",
+      trail: state.customColors.trail || "#0077FF",
+      eq: state.customColors.eq || "#00F0FF"
+    };
+    const preset = { id: `p_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, name: name.slice(0, 24), colors };
+    colorPresets.unshift(preset);
+    activePresetId = preset.id;
+    state.customColors.enabled = true;
+    if (presetNameInput) presetNameInput.value = "";
+    saveColorPresets();
+    savePrefs();
+    renderColorPresets();
+    showToast(`Paleta guardada: ${preset.name}`, "success");
+  };
+
+  document.getElementById("btnSaveColorPreset")?.addEventListener("click", saveCurrentPreset);
+  presetNameInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      saveCurrentPreset();
+    }
+  });
+  renderColorPresets();
 
   // 2. Custom PNG & Animated GIF Boss uploaders
   const pngInput = document.getElementById("bossPngInput");
