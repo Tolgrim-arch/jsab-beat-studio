@@ -318,12 +318,21 @@ export function initStudioControls(showToast) {
     showToast("Jefe restaurado a modo Procedural", "info");
   });
 
-  // 2b. Tenor GIF Search & Instant Boss Application
+  // 2b. GIPHY Search + Direct GIF URL & Instant Boss Application
   const tenorInput = document.getElementById("tenorSearchInput");
   const tenorBtn = document.getElementById("btnTenorSearch");
   const tenorGrid = document.getElementById("tenorResultsGrid");
+  const giphyKeyInput = document.getElementById("giphyApiKeyInput");
+  const GIPHY_KEY_STORAGE = "jsab_giphy_api_key_v1";
 
-  const applyRemoteGif = async (gifUrl, label = "Tenor GIF") => {
+  if (giphyKeyInput) {
+    try { giphyKeyInput.value = localStorage.getItem(GIPHY_KEY_STORAGE) || ""; } catch {}
+    giphyKeyInput.addEventListener("change", () => {
+      try { localStorage.setItem(GIPHY_KEY_STORAGE, giphyKeyInput.value.trim()); } catch {}
+    });
+  }
+
+  const applyRemoteGif = async (gifUrl, label = "GIF") => {
     try {
       showToast(`Cargando ${label}...`, "info");
       state.customBoss.gifFrames = null;
@@ -341,45 +350,62 @@ export function initStudioControls(showToast) {
         showToast(`GIF aplicado: ${label}`, "success");
       }
     } catch {
-      showToast("No se pudo descargar el GIF", "error");
+      showToast("No se pudo descargar el GIF (CORS o URL inválida)", "error");
     }
   };
 
   const searchTenor = async () => {
     const q = tenorInput?.value?.trim();
     if (!q || !tenorGrid) return;
+
+    // Direct GIF URL support
+    if (/^https?:\/\//i.test(q)) {
+      tenorGrid.classList.add("hidden");
+      await applyRemoteGif(q, "URL directa");
+      return;
+    }
+
+    const apiKey = giphyKeyInput?.value?.trim();
     tenorGrid.classList.remove("hidden");
-    tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-slate-400 py-2">Buscando en Tenor...</div>`;
+    if (!apiKey) {
+      tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-[#FFD166] py-2 px-1 leading-relaxed">Ingresa tu GIPHY API Key arriba (gratis en developers.giphy.com) o pega una URL directa de .gif</div>`;
+      return;
+    }
+
+    tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-slate-400 py-2">Buscando en GIPHY...</div>`;
     try {
-      const url = `https://g.tenor.com/v1/search?q=${encodeURIComponent(q)}&key=LIVDSRZULELA&limit=12&media_filter=minimal`;
+      const url = `https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(apiKey)}&q=${encodeURIComponent(q)}&limit=12&rating=pg-13`;
       const res = await fetch(url);
       const data = await res.json();
-      const results = data?.results || [];
+      if (!res.ok || data?.meta?.status >= 400) {
+        tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-[#FF1F71] py-2">API Key inválida o bloqueada (${data?.meta?.msg || res.status})</div>`;
+        return;
+      }
+      const results = data?.data || [];
       tenorGrid.innerHTML = "";
       if (!results.length) {
         tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-slate-500 py-2">Sin resultados</div>`;
         return;
       }
       results.forEach((item) => {
-        const media = item.media?.[0];
-        const previewUrl = media?.tinygif?.url || media?.gif?.url;
-        const fullUrl = media?.gif?.url || previewUrl;
+        const previewUrl = item.images?.fixed_width_small?.url || item.images?.preview_gif?.url;
+        const fullUrl = item.images?.downsized_medium?.url || item.images?.original?.url || previewUrl;
         if (!previewUrl) return;
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "aspect-square rounded overflow-hidden border border-slate-800 hover:border-[#00F0FF] bg-slate-900 cursor-pointer transition";
-        btn.title = item.content_description || "Usar como jefe";
+        btn.title = item.title || "Usar como jefe";
         const img = document.createElement("img");
         img.src = previewUrl;
-        img.alt = item.content_description || "GIF";
+        img.alt = item.title || "GIF";
         img.className = "w-full h-full object-cover";
         img.loading = "lazy";
         btn.appendChild(img);
-        btn.addEventListener("click", () => applyRemoteGif(fullUrl, item.content_description || "Tenor GIF"));
+        btn.addEventListener("click", () => applyRemoteGif(fullUrl, item.title || "GIPHY GIF"));
         tenorGrid.appendChild(btn);
       });
     } catch {
-      tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-[#FF1F71] py-2">Error al conectar con Tenor</div>`;
+      tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-[#FF1F71] py-2">Error al conectar con GIPHY</div>`;
     }
   };
 

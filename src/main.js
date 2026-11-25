@@ -5,7 +5,7 @@ import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./aud
 import { buildChoreographySchedule, spawnSetpieceEvent } from "./combat/choreography.js?v=49";
 import { updateCyanAI } from "./combat/cyanAI.js";
 import { renderFrame, drawTimeline } from "./render/renderer.js?v=49";
-import { initStudioControls } from "./ui/controls.js?v=47";
+import { initStudioControls } from "./ui/controls.js?v=50";
 
 const dom = {
   canvas: document.getElementById("gameCanvas"),
