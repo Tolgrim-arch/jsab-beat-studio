@@ -1,11 +1,11 @@
 import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
-import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=76";
-import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=77";
+import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=78";
+import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=78";
 import { updateCyanAI } from "./combat/cyanAI.js?v=74";
-import { renderFrame, drawTimeline } from "./render/renderer.js?v=75";
-import { initStudioControls } from "./ui/controls.js?v=74";
+import { renderFrame, drawTimeline } from "./render/renderer.js?v=78";
+import { initStudioControls } from "./ui/controls.js?v=78";
 
 const dom = {
   canvas: document.getElementById("gameCanvas"),
@@ -600,27 +600,41 @@ function updateSimulation(dt) {
     spawnParticles(state.blixer.x, state.blixer.y, COLORS.pink, 32, 120, 440);
   }
 
-  const syncT = t + ((state.settings?.syncOffsetMs || 0) / 1000);
+  const hwLatency = (state.settings?.autoLatencyComp !== false && state.audioCtx)
+    ? ((state.audioCtx.baseLatency || 0) + (state.audioCtx.outputLatency || 0))
+    : 0;
+  const syncT = Math.max(0, t - hwLatency + ((state.settings?.syncOffsetMs || 0) / 1000));
+  state.syncTime = syncT;
+
+  // Compute exact continuous beatPhase (0..1) and barPhase (0..1) from current BPM / meter
+  const beatDurNow = Math.max(0.15, state.liveBeatDur || (60 / (state.liveBpm || 128)));
+  const off0 = state.analysis?.bestOffset || 0;
+  const beatPosTotal = Math.max(0, (syncT - off0) / beatDurNow);
+  state.beatPhase = beatPosTotal - Math.floor(beatPosTotal);
+  const mLenNow = state.beatsPerBar || 4;
+  const barPosTotal = beatPosTotal / mLenNow;
+  state.barPhase = barPosTotal - Math.floor(barPosTotal);
+
   while (state.nextEventIdx < state.schedule.length && state.schedule[state.nextEventIdx].spawnTime <= syncT) {
     spawnSetpieceEvent(state.schedule[state.nextEventIdx], dom.statSetpiece);
     state.nextEventIdx++;
   }
 
-  // Update live measure dots, accent, and artifact layer badges
+  // Update live measure dots, accent, motif, and artifact layer badges
   if (dom.telBeatDots) {
     const mLen = state.beatsPerBar || 4;
     const curBeat = state.beatInBar || 0;
     dom.telBeatDots.textContent = Array.from({ length: mLen }, (_, i) => (i === curBeat ? "●" : "○")).join(" ");
   }
   if (dom.telAccent) {
-    const accMap = { DOWNBEAT: "FUERTE", SECONDARY: "MEDIO", WEAK: "DÉBIL", SYNCOPATED: "SÍNCOPA" };
+    const accMap = { DOWNBEAT: "FUERTE", SECONDARY: "MEDIO", WEAK: "DÉBIL", SYNCOPATED: "SÍNCOPA", SUBDIVISION: state.currentSubdivision || "1/2", PRE_DROP: "PRE-DROP" };
     dom.telAccent.textContent = accMap[state.lastAccentLevel] || "FUERTE";
   }
   if (dom.telLayers) {
     const lyr = state.activeArtifactLayers || 1;
     dom.telLayers.textContent = `${lyr}x ${lyr === 1 ? "CAPA" : "CAPAS"}`;
   }
-  if (dom.telMeter) dom.telMeter.textContent = state.meterLabel || "4/4";
+  if (dom.telMeter) dom.telMeter.textContent = `${state.meterLabel || "4/4"} • M:${state.currentMotif || "A"}`;
 
   const b = state.blixer;
   const pInfo = PHASES[state.phase - 1];
@@ -727,7 +741,9 @@ function updateSimulation(dt) {
   }
 
   const leanToCyan = Utils.clamp((state.cyan.x - b.x) / (W * 0.6), -1, 1) * 0.16;
-  const headbang = Math.sin(t * (state.analysis ? (state.analysis.bpm / 60) * Math.PI : 6.5)) * (b.mood === "frenzy" ? 0.14 : 0.06);
+  const beatAngle = (state.beatPhase || 0) * Math.PI * 2;
+  const barAngle = (state.barPhase || 0) * Math.PI * 2;
+  const headbang = Math.sin(beatAngle) * (b.mood === "frenzy" ? 0.14 : 0.06);
   b.tilt = Utils.lerp(b.tilt || 0, leanToCyan + headbang, dt * 12);
 
   if (b.annoyedTimer > 0) b.annoyedTimer -= dt;
@@ -743,8 +759,8 @@ function updateSimulation(dt) {
   const tx = Number.isFinite(b.targetX) ? b.targetX : W * 0.5;
   const ty = Number.isFinite(b.targetY) ? b.targetY : H * 0.26;
   const prevX = b.x, prevY = b.y;
-  b.x = Utils.lerp(b.x, tx + Math.sin(t * 2.2) * 26, dt * 9.5);
-  b.y = Utils.lerp(b.y, ty + Math.cos(t * 2.8) * 16, dt * 9.5);
+  b.x = Utils.lerp(b.x, tx + Math.sin(barAngle) * 26, dt * 9.5);
+  b.y = Utils.lerp(b.y, ty + Math.cos(beatAngle) * 14, dt * 9.5);
 
   if (Math.hypot(b.x - prevX, b.y - prevY) > 4) {
     b.trail.push({ x: b.x, y: b.y, r: b.r, alpha: 0.55 });
@@ -761,28 +777,27 @@ function updateSimulation(dt) {
   let rx = b.x + b.r * handSpread, ry = b.y + 24;
 
   if (handAnim === "alternating") {
-    const hb = Math.sin(t * 6) * amp;
+    const hb = Math.sin(beatAngle) * amp;
     ly += hb; ry -= hb;
   } else if (handAnim === "sync") {
-    const hb = Math.sin(t * 6) * amp;
+    const hb = Math.sin(beatAngle) * amp;
     ly += hb; ry += hb;
   } else if (handAnim === "orbit") {
     const rad = b.r * handSpread;
-    const a = t * 2.4;
-    lx = b.x + Math.cos(a + Math.PI) * rad;
-    ly = b.y + Math.sin(a + Math.PI) * rad;
-    rx = b.x + Math.cos(a) * rad;
-    ry = b.y + Math.sin(a) * rad;
+    lx = b.x + Math.cos(barAngle + Math.PI) * rad;
+    ly = b.y + Math.sin(barAngle + Math.PI) * rad;
+    rx = b.x + Math.cos(barAngle) * rad;
+    ry = b.y + Math.sin(barAngle) * rad;
   } else if (handAnim === "vibe") {
-    const groove = Math.abs(Math.sin(t * 7.5)) * -amp * 1.15;
-    const sway = Math.cos(t * 3.75) * 18;
+    const groove = Math.abs(Math.sin(beatAngle)) * -amp * 1.15;
+    const sway = Math.cos(barAngle) * 18;
     lx += sway; rx += sway;
     ly += groove; ry += groove;
   } else if (handAnim === "wave") {
-    lx += Math.sin(t * 5) * 24;
-    rx -= Math.sin(t * 5) * 24;
-    ly += Math.cos(t * 5) * amp;
-    ry += Math.cos(t * 5) * amp;
+    lx += Math.sin(beatAngle) * 24;
+    rx -= Math.sin(beatAngle) * 24;
+    ly += Math.cos(beatAngle) * amp;
+    ry += Math.cos(beatAngle) * amp;
   }
 
   b.leftHand.x = Utils.lerp(b.leftHand.x, lx, dt * 8);
@@ -791,7 +806,16 @@ function updateSimulation(dt) {
   b.rightHand.y = Utils.lerp(b.rightHand.y, ry, dt * 8);
 
   const entDt = dt * (state.settings?.attackSpeed ?? 1);
-  for (const ent of state.entities) ent.update(entDt, W, H);
+  for (const ent of state.entities) {
+    if (ent.impactTime > 0 && ent.leadTime > 0 && Number.isFinite(ent.spawnClock)) {
+      // Phase-locked telegraph: advance age directly from master audio clock (0-frame drift!)
+      const targetAge = Math.max(0, state.syncTime - ent.spawnClock);
+      const exactDt = Math.max(0, targetAge - (ent.age || 0));
+      ent.update(exactDt, W, H);
+    } else {
+      ent.update(entDt, W, H);
+    }
+  }
   state.entities = state.entities.filter(e => !e.dead);
 
   updateCyanAI(dt);

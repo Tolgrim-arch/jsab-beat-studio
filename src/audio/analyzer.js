@@ -139,8 +139,10 @@ export function analyzeAudioBuffer(audioBuffer) {
     const flux = kickOnset * 1.45 + snareOnset * 0.9 + highOnset * 0.45;
     const totSpec = Math.max(0.0001, sub + bass + lowMid + mid + high);
     const brightness = (mid * 0.45 + high * 0.95) / totSpec;
+    const melodicTot = Math.max(0.0001, lowMid + mid + high);
+    const pitchHeight = Utils.clamp((lowMid * 0.15 + mid * 0.55 + high * 1.0) / melodicTot, 0, 1);
     const tension = zcr * 0.55 + (snareOnset + highOnset) * 0.45;
-    frames[f] = { t: f / fps, rms, sub, bass, lowMid, mid, high, zcr, brightness, tension, kickOnset, snareOnset, highOnset, onset: flux };
+    frames[f] = { t: f / fps, rms, sub, bass, lowMid, mid, high, zcr, brightness, pitchHeight, tension, kickOnset, snareOnset, highOnset, onset: flux };
   }
 
   const normBand = (key) => {
@@ -301,7 +303,18 @@ export function analyzeAudioBuffer(audioBuffer) {
     }
   }
 
-  // Tag every grid beat with barIndex, beatInBar, accentWeight, and accentLevel
+  // Helper: measure note articulation (sustainDuration in seconds while energy stays > 55% of attack peak)
+  const measureSustain = (tSec, maxDur) => {
+    const f0 = Utils.clamp(Math.floor(tSec * fps), 0, frames.length - 1);
+    const peak = Math.max(0.08, frames[f0].rms);
+    const thresh = peak * 0.55;
+    const maxF = Math.min(frames.length - 1, f0 + Math.floor(maxDur * fps));
+    let f = f0 + 1;
+    while (f <= maxF && frames[f].rms >= thresh) f++;
+    return Utils.clamp((f - f0) / fps, 0.08, maxDur);
+  };
+
+  // Tag every grid beat with barIndex, beatInBar, accentWeight, accentLevel, sustainDuration, and pitchHeight
   const mLen = bestMeter.beatsPerBar;
   const beats = gridBeats.map((b, idx) => {
     const shifted = idx - bestMeter.downbeatOffset;
@@ -313,25 +326,58 @@ export function analyzeAudioBuffer(audioBuffer) {
     const accentLevel = beatInBar === 0
       ? "DOWNBEAT"
       : (baseWeight >= 0.72 ? "SECONDARY" : "WEAK");
-    return { ...b, barIndex, beatInBar, accentWeight, accentLevel };
+    const fIdx = Utils.clamp(Math.floor(b.t * fps), 0, frames.length - 1);
+    const sustainDuration = measureSustain(b.t, Math.min(1.6, (b.localBeatDur || beatDur) * 2.2));
+    return {
+      ...b,
+      barIndex,
+      beatInBar,
+      accentWeight,
+      accentLevel,
+      sustainDuration,
+      pitchHeight: frames[fIdx].pitchHeight ?? 0.5,
+      subdivision: "1/1",
+      isSubdivision: false
+    };
   });
 
-  // Add remaining strong syncopated real musical impacts (fills, drops, off-beat kicks)
+  // Detect rhythmic subdivisions (1/2 eighth, 1/3 triplet, 1/4 sixteenth) from realPeaks between grid beats
   for (let p = 0; p < realPeaks.length; p++) {
     if (usedPeakIdx.has(p)) continue;
     const pk = realPeaks[p];
-    if (pk.strength > 0.52 && pk.frame.rms > 0.16) {
-      const lt = getLocalTempoAt(pk.t);
-      beats.push({
-        t: pk.t, bass: pk.frame.bass, mid: pk.frame.mid, high: pk.frame.high, rms: pk.frame.rms,
-        localBpm: lt.bpm, localBeatDur: lt.beatDur,
-        barIndex: Math.floor(pk.t / (lt.beatDur * mLen)),
-        beatInBar: -1,
-        accentWeight: Utils.clamp(0.55 + pk.strength * 0.3, 0.55, 0.92),
-        accentLevel: "SYNCOPATED",
-        isSilent: false, isKick: pk.frame.kickOnset > 0.28, isSnare: true, isSyncopated: true
-      });
+    if (pk.strength <= 0.34 || pk.frame.rms <= 0.14) continue;
+
+    // Find enclosing grid beat
+    let prevIdx = -1;
+    for (let i = 0; i < gridBeats.length - 1; i++) {
+      if (gridBeats[i].t <= pk.t && pk.t < gridBeats[i + 1].t) { prevIdx = i; break; }
     }
+    const lt = getLocalTempoAt(pk.t);
+    let subType = "SYNC";
+    if (prevIdx !== -1) {
+      const span = Math.max(0.15, gridBeats[prevIdx + 1].t - gridBeats[prevIdx].t);
+      const frac = (pk.t - gridBeats[prevIdx].t) / span;
+      if (Math.abs(frac - 0.5) < 0.09) subType = "1/2";
+      else if (Math.abs(frac - 0.333) < 0.07 || Math.abs(frac - 0.667) < 0.07) subType = "1/3";
+      else if (Math.abs(frac - 0.25) < 0.07 || Math.abs(frac - 0.75) < 0.07) subType = "1/4";
+    }
+
+    const isSub = subType === "1/2" || subType === "1/3" || subType === "1/4";
+    if (!isSub && pk.strength <= 0.52) continue;
+
+    beats.push({
+      t: pk.t, bass: pk.frame.bass, mid: pk.frame.mid, high: pk.frame.high, rms: pk.frame.rms,
+      localBpm: lt.bpm, localBeatDur: lt.beatDur,
+      barIndex: prevIdx !== -1 ? beats[prevIdx].barIndex : Math.floor(pk.t / (lt.beatDur * mLen)),
+      beatInBar: -1,
+      accentWeight: Utils.clamp(0.45 + pk.strength * 0.28, 0.45, 0.88),
+      accentLevel: isSub ? "SUBDIVISION" : "SYNCOPATED",
+      subdivision: isSub ? subType : "SYNC",
+      isSubdivision: isSub,
+      sustainDuration: measureSustain(pk.t, Math.min(0.45, lt.beatDur * 0.7)),
+      pitchHeight: pk.frame.pitchHeight ?? 0.5,
+      isSilent: false, isKick: pk.frame.kickOnset > 0.28, isSnare: pk.frame.snareOnset > 0.22, isSyncopated: !isSub
+    });
   }
   beats.sort((a, b) => a.t - b.t);
 
@@ -376,6 +422,7 @@ export function analyzeAudioBuffer(audioBuffer) {
     const sMid = slice.reduce((acc, x) => acc + x.mid, 0) / lenS;
     const sHigh = slice.reduce((acc, x) => acc + x.high, 0) / lenS;
     const sZcr = slice.reduce((acc, x) => acc + x.zcr, 0) / lenS;
+    const sPitch = slice.reduce((acc, x) => acc + (x.pitchHeight ?? 0.5), 0) / lenS;
 
     const localPeaks = realPeaks.filter(p => p.t >= s && p.t < e).length;
     const localRate = localPeaks / Math.max(0.25, e - s);
@@ -401,12 +448,53 @@ export function analyzeAudioBuffer(audioBuffer) {
     else if (energy < avgRms * 0.72) type = "BREAKDOWN";
 
     const lt = getLocalTempoAt(s);
-    sections.push({ start: s, end: e, energy, type, instrument, rhythm, localBpm: lt.bpm });
+    sections.push({
+      start: s, end: e, energy, type, instrument, rhythm, localBpm: lt.bpm,
+      vec: [Utils.clamp(rhythmRatio * 0.5, 0, 1), sBass / Math.max(0.05, sBass + sHigh), sPitch, energy]
+    });
+  }
+
+  // Leitmotif Fingerprinting: cluster 4-bar phrases by cosine similarity so recurring themes share a motifId (A, B, C...)
+  const motifPrototypes = [];
+  const cosSim = (a, b) => {
+    let dot = 0, ma = 0, mb = 0;
+    for (let i = 0; i < a.length; i++) { dot += a[i] * b[i]; ma += a[i] * a[i]; mb += b[i] * b[i]; }
+    return dot / Math.max(0.0001, Math.sqrt(ma * mb));
+  };
+  for (let i = 0; i < sections.length; i += 4) {
+    const chunk = sections.slice(i, i + 4);
+    const avgVec = [0, 1, 2, 3].map(k => chunk.reduce((s, c) => s + c.vec[k], 0) / Math.max(1, chunk.length));
+    let matchedId = null;
+    for (const proto of motifPrototypes) {
+      if (cosSim(avgVec, proto.vec) > 0.94) { matchedId = proto.id; break; }
+    }
+    if (!matchedId) {
+      matchedId = String.fromCharCode(65 + Math.min(7, motifPrototypes.length)); // A..H
+      motifPrototypes.push({ id: matchedId, vec: avgVec });
+    }
+    for (const c of chunk) c.motifId = matchedId;
+  }
+
+  // Detect Pre-Drop Dramatic Silences (0.18s - 1.2s low-RMS breath right before a DROP)
+  const preDropSilences = [];
+  for (let i = 1; i < sections.length; i++) {
+    if (sections[i].type === "DROP" && sections[i - 1].type !== "DROP") {
+      const dropStartF = Utils.clamp(Math.floor(sections[i].start * fps), 0, frames.length - 1);
+      let f = dropStartF - 1;
+      let lowCount = 0;
+      while (f >= Math.max(0, dropStartF - Math.floor(1.25 * fps)) && frames[f].rms < Math.max(0.14, avgRms * 0.35)) {
+        lowCount++;
+        f--;
+      }
+      if (lowCount >= Math.floor(0.18 * fps)) {
+        preDropSilences.push({ start: (f + 1) / fps, end: sections[i].start });
+      }
+    }
   }
 
   const meter = { beatsPerBar: bestMeter.beatsPerBar, label: bestMeter.label, downbeatOffset: bestMeter.downbeatOffset };
   const baseAnalysis = {
-    frames, fps, bpm, beatDur, tempoCurve, meter, bestOffset, beats, sections, archetype,
+    frames, fps, bpm, beatDur, tempoCurve, meter, bestOffset, beats, sections, preDropSilences, archetype,
     profile: { avgBass, avgHigh, avgRms, avgZcr, avgBright, dynamicRange, genre }
   };
   baseAnalysis.dna = generateSongDNA(baseAnalysis, duration);

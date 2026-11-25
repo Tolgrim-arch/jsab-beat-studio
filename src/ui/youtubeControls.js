@@ -131,6 +131,24 @@ export function initYoutubeStudioControls(showToast, hooks = {}, savePrefs = () 
     savePrefs();
   });
 
+  // 2b. Sincronización Musical Pro toggles
+  $("toggleSubdivisionSync")?.addEventListener("change", (e) => {
+    state.settings.subdivisionSync = e.target.checked;
+    savePrefs();
+  });
+  $("togglePreDropFreeze")?.addEventListener("change", (e) => {
+    state.settings.preDropFreeze = e.target.checked;
+    savePrefs();
+  });
+  $("toggleMelodicSync")?.addEventListener("change", (e) => {
+    state.settings.melodicSync = e.target.checked;
+    savePrefs();
+  });
+  $("toggleAutoLatencyComp")?.addEventListener("change", (e) => {
+    state.settings.autoLatencyComp = e.target.checked;
+    savePrefs();
+  });
+
   // 3. Export Quality (FPS / Bitrate)
   const updateExportBadge = () => {
     if ($("exportQualityBadge")) {

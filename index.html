@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v77 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v78 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/main.css?v=77" />
+  <link rel="stylesheet" href="styles/main.css?v=78" />
 </head>
 <body class="h-[100dvh] overflow-hidden flex flex-col bg-[#050611] text-slate-100 select-none">
 
@@ -24,7 +24,7 @@
         <h1 class="font-display text-xs sm:text-base font-bold tracking-wider uppercase flex items-center gap-2 truncate">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v77 • CREATOR PRO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v78 • RHYTHM PRO</span>
         </h1>
       </div>
     </div>
@@ -483,6 +483,25 @@
 
         <!-- PANEL 4: COMBAT ATTACKS & MODES -->
         <div data-studio-panel="combat" class="hidden space-y-3">
+          <div class="studio-card p-3.5 space-y-2 text-[10px] font-mono-tech">
+            <div class="text-[10px] uppercase tracking-wider text-[#00F0FF]">🎵 Sincronización Musical Pro</div>
+            <label class="flex items-center justify-between text-slate-200 cursor-pointer">
+              <span>Subdivisiones / Tresillos (1/2, 1/3, 1/4)</span>
+              <input id="toggleSubdivisionSync" type="checkbox" checked class="accent-[#00F0FF] w-3.5 h-3.5 cursor-pointer" />
+            </label>
+            <label class="flex items-center justify-between text-slate-200 cursor-pointer">
+              <span>Pausa Dramática Pre-Drop (Fakeout)</span>
+              <input id="togglePreDropFreeze" type="checkbox" checked class="accent-[#FF1F71] w-3.5 h-3.5 cursor-pointer" />
+            </label>
+            <label class="flex items-center justify-between text-slate-200 cursor-pointer">
+              <span>Contorno Melódico &amp; Sustain</span>
+              <input id="toggleMelodicSync" type="checkbox" checked class="accent-[#00F0FF] w-3.5 h-3.5 cursor-pointer" />
+            </label>
+            <label class="flex items-center justify-between text-slate-200 cursor-pointer">
+              <span>Compensación Auto-Latencia Audio</span>
+              <input id="toggleAutoLatencyComp" type="checkbox" checked class="accent-emerald-400 w-3.5 h-3.5 cursor-pointer" />
+            </label>
+          </div>
           <div class="studio-card p-3.5 space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">Repertorio de Combate</span>
@@ -857,6 +876,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=77"></script>
+  <script type="module" src="src/main.js?v=78"></script>
 </body>
 </html>

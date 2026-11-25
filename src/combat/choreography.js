@@ -50,11 +50,36 @@ export function buildChoreographySchedule() {
     "AMBIENT / LO-FI":       ["ORB_RAIN", "BREAKDOWN_PULSE", "MANDALA_BLOOM", "LYCANTHROPY_VINES"]
   };
   const genrePool = GENRE_POOLS[analysis.profile?.genre] || archetype.setpieces;
+  const motifToSetpiece = new Map();
 
   const INSTANT_SETPIECES = new Set([
     "BARRACUDA_SWARM", "ORB_RAIN", "WAVE_CORRIDOR",
-    "SAWBLADE_GAUNTLET", "MANDALA_BLOOM", "BREAKDOWN_PULSE", "SYNCOPATED_BURST"
+    "SAWBLADE_GAUNTLET", "MANDALA_BLOOM", "BREAKDOWN_PULSE", "SYNCOPATED_BURST",
+    "SUBDIVISION_SPARK", "PRE_DROP_SILENCE"
   ]);
+
+  // Schedule Pre-Drop Dramatic Silences (Fakeout Breath)
+  for (const pd of (analysis.preDropSilences || [])) {
+    schedule.push({
+      spawnTime: Math.max(0.02, pd.start),
+      impactTime: pd.end,
+      leadTime: Math.max(0.18, pd.end - pd.start),
+      phase: 2,
+      step: 0,
+      beatInBar: 0,
+      beatsPerBar,
+      barIndex: 0,
+      accentLevel: "PRE_DROP",
+      accentWeight: 1.0,
+      localBpm: bpm,
+      localBeatDur: beatDur,
+      setpiece: "PRE_DROP_SILENCE",
+      section: "PRE_DROP",
+      motifId: "A",
+      subdivision: "1/1",
+      seed: rng()
+    });
+  }
 
   // Group beats by detected measure (compás / barIndex) so phrases lock to real bars!
   const barsMap = new Map();
@@ -73,11 +98,13 @@ export function buildChoreographySchedule() {
     const t = barBeats[0].t;
     if (t < 0.35 || t > duration - 2.2) continue;
 
-    const sec = sections.find(s => t >= s.start && t < s.end) || { type: "VERSE", instrument: "SYNTH_LEAD", rhythm: "NORMAL" };
+    const sec = sections.find(s => t >= s.start && t < s.end) || { type: "VERSE", instrument: "SYNTH_LEAD", rhythm: "NORMAL", motifId: "A" };
     const progress = t / duration;
     const phase = progress < 0.2 ? 1 : progress < 0.5 ? 2 : progress < 0.8 ? 3 : 4;
+    const motifId = sec.motifId || "A";
+    const barInPhrase = barIdx % 4; // 0: Call (Left), 1: Response (Right), 2: Develop, 3: Cadence/Fill
 
-    const curKey = `${sec.type}:${sec.instrument}:${sec.rhythm}`;
+    const curKey = `${sec.type}:${sec.instrument}:${sec.rhythm}:${motifId}`;
     if (curKey !== prevKey) {
       cycleIdx++;
       prevKey = curKey;
@@ -85,9 +112,17 @@ export function buildChoreographySchedule() {
 
     const instPool = INSTRUMENT_POOLS[sec.instrument] || archetype.setpieces;
     const pool = (barIdx % 2 === 0) ? genrePool : instPool;
-    let setpiece = pool[(cycleIdx + Math.floor(rng() * pool.length)) % pool.length];
+
+    // Leitmotif Memory: recurring themes reuse their signature setpiece family!
+    if (!motifToSetpiece.has(motifId)) {
+      motifToSetpiece.set(motifId, pool[(cycleIdx + Math.floor(rng() * pool.length)) % pool.length]);
+    }
+    let setpiece = (barInPhrase === 0 || barInPhrase === 1)
+      ? motifToSetpiece.get(motifId)
+      : pool[(cycleIdx + barInPhrase) % pool.length];
+
     if (sec.type === "DROP") {
-      setpiece = (barIdx % 2 === 0) ? "DROP_EXPLOSION" : pool[cycleIdx % pool.length];
+      setpiece = (barInPhrase === 0) ? "DROP_EXPLOSION" : motifToSetpiece.get(motifId);
     } else if (sec.type === "BUILDUP") {
       setpiece = sec.rhythm === "DOUBLE_TIME" ? "BARRACUDA_SWARM" : "BUILDUP_LOCKON";
     } else if (sec.type === "BREAKDOWN" || sec.type === "INTRO") {
@@ -111,7 +146,9 @@ export function buildChoreographySchedule() {
       // Keep weak beats cleaner in calm sections so strong accents stand out
       if (accentLevel === "WEAK" && (sec.type === "INTRO" || sec.type === "BREAKDOWN") && b.rms < 0.28) continue;
 
-      const chosenSetpiece = b.isSyncopated ? "SYNCOPATED_BURST" : setpiece;
+      const chosenSetpiece = b.isSubdivision
+        ? "SUBDIVISION_SPARK"
+        : (b.isSyncopated ? "SYNCOPATED_BURST" : setpiece);
       const isInstant = INSTANT_SETPIECES.has(chosenSetpiece);
       const leadMul = accentLevel === "DOWNBEAT" ? 0.90 : accentLevel === "SECONDARY" ? 0.78 : 0.62;
       const leadTime = isInstant ? 0 : Math.min(0.56, localBeatDur * leadMul);
@@ -124,6 +161,11 @@ export function buildChoreographySchedule() {
         beatInBar,
         beatsPerBar,
         barIndex: barIdx,
+        barInPhrase,
+        motifId,
+        subdivision: b.subdivision || "1/1",
+        sustainDuration: b.sustainDuration || Math.min(0.35, localBeatDur * 0.6),
+        pitchHeight: b.pitchHeight ?? 0.5,
         accentLevel,
         accentWeight,
         localBpm,
@@ -144,6 +186,49 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   const W = state.width, H = state.height;
   const b = state.blixer;
   const cx = state.cyan.x, cy = state.cyan.y;
+  const preCount = state.entities.length;
+
+  // Handle Pre-Drop Dramatic Silence (Fakeout Breath)
+  if (ev.setpiece === "PRE_DROP_SILENCE") {
+    if (state.settings?.preDropFreeze === false) return;
+    state.isPreDropSilence = true;
+    b.lookaheadCharge = 1.0;
+    b.targetX = W * 0.5;
+    b.targetY = H * 0.42;
+    // Dissolve minor bullets into crisp white sparks to leave a clean stage before the DROP
+    state.entities = state.entities.filter(e => {
+      if (e.type === "bullet" || e.type === "sawblade") {
+        if (Number.isFinite(e.x) && Number.isFinite(e.y)) spawnParticles(e.x, e.y, "#FFFFFF", 3, 40, 120);
+        return false;
+      }
+      return true;
+    });
+    return;
+  }
+  state.isPreDropSilence = false;
+
+  // Handle Lightweight Subdivision Micro-Projectiles (1/2, 1/3 triplets, 1/4 sixteenths)
+  if (ev.setpiece === "SUBDIVISION_SPARK") {
+    if (state.settings?.subdivisionSync === false) return;
+    state.currentSubdivision = ev.subdivision || "1/2";
+    const curBpm = ev.localBpm || state.liveBpm || 128;
+    const bpmScale = Utils.clamp(curBpm / 128, 0.7, 1.7);
+    const spd = 330 * bpmScale * (state.settings?.attackSpeed ?? 1);
+    const pitch = state.settings?.melodicSync !== false ? (ev.pitchHeight ?? 0.5) : 0.5;
+    const targetY = H * (0.82 - pitch * 0.64);
+    const baseA = Math.atan2(targetY - b.y, (ev.barInPhrase % 2 === 0 ? cx : W - cx) - b.x);
+    const shape = ev.subdivision === "1/3" ? "triangle" : ev.subdivision === "1/4" ? "diamond" : "circle";
+    if (state.entities.length < 220) {
+      state.entities.push(AttackFactory.bullet(b.x, b.y, Math.cos(baseA) * spd, Math.sin(baseA) * spd, 6.5, shape));
+      if (ev.subdivision === "1/3") {
+        state.entities.push(AttackFactory.bullet(b.x, b.y, Math.cos(baseA + 0.18) * spd * 0.92, Math.sin(baseA + 0.18) * spd * 0.92, 6, shape));
+      }
+    }
+    b.pulse = Math.max(b.pulse, 0.45);
+    return;
+  }
+  state.currentSubdivision = "1/1";
+  if (ev.motifId) state.currentMotif = ev.motifId;
 
   // Read full live telemetry (energy, punch, noise, crunch, brightness, tension)
   const tel = state.audioTelemetry || {};
@@ -157,6 +242,8 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   const bCrunch = tel.crunch ?? (ev.beat?.zcr || 0.25);
   const bBright = tel.brightness ?? (bHigh > bBass ? 0.65 : 0.35);
   const bTension = tel.tension ?? 0;
+  const pitchHeight = state.settings?.melodicSync !== false ? (ev.pitchHeight ?? state.melodicContour ?? 0.5) : 0.5;
+  const sustainDur = state.settings?.melodicSync !== false ? (ev.sustainDuration || 0.3) : 0.3;
 
   let activeBands = 0;
   if (bSub > 0.30) activeBands++;
@@ -169,7 +256,7 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   state.noiseLevel = noiseLevel;
   state.activeArtifactLayers = 1 + (noiseLevel >= 0.36 ? 1 : 0) + (noiseLevel >= 0.62 ? 1 : 0) + (noiseLevel >= 0.82 ? 1 : 0);
 
-  // Dynamic BPM + Telemetry scaling: punch speeds up bursts, tension tightens telegraphs, energy scales size
+  // Dynamic BPM + Telemetry scaling — preserve exact ev.leadTime so impactTime is phase-locked!
   const curBpm = ev.localBpm || state.liveBpm || state.analysis?.bpm || 128;
   const curBeatDur = ev.localBeatDur || state.liveBeatDur || (60 / curBpm);
   const bpmScale = Utils.clamp(curBpm / 128, 0.68, 1.75);
@@ -182,7 +269,7 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   const punchBoost = 1 + Utils.clamp(bPunch, 0, 1) * 0.26;
   const energyScale = 0.78 + Utils.clamp(bRms, 0, 1) * 0.46;
   const spdMul = PHASES[ev.phase - 1].speedMul * (state.settings?.attackSpeed ?? 1) * bpmScale * punchBoost * (0.88 + accentWeight * 0.24);
-  const lt = ev.leadTime > 0 ? Math.max(0.14, ev.leadTime * (1 - Utils.clamp(bTension, 0, 1) * 0.22)) : 0;
+  const lt = ev.leadTime; // Exact pre-computed leadTime for 0-drift impact!
   const danger = (state.customColors?.enabled ? state.customColors.danger : state.analysis?.dna?.palette?.danger) || "#FF1E6E";
 
   // Update live measure telemetry
@@ -202,19 +289,21 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   state.activeSetpiece = activeSetpiece;
   if (domSetpieceEl) domSetpieceEl.textContent = activeSetpiece.replace(/_/g, " ");
 
-  // Accentuated pulse, camera punch, and boss snap driven by metric accent + live PUNCH
+  // Call & Response Boss Positioning on Downbeats: Bar 0 = Left, Bar 1 = Right, Bar 2 = Top/Pitch, Bar 3 = Center Fill
   b.pulse = Math.max(b.pulse, isDownbeat ? 1.0 : isSecondary ? 0.82 : 0.55);
   if (isDownbeat) {
     state.bgPulse = Math.max(state.bgPulse, (0.78 + bPunch * 0.22) * accentWeight);
     state.zoomPunch = Math.max(state.zoomPunch, (0.028 + bPunch * 0.028) * accentWeight);
     state.shake = Math.max(state.shake, (6 + bPunch * 9) * accentWeight);
+    const barPos = ev.barInPhrase ?? 0;
+    const melodicY = H * (0.52 - pitchHeight * 0.30);
     const spots = [
-      { x: W * 0.5, y: H * 0.5 },   // Center stage (JSAB Drop!)
-      { x: W * 0.5, y: H * 0.22 },  // Top center
-      { x: W * 0.22, y: H * 0.35 }, // Left flank
-      { x: W * 0.78, y: H * 0.35 }  // Right flank
+      { x: W * 0.24, y: melodicY }, // Bar 0: Call (Left)
+      { x: W * 0.76, y: melodicY }, // Bar 1: Response (Right)
+      { x: W * 0.50, y: H * 0.22 }, // Bar 2: High Center
+      { x: W * 0.50, y: H * 0.48 }  // Bar 3: Center Cadence / Drop
     ];
-    const pick = ev.section === "DROP" ? spots[0] : spots[Math.floor(ev.seed * spots.length)];
+    const pick = ev.section === "DROP" ? spots[3] : spots[barPos % 4];
     b.targetX = pick.x;
     b.targetY = pick.y;
     spawnParticles(b.x, b.y, danger, Math.round((10 + accentWeight * 10) * energyScale), 120 * bpmScale, 360 * bpmScale);
@@ -227,8 +316,9 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   const len = Math.max(W, H) * 1.45;
   const noiseDensityMul = 0.48 + noiseLevel * 1.12;
   const densityScale = (state.settings?.attackDensity ?? 1) * noiseDensityMul * (isDownbeat ? 1.15 : isSecondary ? 1.0 : 0.72);
-  // Telemetry-driven bullet geometry: high crunch -> sharp diamond/gear, high brightness -> triangle, calm -> circle
+  // Telemetry-driven bullet geometry: high crunch -> sharp diamond, high brightness -> triangle, calm -> circle
   const telemetryBulletShape = bCrunch > 0.58 ? "diamond" : bBright > 0.55 ? "triangle" : "circle";
+  const melodicActiveDur = Utils.clamp(sustainDur, 0.16, Math.min(1.15, curBeatDur * 1.8));
 
   switch (activeSetpiece) {
     case "DROP_EXPLOSION": {
@@ -550,6 +640,20 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
     }
     if (ev.step === 2) {
       AttackFactory.danmakuAimedFan(bx, by, cx, cy, 5 + ev.phase, 0.95, 240 * spdMul);
+    }
+  }
+
+  // Phase-lock all newly spawned telegraphed entities to ev.impactTime so impact occurs on the exact audio millisecond!
+  if (ev.impactTime > 0 && ev.leadTime > 0) {
+    for (let i = preCount; i < state.entities.length; i++) {
+      const ent = state.entities[i];
+      if (ent && ent.leadTime > 0) {
+        ent.impactTime = ev.impactTime;
+        ent.spawnClock = ev.impactTime - ent.leadTime;
+        if (state.settings?.melodicSync !== false && (ent.type === "laser" || ent.type === "megaBeam") && ent.activeTime) {
+          ent.activeTime = Utils.clamp(melodicActiveDur, 0.16, ent.type === "megaBeam" ? 0.95 : 0.55);
+        }
+      }
     }
   }
 }

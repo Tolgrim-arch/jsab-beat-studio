@@ -26,7 +26,8 @@ function drawBiomeBackground(ctx, W, H) {
     if (style === "auto") style = arch?.bgStyle || "seismic";
 
     if (style !== "flat") {
-      const t = state.currentTime || 0;
+      const bp = state.beatPhase || 0;
+      const barP = state.barPhase || 0;
       const pulse = state.bgPulse || 0;
       const sub = state.audioTelemetry?.sub || 0;
       const danger = getDangerColor();
@@ -34,13 +35,13 @@ function drawBiomeBackground(ctx, W, H) {
 
       ctx.save();
       if (style === "seismic") {
-        // Expanding concentric shockwave rings + horizontal seismic grid
+        // Expanding concentric shockwave rings locked to beatPhase
         const cx = W * 0.5, cy = H * 0.35;
         const maxR = Math.hypot(W, H) * 0.65;
         ctx.strokeStyle = danger;
         ctx.lineWidth = 1.8;
         for (let i = 0; i < 6; i++) {
-          const prog = ((t * 0.45 + i / 6) % 1);
+          const prog = ((barP + i / 6) % 1);
           const r = prog * maxR;
           ctx.globalAlpha = (1 - prog) * 0.24 * biomeInt * (1 + pulse * 0.9);
           ctx.beginPath();
@@ -50,7 +51,7 @@ function drawBiomeBackground(ctx, W, H) {
         ctx.globalAlpha = 0.08 * biomeInt;
         ctx.strokeStyle = cyan;
         const step = 64;
-        const offY = (t * 28) % step;
+        const offY = bp * step;
         for (let y = offY; y < H; y += step) {
           ctx.beginPath();
           ctx.moveTo(0, y);
@@ -58,37 +59,35 @@ function drawBiomeBackground(ctx, W, H) {
           ctx.stroke();
         }
       } else if (style === "tunnel") {
-        // Hypnotic zooming geometric tunnel
+        // Hypnotic zooming geometric tunnel advancing 1 square per beat
         const cx = W * 0.5, cy = H * 0.5;
         const maxS = Math.max(W, H) * 0.85;
         ctx.strokeStyle = danger;
         ctx.lineWidth = 2;
         for (let i = 0; i < 8; i++) {
-          const prog = ((t * 0.75 + i / 8) % 1);
+          const prog = ((bp / 2 + i / 8) % 1);
           const sz = prog * prog * maxS;
           ctx.save();
           ctx.translate(cx, cy);
-          ctx.rotate(t * 0.25 + prog * 0.65);
+          ctx.rotate(barP * Math.PI * 0.5 + prog * 0.65);
           ctx.globalAlpha = Math.sin(prog * Math.PI) * 0.26 * biomeInt * (1 + sub * 0.8);
           ctx.strokeRect(-sz / 2, -sz / 2, sz, sz);
           ctx.restore();
         }
       } else if (style === "perspective") {
-        // Retro-synthwave perspective horizon grid
+        // Retro-synthwave perspective horizon grid locked to beatPhase
         const horizon = H * 0.42;
         ctx.strokeStyle = danger;
         ctx.lineWidth = 1.5;
         ctx.globalAlpha = (0.18 + pulse * 0.14) * biomeInt;
-        // Horizontal receding lines
         for (let i = 0; i < 10; i++) {
-          const prog = ((t * 0.85 + i / 10) % 1);
+          const prog = ((bp + i / 10) % 1);
           const y = horizon + prog * prog * (H - horizon);
           ctx.beginPath();
           ctx.moveTo(0, y);
           ctx.lineTo(W, y);
           ctx.stroke();
         }
-        // Vertical perspective rays
         const rays = 12;
         for (let i = -rays; i <= rays; i++) {
           ctx.beginPath();
@@ -97,7 +96,7 @@ function drawBiomeBackground(ctx, W, H) {
           ctx.stroke();
         }
       } else if (style === "vortex") {
-        // Rotating abyssal spiral arms
+        // Rotating abyssal spiral arms locked to barPhase
         const cx = W * 0.5, cy = H * 0.45;
         const maxR = Math.hypot(W, H) * 0.6;
         ctx.strokeStyle = danger;
@@ -108,7 +107,7 @@ function drawBiomeBackground(ctx, W, H) {
           ctx.beginPath();
           for (let step = 0; step <= 20; step++) {
             const u = step / 20;
-            const ang = (Math.PI * 2 * a) / arms + u * 3.2 - t * 1.1;
+            const ang = (Math.PI * 2 * a) / arms + u * 3.2 - barP * Math.PI * 2;
             const r = u * maxR;
             const px = cx + Math.cos(ang) * r;
             const py = cy + Math.sin(ang) * r;
@@ -122,16 +121,28 @@ function drawBiomeBackground(ctx, W, H) {
     }
   }
 
+  // Pre-Drop Silence dramatic focus vignette
+  if (state.isPreDropSilence) {
+    ctx.save();
+    const vig = ctx.createRadialGradient(W / 2, H * 0.42, Math.min(W, H) * 0.14, W / 2, H * 0.42, Math.max(W, H) * 0.65);
+    vig.addColorStop(0, "rgba(0,0,0,0)");
+    vig.addColorStop(1, "rgba(0,0,0,0.72)");
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
+
   const eqCol = state.customColors?.enabled ? (state.customColors.eq || getCyanColor()) : getCyanColor();
   const eqAlpha = state.settings?.eqAlpha ?? 0.14;
   if (eqAlpha > 0.01) {
     const bars = 36;
     const bw = W / bars;
+    const beatAng = (state.beatPhase || 0) * Math.PI * 2;
     ctx.save();
     ctx.fillStyle = eqCol;
     ctx.globalAlpha = eqAlpha;
     for (let i = 0; i < bars; i++) {
-      const wave = 0.4 + 0.6 * Math.sin(state.currentTime * 4 + i * 0.45);
+      const wave = 0.4 + 0.6 * Math.sin(beatAng + i * 0.45);
       const bh = (24 + state.bgPulse * 70) * wave;
       ctx.fillRect(i * bw, H - bh, bw - 2, bh);
     }

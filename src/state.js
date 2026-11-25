@@ -34,6 +34,13 @@ export const state = {
   meterLabel: "4/4",
   beatsPerBar: 4,
   beatInBar: 0,
+  beatPhase: 0,
+  barPhase: 0,
+  syncTime: 0,
+  isPreDropSilence: false,
+  melodicContour: 0.5,
+  currentMotif: "A",
+  currentSubdivision: "1/1",
   lastAccentLevel: "DOWNBEAT",
   audioTelemetry: { sub: 0, bass: 0, lowMid: 0, mid: 0, high: 0, brightness: 0, tension: 0 },
   customColors: {
@@ -59,7 +66,11 @@ export const state = {
     biomeBgStyle: "auto", // "auto" | "flat" | "seismic" | "tunnel" | "perspective" | "vortex"
     biomeBgIntensity: 0.75,
     exportFps: 60,
-    exportBitrateMbps: 12
+    exportBitrateMbps: 12,
+    autoLatencyComp: true,
+    subdivisionSync: true,
+    preDropFreeze: true,
+    melodicSync: true
   },
   velocityTimer: 0,
   rgbSplit: 0,
