@@ -122,10 +122,22 @@ export function drawProceduralBoss(ctx) {
       else shape = "circle";
     }
 
-    const drawSingleSpike = (sizeMul = 1) => {
+    const tData = state.audioTelemetry || { sub: 0, bass: 0, lowMid: 0, mid: 0, high: 0 };
+    const eqBands = [tData.sub || 0, tData.bass || 0, tData.lowMid || 0, tData.mid || 0, tData.high || 0];
+
+    const drawSingleSpike = (sizeMul = 1, idx = 0, total = spikes) => {
       const sz = b.r * spSize * sizeMul;
       ctx.beginPath();
-      if (spStyle === "needle") {
+      if (spStyle === "equalizer") {
+        const bandF = (idx / Math.max(1, total)) * eqBands.length;
+        const b0 = eqBands[Math.floor(bandF) % eqBands.length];
+        const b1 = eqBands[(Math.floor(bandF) + 1) % eqBands.length];
+        const frac = bandF - Math.floor(bandF);
+        const energy = b0 + (b1 - b0) * frac;
+        const barLen = sz * (0.14 + energy * 0.52 + b.pulse * 0.14);
+        const barThick = Math.max(3, sz * 0.11);
+        ctx.roundRect(-sz * 0.06, -barThick * 0.5, barLen, barThick, barThick * 0.45);
+      } else if (spStyle === "needle") {
         ctx.moveTo(sz * 0.42, 0);
         ctx.lineTo(-sz * 0.14, -sz * 0.08);
         ctx.lineTo(-sz * 0.14, sz * 0.08);
@@ -203,13 +215,14 @@ export function drawProceduralBoss(ctx) {
         const outAngle = (a0 + a1) * 0.5;
         for (let i = 0; i < perSide; i++) {
           const u = (i + 0.5) / perSide;
-          const off = animRadialOffset(idx++, spikes);
+          const curIdx = idx++;
+          const off = animRadialOffset(curIdx, spikes);
           const px = x0 + (x1 - x0) * u + Math.cos(outAngle) * off;
           const py = y0 + (y1 - y0) * u + Math.sin(outAngle) * off;
           ctx.save();
           ctx.translate(px, py);
           ctx.rotate(outAngle);
-          drawSingleSpike(1);
+          drawSingleSpike(1, curIdx, spikes);
           ctx.restore();
         }
       }
@@ -232,7 +245,7 @@ export function drawProceduralBoss(ctx) {
           ctx.save();
           ctx.translate(Math.cos(a) * dist, Math.sin(a) * dist);
           ctx.rotate(a);
-          drawSingleSpike(ring === 0 ? 0.85 : 1.05);
+          drawSingleSpike(ring === 0 ? 0.85 : 1.05, i, spikes);
           ctx.restore();
         }
         ctx.restore();
@@ -247,7 +260,7 @@ export function drawProceduralBoss(ctx) {
         ctx.save();
         ctx.translate(px, py);
         ctx.rotate(Math.atan2(py, px));
-        drawSingleSpike(0.95);
+        drawSingleSpike(0.95, i, spikes);
         ctx.restore();
       }
     } else if (shape === "spiral") {
@@ -258,7 +271,7 @@ export function drawProceduralBoss(ctx) {
         ctx.save();
         ctx.translate(Math.cos(a) * dist, Math.sin(a) * dist);
         ctx.rotate(a);
-        drawSingleSpike(0.75 + (i / spikes) * 0.5);
+        drawSingleSpike(0.75 + (i / spikes) * 0.5, i, spikes);
         ctx.restore();
       }
     } else {
@@ -270,7 +283,7 @@ export function drawProceduralBoss(ctx) {
         ctx.save();
         ctx.translate(Math.cos(a) * dist, Math.sin(a) * dist);
         ctx.rotate(a);
-        drawSingleSpike(shape === "starCrown" ? (i % 2 === 0 ? 1.25 : 0.75) : 1);
+        drawSingleSpike(shape === "starCrown" ? (i % 2 === 0 ? 1.25 : 0.75) : 1, i, spikes);
         ctx.restore();
       }
     }
