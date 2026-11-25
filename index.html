@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v75 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v76 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/main.css?v=75" />
+  <link rel="stylesheet" href="styles/main.css?v=76" />
 </head>
 <body class="h-[100dvh] overflow-hidden flex flex-col bg-[#050611] text-slate-100 select-none">
 
@@ -24,7 +24,7 @@
         <h1 class="font-display text-xs sm:text-base font-bold tracking-wider uppercase flex items-center gap-2 truncate">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v75 • CREATOR PRO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v76 • CREATOR PRO</span>
         </h1>
       </div>
     </div>
@@ -148,51 +148,82 @@
               <span class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">Telemetría en Vivo</span>
               <span id="phaseBadge" class="text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">FASE 1</span>
             </div>
-            <div id="phaseName" class="text-xs font-display font-bold text-white mb-2">CALMA INICIAL</div>
-            <div class="flex items-center gap-1.5 mb-2.5 text-[9px] font-mono-tech">
-              <span id="telInstrument" class="px-2 py-0.5 rounded bg-[#00F0FF]/15 text-[#00F0FF] border border-[#00F0FF]/30">SYNTH_LEAD</span>
-              <span id="telRhythm" class="px-2 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">NORMAL</span>
+            <div class="flex items-center justify-between mb-2">
+              <div id="phaseName" class="text-xs font-display font-bold text-white">CALMA INICIAL</div>
+              <div id="telBeatDots" class="text-xs font-mono-tech text-[#00F0FF] tracking-widest">● ○ ○ ○</div>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 mb-2.5 text-[9px] font-mono-tech">
+              <span id="telInstrument" class="px-1.5 py-0.5 rounded bg-[#00F0FF]/15 text-[#00F0FF] border border-[#00F0FF]/30">SYNTH_LEAD</span>
+              <span id="telRhythm" class="px-1.5 py-0.5 rounded bg-purple-500/15 text-purple-300 border border-purple-500/30">NORMAL</span>
+              <span id="telGenre" class="px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">EDM</span>
+              <span id="telMeter" class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30">4/4</span>
+              <span id="telAccent" class="px-1.5 py-0.5 rounded bg-[#FF1F71]/15 text-[#FF4D8D] border border-[#FF1F71]/30">FUERTE</span>
+              <span id="telLayers" class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 border border-slate-700">1x CAPA</span>
             </div>
             <div class="space-y-1.5">
               <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-                <span class="w-12 text-slate-400">SUB</span>
+                <span class="w-14 text-slate-400">SUB</span>
                 <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
                   <div id="barSub" class="h-full bg-rose-500 w-0 transition-all duration-75 rounded-full"></div>
                 </div>
               </div>
               <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-                <span class="w-12 text-slate-400">KICK</span>
+                <span class="w-14 text-slate-400">KICK</span>
                 <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
                   <div id="barBass" class="h-full bg-[#FF1F71] w-0 transition-all duration-75 rounded-full"></div>
                 </div>
               </div>
               <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-                <span class="w-12 text-slate-400">PAD</span>
+                <span class="w-14 text-slate-400">PAD</span>
                 <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
                   <div id="barLowMid" class="h-full bg-emerald-400 w-0 transition-all duration-75 rounded-full"></div>
                 </div>
               </div>
               <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-                <span class="w-12 text-slate-400">SNARE</span>
+                <span class="w-14 text-slate-400">SNARE</span>
                 <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
                   <div id="barMid" class="h-full bg-[#FFD166] w-0 transition-all duration-75 rounded-full"></div>
                 </div>
               </div>
               <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-                <span class="w-12 text-slate-400">SYNTH</span>
+                <span class="w-14 text-slate-400">SYNTH</span>
                 <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
                   <div id="barHigh" class="h-full bg-[#00F0FF] w-0 transition-all duration-75 rounded-full"></div>
                 </div>
               </div>
-              <div class="pt-1 border-t border-slate-800/70 space-y-1.5">
+              <div class="pt-1.5 border-t border-slate-800/70 space-y-1.5">
                 <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-                  <span class="w-12 text-slate-400">BRILLO</span>
+                  <span class="w-14 text-slate-400">ENERGÍA</span>
+                  <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
+                    <div id="barEnergy" class="h-full bg-indigo-400 w-0 transition-all duration-75 rounded-full"></div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+                  <span class="w-14 text-slate-400">PUNCH</span>
+                  <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
+                    <div id="barPunch" class="h-full bg-fuchsia-400 w-0 transition-all duration-75 rounded-full"></div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+                  <span class="w-14 text-slate-400">RUIDO</span>
+                  <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
+                    <div id="barNoise" class="h-full bg-amber-400 w-0 transition-all duration-75 rounded-full"></div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+                  <span class="w-14 text-slate-400">CRUNCH</span>
+                  <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
+                    <div id="barCrunch" class="h-full bg-red-400 w-0 transition-all duration-75 rounded-full"></div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+                  <span class="w-14 text-slate-400">BRILLO</span>
                   <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
                     <div id="barBright" class="h-full bg-sky-300 w-0 transition-all duration-75 rounded-full"></div>
                   </div>
                 </div>
                 <div class="flex items-center gap-2 text-[10px] font-mono-tech">
-                  <span class="w-12 text-slate-400">TENSIÓN</span>
+                  <span class="w-14 text-slate-400">TENSIÓN</span>
                   <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
                     <div id="barTension" class="h-full bg-orange-400 w-0 transition-all duration-75 rounded-full"></div>
                   </div>
@@ -826,6 +857,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=75"></script>
+  <script type="module" src="src/main.js?v=76"></script>
 </body>
 </html>

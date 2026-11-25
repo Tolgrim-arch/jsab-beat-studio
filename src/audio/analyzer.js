@@ -338,7 +338,21 @@ export function analyzeAudioBuffer(audioBuffer) {
   const avgBass = frames.reduce((s, f) => s + f.bass, 0) / frames.length;
   const avgHigh = frames.reduce((s, f) => s + f.high, 0) / frames.length;
   const avgRms = frames.reduce((s, f) => s + f.rms, 0) / frames.length;
+  const avgZcr = frames.reduce((s, f) => s + f.zcr, 0) / frames.length;
+  const avgBright = frames.reduce((s, f) => s + f.brightness, 0) / frames.length;
   const avgPeakRate = realPeaks.length / Math.max(1, duration);
+
+  // Estimate dynamic range (p95 - p20 RMS) and musical genre/style tag
+  const sortedRms = frames.map(f => f.rms).sort((a, b) => a - b);
+  const dynamicRange = Utils.clamp((sortedRms[Math.floor(sortedRms.length * 0.95)] || 0) - (sortedRms[Math.floor(sortedRms.length * 0.20)] || 0), 0, 1);
+
+  let genre = "ELECTRONIC / EDM";
+  if (bestMeter.label === "3/4") genre = "WALTZ / 3:4";
+  else if (bpm >= 158) genre = avgZcr > 0.45 ? "SPEEDCORE / BREAKCORE" : "DRUM & BASS";
+  else if (bpm >= 122 && bpm <= 145 && avgBass > 0.45 && avgZcr > 0.36) genre = "PHONK / DUBSTEP";
+  else if (bpm >= 115 && bpm <= 136 && avgBright > 0.46) genre = "SYNTHWAVE / HOUSE";
+  else if (bpm < 105 && avgBass > avgHigh * 1.1) genre = "TRAP / HIP-HOP";
+  else if (avgRms < 0.28) genre = "AMBIENT / LO-FI";
 
   let archetype = ARCHETYPES.CLOCKWORK_SYNTH;
   if (bpm >= 140 && avgHigh >= avgBass * 0.7) archetype = ARCHETYPES.HYPER_BARRAGE;
@@ -391,7 +405,10 @@ export function analyzeAudioBuffer(audioBuffer) {
   }
 
   const meter = { beatsPerBar: bestMeter.beatsPerBar, label: bestMeter.label, downbeatOffset: bestMeter.downbeatOffset };
-  const baseAnalysis = { frames, fps, bpm, beatDur, tempoCurve, meter, bestOffset, beats, sections, archetype, profile: { avgBass, avgHigh, avgRms } };
+  const baseAnalysis = {
+    frames, fps, bpm, beatDur, tempoCurve, meter, bestOffset, beats, sections, archetype,
+    profile: { avgBass, avgHigh, avgRms, avgZcr, avgBright, dynamicRange, genre }
+  };
   baseAnalysis.dna = generateSongDNA(baseAnalysis, duration);
   return baseAnalysis;
 }

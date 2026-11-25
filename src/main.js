@@ -1,7 +1,7 @@
 import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
-import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=74";
+import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=76";
 import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=75";
 import { updateCyanAI } from "./combat/cyanAI.js?v=74";
 import { renderFrame, drawTimeline } from "./render/renderer.js?v=75";
@@ -37,10 +37,19 @@ const dom = {
   barLowMid: document.getElementById("barLowMid"),
   barMid: document.getElementById("barMid"),
   barHigh: document.getElementById("barHigh"),
+  barEnergy: document.getElementById("barEnergy"),
+  barPunch: document.getElementById("barPunch"),
+  barNoise: document.getElementById("barNoise"),
+  barCrunch: document.getElementById("barCrunch"),
   barBright: document.getElementById("barBright"),
   barTension: document.getElementById("barTension"),
   telInstrument: document.getElementById("telInstrument"),
   telRhythm: document.getElementById("telRhythm"),
+  telGenre: document.getElementById("telGenre"),
+  telMeter: document.getElementById("telMeter"),
+  telAccent: document.getElementById("telAccent"),
+  telLayers: document.getElementById("telLayers"),
+  telBeatDots: document.getElementById("telBeatDots"),
   timeCurrent: document.getElementById("timeCurrent"),
   timeTotal: document.getElementById("timeTotal"),
   resolutionLabel: document.getElementById("resolutionLabel"),
@@ -238,6 +247,8 @@ function loadAudioBuffer(buffer, title) {
   dom.trackStatus.textContent = "Sincronizado";
   dom.trackStatus.className = "text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300";
   dom.statBpm.textContent = `${state.liveBpm} • ${state.meterLabel}`;
+  if (dom.telGenre) dom.telGenre.textContent = state.analysis.profile?.genre || "ELECTRONIC";
+  if (dom.telMeter) dom.telMeter.textContent = state.meterLabel;
   dom.statDuration.textContent = Utils.formatTime(state.duration);
   dom.statEvents.textContent = state.schedule.length;
   dom.statArchetype.textContent = state.analysis.archetype.label;
@@ -415,13 +426,25 @@ function updateSimulation(dt) {
     const bright = Math.min(1, (mid * 0.45 + high * 0.95) / Math.max(0.05, sub + bass + lowMid + mid + high));
     const tension = Math.min(1, Math.abs(bass - (state.livePrevBass || 0)) * 2.8 + high * 0.65);
 
-    state.audioTelemetry = { sub, bass, lowMid, mid, high, brightness: bright, tension };
+    const energy = Math.min(1, (sub + bass + lowMid + mid + high) / 3.4);
+    const punch = Math.min(1, Math.max(0, bass - (state.livePrevBass || 0)) * 3.8 + Math.max(0, mid - (state.livePrevMid || 0)) * 2.5);
+    state.livePrevMid = mid;
+    let activeB = 0;
+    if (sub > 0.3) activeB++; if (bass > 0.3) activeB++; if (lowMid > 0.3) activeB++; if (mid > 0.3) activeB++; if (high > 0.3) activeB++;
+    const liveNoise = Utils.clamp(energy * 0.45 + (activeB / 5) * 0.35 + tension * 0.25, 0.05, 1);
+    const crunch = Utils.clamp(high * 0.7 + tension * 0.45, 0, 1);
+
+    state.audioTelemetry = { sub, bass, lowMid, mid, high, brightness: bright, tension, energy, punch, noise: liveNoise, crunch };
 
     if (dom.barSub) dom.barSub.style.width = `${Math.min(100, sub * 115)}%`;
     dom.barBass.style.width = `${Math.min(100, bass * 115)}%`;
     if (dom.barLowMid) dom.barLowMid.style.width = `${Math.min(100, lowMid * 115)}%`;
     dom.barMid.style.width = `${Math.min(100, mid * 115)}%`;
     dom.barHigh.style.width = `${Math.min(100, high * 115)}%`;
+    if (dom.barEnergy) dom.barEnergy.style.width = `${Math.min(100, energy * 115)}%`;
+    if (dom.barPunch) dom.barPunch.style.width = `${Math.min(100, punch * 115)}%`;
+    if (dom.barNoise) dom.barNoise.style.width = `${Math.min(100, liveNoise * 105)}%`;
+    if (dom.barCrunch) dom.barCrunch.style.width = `${Math.min(100, crunch * 110)}%`;
     if (dom.barBright) dom.barBright.style.width = `${Math.min(100, bright * 120)}%`;
     if (dom.barTension) dom.barTension.style.width = `${Math.min(100, tension * 115)}%`;
     if (dom.telInstrument) {
@@ -507,6 +530,15 @@ function updateSimulation(dt) {
     const idx = Utils.clamp(Math.floor(t * state.analysis.fps), 0, state.analysis.frames.length - 1);
     const fr = state.analysis.frames[idx];
     bass = fr.bass; mid = fr.mid; high = fr.high;
+    let activeB = 0;
+    if ((fr.sub || 0) > 0.3) activeB++;
+    if ((fr.bass || 0) > 0.3) activeB++;
+    if ((fr.lowMid || 0) > 0.3) activeB++;
+    if ((fr.mid || 0) > 0.3) activeB++;
+    if ((fr.high || 0) > 0.3) activeB++;
+    const noiseLive = Utils.clamp((fr.rms || 0) * 0.45 + (activeB / 5) * 0.35 + (fr.tension || 0) * 0.25, 0.05, 1);
+    const punchLive = Utils.clamp((fr.onset || 0) * 0.85, 0, 1);
+
     state.audioTelemetry = {
       sub: fr.sub || 0,
       bass: fr.bass || 0,
@@ -514,13 +546,21 @@ function updateSimulation(dt) {
       mid: fr.mid || 0,
       high: fr.high || 0,
       brightness: fr.brightness || 0,
-      tension: fr.tension || 0
+      tension: fr.tension || 0,
+      energy: fr.rms || 0,
+      punch: punchLive,
+      noise: noiseLive,
+      crunch: fr.zcr || 0
     };
     if (dom.barSub) dom.barSub.style.width = `${Math.min(100, (fr.sub || 0) * 90)}%`;
     dom.barBass.style.width = `${Math.min(100, bass * 90)}%`;
     if (dom.barLowMid) dom.barLowMid.style.width = `${Math.min(100, (fr.lowMid || 0) * 90)}%`;
     dom.barMid.style.width = `${Math.min(100, mid * 90)}%`;
     dom.barHigh.style.width = `${Math.min(100, high * 90)}%`;
+    if (dom.barEnergy) dom.barEnergy.style.width = `${Math.min(100, (fr.rms || 0) * 95)}%`;
+    if (dom.barPunch) dom.barPunch.style.width = `${Math.min(100, punchLive * 100)}%`;
+    if (dom.barNoise) dom.barNoise.style.width = `${Math.min(100, noiseLive * 100)}%`;
+    if (dom.barCrunch) dom.barCrunch.style.width = `${Math.min(100, (fr.zcr || 0) * 95)}%`;
     if (dom.barBright) dom.barBright.style.width = `${Math.min(100, (fr.brightness || 0) * 90)}%`;
     if (dom.barTension) dom.barTension.style.width = `${Math.min(100, (fr.tension || 0) * 90)}%`;
 
@@ -565,6 +605,22 @@ function updateSimulation(dt) {
     spawnSetpieceEvent(state.schedule[state.nextEventIdx], dom.statSetpiece);
     state.nextEventIdx++;
   }
+
+  // Update live measure dots, accent, and artifact layer badges
+  if (dom.telBeatDots) {
+    const mLen = state.beatsPerBar || 4;
+    const curBeat = state.beatInBar || 0;
+    dom.telBeatDots.textContent = Array.from({ length: mLen }, (_, i) => (i === curBeat ? "●" : "○")).join(" ");
+  }
+  if (dom.telAccent) {
+    const accMap = { DOWNBEAT: "FUERTE", SECONDARY: "MEDIO", WEAK: "DÉBIL", SYNCOPATED: "SÍNCOPA" };
+    dom.telAccent.textContent = accMap[state.lastAccentLevel] || "FUERTE";
+  }
+  if (dom.telLayers) {
+    const lyr = state.activeArtifactLayers || 1;
+    dom.telLayers.textContent = `${lyr}x ${lyr === 1 ? "CAPA" : "CAPAS"}`;
+  }
+  if (dom.telMeter) dom.telMeter.textContent = state.meterLabel || "4/4";
 
   const b = state.blixer;
   const pInfo = PHASES[state.phase - 1];
