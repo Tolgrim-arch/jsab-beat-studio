@@ -2,9 +2,9 @@ import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
 import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=74";
-import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=74";
+import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=75";
 import { updateCyanAI } from "./combat/cyanAI.js?v=74";
-import { renderFrame, drawTimeline } from "./render/renderer.js?v=74";
+import { renderFrame, drawTimeline } from "./render/renderer.js?v=75";
 import { initStudioControls } from "./ui/controls.js?v=74";
 
 const dom = {

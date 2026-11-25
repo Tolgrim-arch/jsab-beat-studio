@@ -311,7 +311,9 @@ export function renderFrame(ctx) {
     ctx.fillText(`PHASE ${state.phase} • ${PHASES[state.phase - 1].name}`, 24, 34);
     ctx.fillStyle = COLORS.cyan;
     ctx.font = "600 11px 'JetBrains Mono', monospace";
-    ctx.fillText(`SETPIECE: ${state.activeSetpiece.replace(/_/g, " ")} • ${state.liveBpm || 128} BPM [${state.meterLabel || "4/4"}] ${dots}`, 24, 54);
+    const layers = state.activeArtifactLayers || 1;
+    const noisePct = Math.round((state.noiseLevel || 0) * 100);
+    ctx.fillText(`SETPIECE: ${state.activeSetpiece.replace(/_/g, " ")} • ${state.liveBpm || 128} BPM [${state.meterLabel || "4/4"}] ${dots} • RUIDO ${noisePct}% (${layers}x)`, 24, 54);
   }
 
   drawStudioOverlays(ctx, W, H);

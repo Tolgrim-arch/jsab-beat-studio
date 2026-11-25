@@ -187,7 +187,30 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
 
   const bx = b.x, by = b.y;
   const len = Math.max(W, H) * 1.45;
-  const densityScale = (state.settings?.attackDensity ?? 1) * (isDownbeat ? 1.18 : isSecondary ? 1.0 : 0.72);
+
+  // Measure real-time noise / spectral richness (how many bands & energy are active simultaneously)
+  const tel = state.audioTelemetry || {};
+  const bSub = tel.sub ?? (ev.beat?.bass || 0) * 0.85;
+  const bBass = ev.beat?.bass ?? tel.bass ?? 0;
+  const bLowMid = tel.lowMid ?? (ev.beat?.mid || 0) * 0.7;
+  const bMid = ev.beat?.mid ?? tel.mid ?? 0;
+  const bHigh = ev.beat?.high ?? tel.high ?? 0;
+  const bRms = ev.beat?.rms ?? Math.max(bBass, bMid, bHigh);
+  const bTension = tel.tension ?? 0;
+
+  let activeBands = 0;
+  if (bSub > 0.30) activeBands++;
+  if (bBass > 0.30) activeBands++;
+  if (bLowMid > 0.30) activeBands++;
+  if (bMid > 0.30) activeBands++;
+  if (bHigh > 0.30) activeBands++;
+
+  const noiseLevel = Utils.clamp(bRms * 0.45 + (activeBands / 5) * 0.35 + bTension * 0.25, 0.08, 1.0);
+  state.noiseLevel = noiseLevel;
+  state.activeArtifactLayers = 1 + (noiseLevel >= 0.36 ? 1 : 0) + (noiseLevel >= 0.62 ? 1 : 0) + (noiseLevel >= 0.82 ? 1 : 0);
+
+  const noiseDensityMul = 0.48 + noiseLevel * 1.12;
+  const densityScale = (state.settings?.attackDensity ?? 1) * noiseDensityMul * (isDownbeat ? 1.15 : isSecondary ? 1.0 : 0.72);
 
   switch (activeSetpiece) {
     case "DROP_EXPLOSION": {
@@ -416,20 +439,77 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
     }
 
     default: {
-      // BREAKDOWN_PULSE: Clean shockwave + 8-dot ring
-      state.entities.push(AttackFactory.shockwave(bx, by, 380, len * 0.9, 18));
-      for (let k = 0; k < 8; k++) {
-        const a = (Math.PI * 2 * k) / 8 + ev.step * 0.3;
-        state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * 240, Math.sin(a) * 240, 7, "circle"));
+      // BREAKDOWN_PULSE: Clean shockwave + dot ring scaled by noiseLevel
+      state.entities.push(AttackFactory.shockwave(bx, by, 380 * bpmScale, len * 0.9, 16));
+      const dotCount = Math.max(4, Math.round(8 * densityScale));
+      for (let k = 0; k < dotCount; k++) {
+        const a = (Math.PI * 2 * k) / dotCount + ev.step * 0.3;
+        state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * 240 * spdMul, Math.sin(a) * 240 * spdMul, 7, "circle"));
       }
       break;
+    }
+  }
+
+  // Multi-Artifact Noise Layering: more audio noise / active bands => more DISTINCT attack artifacts simultaneously
+  if (state.entities.length < 210) {
+    const extraLayers = state.activeArtifactLayers - 1; // 0 (calm) up to 3 (wall of sound)
+    const ltLayer = Math.max(0.18, Math.min(0.45, curBeatDur * 0.65));
+
+    // Layer 2 (Medium+ noise >= 0.36): add a distinct artifact matching the loudest secondary frequency band
+    if (extraLayers >= 1) {
+      if (bBass >= bMid && bBass >= bHigh && activeSetpiece !== "DROP_EXPLOSION") {
+        state.entities.push(AttackFactory.shockwave(bx, by, 440 * spdMul, len * 0.85, 22));
+      } else if (bMid >= bHigh && activeSetpiece !== "BUILDUP_LOCKON") {
+        const a = Math.atan2(cy - by, cx - bx);
+        state.entities.push(AttackFactory.laser(bx, by, bx + Math.cos(a) * len, by + Math.sin(a) * len, 20, ltLayer, 0.2));
+      } else if (activeSetpiece !== "SYNCOPATED_BURST") {
+        const fanCnt = Math.max(3, Math.round(4 * densityScale));
+        const baseA = Math.atan2(cy - by, cx - bx);
+        for (let k = 0; k < fanCnt; k++) {
+          const a = baseA + (k - (fanCnt - 1) / 2) * 0.24;
+          state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * 330 * spdMul, Math.sin(a) * 330 * spdMul, 7.5, "diamond"));
+        }
+      }
+    }
+
+    // Layer 3 (High noise >= 0.62): add a second distinct artifact (sawblade, pulse bomb, or sweep bar)
+    if (extraLayers >= 2 && state.entities.length < 210) {
+      const pick2 = Math.floor((ev.seed * 17 + ev.step) % 3);
+      if (pick2 === 0 && activeSetpiece !== "SAWBLADE_GAUNTLET") {
+        const side = ev.step % 2 === 0 ? 32 : W - 32;
+        state.entities.push(AttackFactory.sawblade(side, H * (0.25 + ev.seed * 0.5), (side < W / 2 ? 1 : -1) * 310 * spdMul, (ev.seed - 0.5) * 240, 24, 3.2));
+      } else if (pick2 === 1 && activeSetpiece !== "CLOSE_TO_ME_ORBS") {
+        const px = Utils.clamp(cx + (ev.seed - 0.5) * 220, 90, W - 90);
+        const py = Utils.clamp(cy + (0.5 - ev.seed) * 180, 90, H - 90);
+        state.entities.push(AttackFactory.pulseBomb(px, py, 74, ltLayer, 8, ev.step * 0.5));
+      } else if (activeSetpiece !== "WAVE_CORRIDOR") {
+        const dir = ev.seed > 0.5 ? 1 : -1;
+        state.entities.push(AttackFactory.sweepBar("x", dir === 1 ? -36 : W + 36, dir, 400 * spdMul, 30, H * (0.25 + ev.seed * 0.5), 185));
+      }
+    }
+
+    // Layer 4 (Extreme noise / saturated drop >= 0.82): add a third distinct artifact (cross lasers + triangle ring or serpent)
+    if (extraLayers >= 3 && state.entities.length < 210) {
+      if (bSub > 0.55 && activeSetpiece !== "HYDRAULIC_CRUSH") {
+        const edge = ev.step % 2 === 0 ? "left" : "right";
+        state.entities.push(AttackFactory.hydraulicPiston(edge, W * 0.2, ltLayer, 0.28));
+      } else if (activeSetpiece !== "BARRACUDA_SWARM") {
+        const dir = ev.step % 2 === 0 ? 1 : -1;
+        state.entities.push(AttackFactory.barracudaSerpent(H * (0.25 + ev.seed * 0.5), dir, 480 * spdMul, 48, 5.5));
+      }
+      if (isStrong) {
+        for (let k = 0; k < 6; k++) {
+          const a = (Math.PI * 2 * k) / 6 + ev.seed * Math.PI;
+          state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * 270 * spdMul, Math.sin(a) * 270 * spdMul, 8, "triangle"));
+        }
+      }
     }
   }
 
   // Global Bullet Hell (Touhou) Mode overlay
   if (state.settings?.touhouMode && activeSetpiece !== "TOUHOU_DANMAKU") {
     if (ev.step === 0 && !state.entities.some(e => e.type === "danmakuSpiral")) {
-      state.entities.push(AttackFactory.danmakuSpiral(4 + ev.phase, 185 * spdMul, (ev.phase % 2 === 0 ? 1 : -1) * 1.9, Math.max(2.4, state.analysis.beatDur * 3.5), 5.5));
+      state.entities.push(AttackFactory.danmakuSpiral(4 + ev.phase, 185 * spdMul, (ev.phase % 2 === 0 ? 1 : -1) * 1.9, Math.max(2.4, curBeatDur * 3.5), 5.5));
     }
     if (ev.step === 2) {
       AttackFactory.danmakuAimedFan(bx, by, cx, cy, 5 + ev.phase, 0.95, 240 * spdMul);
