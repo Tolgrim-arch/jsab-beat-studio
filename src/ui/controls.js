@@ -24,8 +24,9 @@ function savePrefs() {
 async function decodeAnimatedGif(arrayBuffer) {
   if (typeof ImageDecoder === "undefined") return null;
   try {
-    const decoder = new ImageDecoder({ data: arrayBuffer, type: "image/gif" });
+    const decoder = new ImageDecoder({ data: new Uint8Array(arrayBuffer), type: "image/gif" });
     await decoder.tracks.ready;
+    await decoder.completed;
     const track = decoder.tracks.selectedTrack;
     const count = track.frameCount || 1;
     if (count <= 1) return null;
