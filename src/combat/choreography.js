@@ -40,6 +40,17 @@ export function buildChoreographySchedule() {
     MELODIC_PAD: ["LYCANTHROPY_VINES", "ORB_RAIN", "BREAKDOWN_PULSE", "MANDALA_BLOOM"]
   };
 
+  const GENRE_POOLS = {
+    "PHONK / DUBSTEP":       ["DROP_EXPLOSION", "TWIN_HAND_SMASH", "HYDRAULIC_CRUSH", "MEGA_MOUTH_BEAM"],
+    "SPEEDCORE / BREAKCORE": ["BARRACUDA_SWARM", "TOUHOU_DANMAKU", "SAWBLADE_GAUNTLET", "WAVE_CORRIDOR"],
+    "DRUM & BASS":           ["BARRACUDA_SWARM", "WAVE_CORRIDOR", "CLOCKWORK_LASERS", "SAWBLADE_GAUNTLET"],
+    "SYNTHWAVE / HOUSE":     ["CLOCKWORK_LASERS", "CHECKERBOARD_DANCE", "CLOSE_TO_ME_ORBS", "MANDALA_BLOOM"],
+    "WALTZ / 3:4":           ["MANDALA_BLOOM", "CLOCKWORK_LASERS", "CLOSE_TO_ME_ORBS", "LYCANTHROPY_VINES"],
+    "TRAP / HIP-HOP":        ["TWIN_HAND_SMASH", "HYDRAULIC_CRUSH", "BUILDUP_LOCKON", "DROP_EXPLOSION"],
+    "AMBIENT / LO-FI":       ["ORB_RAIN", "BREAKDOWN_PULSE", "MANDALA_BLOOM", "LYCANTHROPY_VINES"]
+  };
+  const genrePool = GENRE_POOLS[analysis.profile?.genre] || archetype.setpieces;
+
   const INSTANT_SETPIECES = new Set([
     "BARRACUDA_SWARM", "ORB_RAIN", "WAVE_CORRIDOR",
     "SAWBLADE_GAUNTLET", "MANDALA_BLOOM", "BREAKDOWN_PULSE", "SYNCOPATED_BURST"
@@ -72,7 +83,8 @@ export function buildChoreographySchedule() {
       prevKey = curKey;
     }
 
-    const pool = INSTRUMENT_POOLS[sec.instrument] || archetype.setpieces;
+    const instPool = INSTRUMENT_POOLS[sec.instrument] || archetype.setpieces;
+    const pool = (barIdx % 2 === 0) ? genrePool : instPool;
     let setpiece = pool[(cycleIdx + Math.floor(rng() * pool.length)) % pool.length];
     if (sec.type === "DROP") {
       setpiece = (barIdx % 2 === 0) ? "DROP_EXPLOSION" : pool[cycleIdx % pool.length];
@@ -133,7 +145,31 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   const b = state.blixer;
   const cx = state.cyan.x, cy = state.cyan.y;
 
-  // Dynamic BPM scaling: attack velocities & timings follow the live/local BPM
+  // Read full live telemetry (energy, punch, noise, crunch, brightness, tension)
+  const tel = state.audioTelemetry || {};
+  const bSub = tel.sub ?? (ev.beat?.bass || 0) * 0.85;
+  const bBass = ev.beat?.bass ?? tel.bass ?? 0;
+  const bLowMid = tel.lowMid ?? (ev.beat?.mid || 0) * 0.7;
+  const bMid = ev.beat?.mid ?? tel.mid ?? 0;
+  const bHigh = ev.beat?.high ?? tel.high ?? 0;
+  const bRms = tel.energy ?? ev.beat?.rms ?? Math.max(bBass, bMid, bHigh);
+  const bPunch = tel.punch ?? (ev.beat?.onset || bBass * 0.6);
+  const bCrunch = tel.crunch ?? (ev.beat?.zcr || 0.25);
+  const bBright = tel.brightness ?? (bHigh > bBass ? 0.65 : 0.35);
+  const bTension = tel.tension ?? 0;
+
+  let activeBands = 0;
+  if (bSub > 0.30) activeBands++;
+  if (bBass > 0.30) activeBands++;
+  if (bLowMid > 0.30) activeBands++;
+  if (bMid > 0.30) activeBands++;
+  if (bHigh > 0.30) activeBands++;
+
+  const noiseLevel = tel.noise ?? Utils.clamp(bRms * 0.45 + (activeBands / 5) * 0.35 + bTension * 0.25, 0.08, 1.0);
+  state.noiseLevel = noiseLevel;
+  state.activeArtifactLayers = 1 + (noiseLevel >= 0.36 ? 1 : 0) + (noiseLevel >= 0.62 ? 1 : 0) + (noiseLevel >= 0.82 ? 1 : 0);
+
+  // Dynamic BPM + Telemetry scaling: punch speeds up bursts, tension tightens telegraphs, energy scales size
   const curBpm = ev.localBpm || state.liveBpm || state.analysis?.bpm || 128;
   const curBeatDur = ev.localBeatDur || state.liveBeatDur || (60 / curBpm);
   const bpmScale = Utils.clamp(curBpm / 128, 0.68, 1.75);
@@ -143,8 +179,10 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   const isSecondary = accentLevel === "SECONDARY";
   const isStrong = isDownbeat || isSecondary;
 
-  const spdMul = PHASES[ev.phase - 1].speedMul * (state.settings?.attackSpeed ?? 1) * bpmScale * (0.88 + accentWeight * 0.24);
-  const lt = ev.leadTime;
+  const punchBoost = 1 + Utils.clamp(bPunch, 0, 1) * 0.26;
+  const energyScale = 0.78 + Utils.clamp(bRms, 0, 1) * 0.46;
+  const spdMul = PHASES[ev.phase - 1].speedMul * (state.settings?.attackSpeed ?? 1) * bpmScale * punchBoost * (0.88 + accentWeight * 0.24);
+  const lt = ev.leadTime > 0 ? Math.max(0.14, ev.leadTime * (1 - Utils.clamp(bTension, 0, 1) * 0.22)) : 0;
   const danger = (state.customColors?.enabled ? state.customColors.danger : state.analysis?.dna?.palette?.danger) || "#FF1E6E";
 
   // Update live measure telemetry
@@ -164,12 +202,12 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   state.activeSetpiece = activeSetpiece;
   if (domSetpieceEl) domSetpieceEl.textContent = activeSetpiece.replace(/_/g, " ");
 
-  // Accentuated pulse, camera punch, and boss snap on strong beats of the measure!
+  // Accentuated pulse, camera punch, and boss snap driven by metric accent + live PUNCH
   b.pulse = Math.max(b.pulse, isDownbeat ? 1.0 : isSecondary ? 0.82 : 0.55);
   if (isDownbeat) {
-    state.bgPulse = Math.max(state.bgPulse, 0.85 * accentWeight);
-    state.zoomPunch = Math.max(state.zoomPunch, 0.032 * accentWeight);
-    state.shake = Math.max(state.shake, 7 * accentWeight);
+    state.bgPulse = Math.max(state.bgPulse, (0.78 + bPunch * 0.22) * accentWeight);
+    state.zoomPunch = Math.max(state.zoomPunch, (0.028 + bPunch * 0.028) * accentWeight);
+    state.shake = Math.max(state.shake, (6 + bPunch * 9) * accentWeight);
     const spots = [
       { x: W * 0.5, y: H * 0.5 },   // Center stage (JSAB Drop!)
       { x: W * 0.5, y: H * 0.22 },  // Top center
@@ -179,38 +217,18 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
     const pick = ev.section === "DROP" ? spots[0] : spots[Math.floor(ev.seed * spots.length)];
     b.targetX = pick.x;
     b.targetY = pick.y;
-    spawnParticles(b.x, b.y, danger, Math.round(12 + accentWeight * 10), 120 * bpmScale, 360 * bpmScale);
+    spawnParticles(b.x, b.y, danger, Math.round((10 + accentWeight * 10) * energyScale), 120 * bpmScale, 360 * bpmScale);
   } else if (isSecondary) {
     state.bgPulse = Math.max(state.bgPulse, 0.55 * accentWeight);
-    state.zoomPunch = Math.max(state.zoomPunch, 0.018 * accentWeight);
+    state.zoomPunch = Math.max(state.zoomPunch, (0.016 + bPunch * 0.015) * accentWeight);
   }
 
   const bx = b.x, by = b.y;
   const len = Math.max(W, H) * 1.45;
-
-  // Measure real-time noise / spectral richness (how many bands & energy are active simultaneously)
-  const tel = state.audioTelemetry || {};
-  const bSub = tel.sub ?? (ev.beat?.bass || 0) * 0.85;
-  const bBass = ev.beat?.bass ?? tel.bass ?? 0;
-  const bLowMid = tel.lowMid ?? (ev.beat?.mid || 0) * 0.7;
-  const bMid = ev.beat?.mid ?? tel.mid ?? 0;
-  const bHigh = ev.beat?.high ?? tel.high ?? 0;
-  const bRms = ev.beat?.rms ?? Math.max(bBass, bMid, bHigh);
-  const bTension = tel.tension ?? 0;
-
-  let activeBands = 0;
-  if (bSub > 0.30) activeBands++;
-  if (bBass > 0.30) activeBands++;
-  if (bLowMid > 0.30) activeBands++;
-  if (bMid > 0.30) activeBands++;
-  if (bHigh > 0.30) activeBands++;
-
-  const noiseLevel = Utils.clamp(bRms * 0.45 + (activeBands / 5) * 0.35 + bTension * 0.25, 0.08, 1.0);
-  state.noiseLevel = noiseLevel;
-  state.activeArtifactLayers = 1 + (noiseLevel >= 0.36 ? 1 : 0) + (noiseLevel >= 0.62 ? 1 : 0) + (noiseLevel >= 0.82 ? 1 : 0);
-
   const noiseDensityMul = 0.48 + noiseLevel * 1.12;
   const densityScale = (state.settings?.attackDensity ?? 1) * noiseDensityMul * (isDownbeat ? 1.15 : isSecondary ? 1.0 : 0.72);
+  // Telemetry-driven bullet geometry: high crunch -> sharp diamond/gear, high brightness -> triangle, calm -> circle
+  const telemetryBulletShape = bCrunch > 0.58 ? "diamond" : bBright > 0.55 ? "triangle" : "circle";
 
   switch (activeSetpiece) {
     case "DROP_EXPLOSION": {
@@ -500,9 +518,28 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
       if (isStrong) {
         for (let k = 0; k < 6; k++) {
           const a = (Math.PI * 2 * k) / 6 + ev.seed * Math.PI;
-          state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * 270 * spdMul, Math.sin(a) * 270 * spdMul, 8, "triangle"));
+          state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * 270 * spdMul, Math.sin(a) * 270 * spdMul, Math.round(7.5 * energyScale), telemetryBulletShape));
         }
       }
+    }
+
+    // Telemetry-specific reactive specials (PUNCH, CRUNCH, TENSION, BRIGHTNESS)
+    if (bPunch > 0.74 && isStrong && activeSetpiece !== "DROP_EXPLOSION") {
+      state.entities.push(AttackFactory.shockwave(bx, by, 500 * spdMul, len * 0.9, Math.round(22 * energyScale)));
+    }
+    if (bCrunch > 0.72 && ev.step % 2 === 0 && activeSetpiece !== "SAWBLADE_GAUNTLET") {
+      const side = ev.seed > 0.5 ? 30 : W - 30;
+      state.entities.push(AttackFactory.sawblade(side, H * (0.2 + ev.seed * 0.6), (side < W / 2 ? 1 : -1) * 340 * spdMul, (0.5 - ev.seed) * 220, Math.round(22 * energyScale), 2.8));
+    }
+    if (bTension > 0.68 && activeSetpiece !== "BUILDUP_LOCKON") {
+      const a = Math.atan2(cy - by, cx - bx);
+      state.entities.push(AttackFactory.laser(bx, by, bx + Math.cos(a) * len, by + Math.sin(a) * len, Math.round(18 * energyScale), Math.max(0.14, ltLayer * 0.8), 0.18));
+    }
+    if (bBright > 0.66 && isStrong && activeSetpiece !== "SYNCOPATED_BURST") {
+      const a0 = Math.atan2(cy - by, cx - bx);
+      [-0.22, 0, 0.22].forEach(off => {
+        state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a0 + off) * 360 * spdMul, Math.sin(a0 + off) * 360 * spdMul, Math.round(7 * energyScale), "triangle"));
+      });
     }
   }
 
