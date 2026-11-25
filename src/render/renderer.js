@@ -104,8 +104,20 @@ export function renderFrame(ctx) {
   }
   ctx.globalAlpha = 1;
 
-  drawProceduralBoss(ctx);
+  if (!state.bossDefeated) drawProceduralBoss(ctx);
   drawCyan(ctx);
+
+  if (state.bossDefeated) {
+    ctx.save();
+    ctx.textAlign = "center";
+    ctx.fillStyle = COLORS.white;
+    ctx.font = "900 42px Orbitron, sans-serif";
+    ctx.fillText("STAGE CLEAR", W / 2, H * 0.42);
+    ctx.fillStyle = getCyanColor();
+    ctx.font = "700 18px 'JetBrains Mono', monospace";
+    ctx.fillText("PERFECT NO-HIT", W / 2, H * 0.48);
+    ctx.restore();
+  }
 
   if (state.flashAlpha > 0.01) {
     ctx.fillStyle = `rgba(255, 255, 255, ${state.flashAlpha * 0.65})`;

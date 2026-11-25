@@ -14,7 +14,7 @@ export function buildChoreographySchedule() {
   const phraseLen = 4;
   for (let i = 0; i < beats.length; i += phraseLen) {
     const t = beats[i].t;
-    if (t < 0.5 || t > duration - 0.5) continue;
+    if (t < 0.5 || t > duration - 2.6) continue;
 
     const sec = sections.find(s => t >= s.start && t < s.end) || { type: "VERSE" };
     const progress = t / duration;

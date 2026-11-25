@@ -82,6 +82,8 @@ export function resetWorldEntities() {
   state.zoomPunch = 0;
   state.flashAlpha = 0;
   state.bgPulse = 0;
+  state.finaleTriggered = false;
+  state.bossDefeated = false;
   state.blixer.x = W * 0.5;
   state.blixer.y = H * 0.26;
   state.cyan.x = W * 0.5;

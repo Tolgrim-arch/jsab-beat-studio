@@ -339,6 +339,50 @@ function updateSimulation(dt) {
 
   const b = state.blixer;
   const pInfo = PHASES[state.phase - 1];
+  const timeLeft = state.duration > 0 ? (state.duration - t) : 99;
+
+  // CONCLUSIVE JSAB FINALE (last 2.2 seconds of the song)
+  if (state.duration > 5 && timeLeft <= 2.2) {
+    if (!state.finaleTriggered) {
+      state.finaleTriggered = true;
+      // Dissolve remaining attacks into harmless white/cyan sparks
+      for (const ent of state.entities) {
+        if (Number.isFinite(ent.x) && Number.isFinite(ent.y)) {
+          spawnParticles(ent.x, ent.y, COLORS.white, 4, 40, 140);
+        }
+      }
+      state.entities = [];
+      b.targetX = W * 0.5;
+      b.targetY = H * 0.42;
+    }
+
+    if (timeLeft <= 0.85 && !state.bossDefeated) {
+      state.bossDefeated = true;
+      state.flashAlpha = 0.85;
+      state.shake = 22;
+      state.zoomPunch = 0.06;
+      spawnParticles(b.x, b.y, COLORS.white, 40, 140, 520);
+      spawnParticles(b.x, b.y, COLORS.cyan, 30, 100, 420);
+      spawnParticles(b.x, b.y, COLORS.pink, 35, 120, 460);
+    }
+
+    b.mood = "sad";
+    b.jitter = state.bossDefeated ? 0 : 14;
+    b.x = Utils.lerp(b.x, W * 0.5, dt * 6);
+    b.y = Utils.lerp(b.y, H * 0.42, dt * 6);
+
+    // Move Cyan triumphantly toward lower center
+    state.cyan.x = Utils.lerp(state.cyan.x, W * 0.5, dt * 3);
+    state.cyan.y = Utils.lerp(state.cyan.y, H * 0.68, dt * 3);
+    state.cyan.vx = 0; state.cyan.vy = 0;
+
+    for (const p of state.particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }
+    state.particles = state.particles.filter(p => p.life > 0);
+    state.shake = Math.max(0, state.shake - dt * 24);
+    state.zoomPunch = Utils.lerp(state.zoomPunch, 0, dt * 8);
+    state.flashAlpha = Math.max(0, state.flashAlpha - dt * 1.4);
+    return;
+  }
 
   // 1. 0.8s Audio Lookahead for Anticipation before Drops!
   let currentSecType = "VERSE";
