@@ -275,6 +275,17 @@ export const STYLE_PRESETS = {
       endCta: { enabled: true },
       clip: { enabled: true, start: 0, end: 40 }
     }
+  },
+  pure_minimal: {
+    label: "Modo Puro (Todo Off)",
+    settings: { phonkMode: false, touhouMode: false, biomeBgEnabled: false, biomeBgStyle: "flat", shakeMul: 1.0, zoomMul: 1.0, attackDensity: 1.0, attackSpeed: 1.0 },
+    studio: {
+      commentCard: { enabled: false },
+      vsIntro: { enabled: false },
+      bossBar: { enabled: false, showNearMiss: false },
+      endCta: { enabled: false },
+      clip: { enabled: false }
+    }
   }
 };
 

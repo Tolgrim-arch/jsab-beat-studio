@@ -27,6 +27,7 @@ export function initYoutubeStudioControls(showToast, hooks = {}, savePrefs = () 
 
     if ($("toggleBiomeBg")) $("toggleBiomeBg").checked = s.biomeBgEnabled !== false;
     if ($("selectBiomeBgStyle")) $("selectBiomeBgStyle").value = s.biomeBgStyle || "auto";
+    if ($("selectYoutubeBiomeBg")) $("selectYoutubeBiomeBg").value = s.biomeBgStyle || "auto";
     if ($("sliderBiomeBgInt")) $("sliderBiomeBgInt").value = s.biomeBgIntensity ?? 0.75;
     if ($("valBiomeBgInt")) $("valBiomeBgInt").textContent = `${Math.round((s.biomeBgIntensity ?? 0.75) * 100)}%`;
 
@@ -111,6 +112,16 @@ export function initYoutubeStudioControls(showToast, hooks = {}, savePrefs = () 
   });
   $("selectBiomeBgStyle")?.addEventListener("change", (e) => {
     state.settings.biomeBgStyle = e.target.value;
+    state.settings.biomeBgEnabled = e.target.value !== "flat";
+    if ($("toggleBiomeBg")) $("toggleBiomeBg").checked = state.settings.biomeBgEnabled;
+    if ($("selectYoutubeBiomeBg")) $("selectYoutubeBiomeBg").value = e.target.value;
+    savePrefs();
+  });
+  $("selectYoutubeBiomeBg")?.addEventListener("change", (e) => {
+    state.settings.biomeBgStyle = e.target.value;
+    state.settings.biomeBgEnabled = e.target.value !== "flat";
+    if ($("toggleBiomeBg")) $("toggleBiomeBg").checked = state.settings.biomeBgEnabled;
+    if ($("selectBiomeBgStyle")) $("selectBiomeBgStyle").value = e.target.value;
     savePrefs();
   });
   $("sliderBiomeBgInt")?.addEventListener("input", (e) => {
