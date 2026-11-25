@@ -150,5 +150,13 @@ export function initStudioControls(showToast) {
     input.addEventListener("input", () => apply(Number(input.value)));
     document.querySelector(`[data-step-dec="${id}"]`)?.addEventListener("click", () => apply(Number(input.value) - step));
     document.querySelector(`[data-step-inc="${id}"]`)?.addEventListener("click", () => apply(Number(input.value) + step));
-  });
+  const phonkEl = document.getElementById("togglePhonk");
+  if (phonkEl) {
+    phonkEl.checked = !!state.settings.phonkMode;
+    phonkEl.addEventListener("change", () => {
+      state.settings.phonkMode = phonkEl.checked;
+      savePrefs();
+      showToast(phonkEl.checked ? "⚡ Modo TikTok / Phonk Edit ACTIVADO" : "Modo Phonk desactivado", "info");
+    });
+  }
 }

@@ -135,6 +135,26 @@ export function renderFrame(ctx) {
     ctx.restore();
   }
 
+  if (state.settings?.phonkMode) {
+    // Pulsing dark cinematic vignette reacting to 808 bass
+    const vig = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.28, W / 2, H / 2, Math.max(W, H) * 0.72);
+    vig.addColorStop(0, "rgba(0,0,0,0)");
+    vig.addColorStop(1, `rgba(0,0,0,${0.55 + state.bgPulse * 0.25})`);
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, W, H);
+
+    // RGB Split / Chromatic impact edge flash on hard kicks
+    if (state.rgbSplit > 0.08) {
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
+      ctx.fillStyle = `rgba(0, 240, 255, ${state.rgbSplit * 0.16})`;
+      ctx.fillRect(0, 0, 18 * state.rgbSplit, H);
+      ctx.fillStyle = `rgba(255, 30, 110, ${state.rgbSplit * 0.18})`;
+      ctx.fillRect(W - 18 * state.rgbSplit, 0, 18 * state.rgbSplit, H);
+      ctx.restore();
+    }
+  }
+
   if (state.flashAlpha > 0.01) {
     ctx.fillStyle = `rgba(255, 255, 255, ${state.flashAlpha * 0.65})`;
     ctx.fillRect(0, 0, W, H);

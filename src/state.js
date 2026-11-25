@@ -44,8 +44,12 @@ export const state = {
     bossScale: 1.0,
     shakeMul: 1.0,
     zoomMul: 1.0,
-    eqAlpha: 0.14
+    eqAlpha: 0.14,
+    phonkMode: false
   },
+  velocityTimer: 0,
+  rgbSplit: 0,
+  whipDir: 1,
   customBoss: {
     img: null,
     frame: "circle",      // "none" | "circle" | "square"

@@ -313,7 +313,16 @@ function updateSimulation(dt) {
     dom.barHigh.style.width = `${Math.min(100, high * 90)}%`;
 
     if (fr.kickOnset > 0.45) {
-      state.zoomPunch = Math.max(state.zoomPunch, 0.022);
+      if (state.settings?.phonkMode) {
+        state.zoomPunch = Math.max(state.zoomPunch, 0.068);
+        state.camTilt = (state.whipDir || 1) * 0.042;
+        state.whipDir = -(state.whipDir || 1);
+        state.velocityTimer = 0.055;
+        state.rgbSplit = 1.0;
+        state.shake = Math.max(state.shake, 11);
+      } else {
+        state.zoomPunch = Math.max(state.zoomPunch, 0.022);
+      }
       state.bgPulse = Math.max(state.bgPulse, 0.65);
     }
 
