@@ -15,18 +15,21 @@ function drawBiomeBackground(ctx, W, H) {
   ctx.fillStyle = state.customColors?.enabled ? state.customColors.bg : "#040D14";
   ctx.fillRect(0, 0, W, H);
 
-  const cyanCol = getCyanColor();
-  const bars = 36;
-  const bw = W / bars;
-  ctx.save();
-  ctx.fillStyle = cyanCol;
-  ctx.globalAlpha = 0.14;
-  for (let i = 0; i < bars; i++) {
-    const wave = 0.4 + 0.6 * Math.sin(state.currentTime * 4 + i * 0.45);
-    const bh = (24 + state.bgPulse * 70) * wave;
-    ctx.fillRect(i * bw, H - bh, bw - 2, bh);
+  const eqCol = state.customColors?.enabled ? (state.customColors.eq || getCyanColor()) : getCyanColor();
+  const eqAlpha = state.settings?.eqAlpha ?? 0.14;
+  if (eqAlpha > 0.01) {
+    const bars = 36;
+    const bw = W / bars;
+    ctx.save();
+    ctx.fillStyle = eqCol;
+    ctx.globalAlpha = eqAlpha;
+    for (let i = 0; i < bars; i++) {
+      const wave = 0.4 + 0.6 * Math.sin(state.currentTime * 4 + i * 0.45);
+      const bh = (24 + state.bgPulse * 70) * wave;
+      ctx.fillRect(i * bw, H - bh, bw - 2, bh);
+    }
+    ctx.restore();
   }
-  ctx.restore();
 
   if (state.phase >= 2) {
     const borderH = 10 + state.bgPulse * 18;
@@ -39,8 +42,8 @@ function drawBiomeBackground(ctx, W, H) {
 function drawCyan(ctx) {
   const c = state.cyan;
   const cyanCol = getCyanColor();
+  const trailCol = state.customColors?.enabled ? (state.customColors.trail || "#0077FF") : "#0077FF";
 
-  // Solid expanding cyan circle on Dash (just like ergrgerg.PNG!)
   if (c.dashRing) {
     ctx.save();
     ctx.globalAlpha = Utils.clamp(c.dashRing.alpha, 0, 1);
@@ -51,11 +54,10 @@ function drawCyan(ctx) {
     ctx.restore();
   }
 
-  // Small solid BLUE (#0077FF) squares left behind ONLY while moving
   for (const tr of c.trail) {
     ctx.save();
     ctx.globalAlpha = Utils.clamp(tr.alpha, 0, 1);
-    ctx.fillStyle = "#0077FF";
+    ctx.fillStyle = trailCol;
     const sz = tr.size || 4;
     ctx.fillRect(tr.x - sz, tr.y - sz, sz * 2, sz * 2);
     ctx.restore();
@@ -66,7 +68,6 @@ function drawCyan(ctx) {
   ctx.rotate(c.rot);
 
   if (c.dashTimer > 0) {
-    // Stretched pure WHITE rectangle with cyan core during dash
     ctx.fillStyle = COLORS.white;
     ctx.fillRect(-c.r * 2.4, -c.r * 0.72, c.r * 4.8, c.r * 1.44);
     ctx.fillStyle = cyanCol;
@@ -83,15 +84,17 @@ export function renderFrame(ctx) {
   const W = state.width, H = state.height;
   ctx.save();
 
-  if (state.zoomPunch > 0.001 || Math.abs(state.camTilt || 0) > 0.0005) {
-    const z = 1 + state.zoomPunch;
+  const zoom = (state.zoomPunch || 0) * (state.settings?.zoomMul ?? 1);
+  if (zoom > 0.001 || Math.abs(state.camTilt || 0) > 0.0005) {
+    const z = 1 + zoom;
     ctx.translate(W / 2, H / 2);
     ctx.rotate(state.camTilt || 0);
     ctx.scale(z, z);
     ctx.translate(-W / 2, -H / 2);
   }
-  if (state.shake > 0.2) {
-    ctx.translate((Math.random() - 0.5) * state.shake, (Math.random() - 0.5) * state.shake);
+  const shake = (state.shake || 0) * (state.settings?.shakeMul ?? 1);
+  if (shake > 0.2) {
+    ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
   }
 
   drawBiomeBackground(ctx, W, H);

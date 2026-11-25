@@ -33,7 +33,22 @@ export const state = {
     enabled: false,
     bg: "#040D14",
     danger: "#FF1E6E",
-    cyan: "#00F0FF"
+    cyan: "#00F0FF",
+    trail: "#0077FF",
+    eq: "#00F0FF"
+  },
+  settings: {
+    syncOffsetMs: 0,
+    attackSpeed: 1.0,
+    attackDensity: 1.0,
+    bossScale: 1.0,
+    shakeMul: 1.0,
+    zoomMul: 1.0,
+    eqAlpha: 0.14
+  },
+  customBoss: {
+    img: null,
+    frame: "circle" // "none" | "circle" | "square" | "spiky"
   },
   entities: [],
   particles: [],

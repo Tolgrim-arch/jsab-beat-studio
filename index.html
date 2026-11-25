@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v31 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v32 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -24,7 +24,7 @@
         <h1 class="font-display text-sm sm:text-base font-bold tracking-wider uppercase flex items-center gap-2">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">v31 • MODULAR</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">v32 • MODULAR</span>
         </h1>
       </div>
     </div>
@@ -123,26 +123,82 @@
         </div>
       </div>
 
-      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5 space-y-2.5">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Colores Personalizados</span>
-          <button id="btnResetColors" class="text-[10px] font-mono-tech text-[#00F0FF] hover:underline cursor-pointer">Auto ADN</button>
+      <!-- ACCORDION 1: COLORES TOTALES -->
+      <details class="studio-acc rounded-xl bg-[#121530] border border-slate-800/90 p-3.5" open>
+        <summary class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-300">
+          <span>🎨 Colores Totales</span>
+          <span class="acc-arrow text-[#00F0FF]">▸</span>
+        </summary>
+        <p class="text-[10px] text-slate-400 mt-1.5 mb-2.5 leading-relaxed">Personaliza el color de cada elemento en tiempo real o usa Auto ADN.</p>
+        <div class="grid grid-cols-5 gap-1.5 text-center text-[9px] font-mono-tech text-slate-300 mb-2">
+          <label class="flex flex-col items-center gap-1 cursor-pointer"><input id="colorBg" type="color" value="#040D14" class="w-7 h-5 rounded bg-transparent border border-slate-700 cursor-pointer" /><span>Fondo</span></label>
+          <label class="flex flex-col items-center gap-1 cursor-pointer"><input id="colorDanger" type="color" value="#FF1E6E" class="w-7 h-5 rounded bg-transparent border border-slate-700 cursor-pointer" /><span>Jefe</span></label>
+          <label class="flex flex-col items-center gap-1 cursor-pointer"><input id="colorCyan" type="color" value="#00F0FF" class="w-7 h-5 rounded bg-transparent border border-slate-700 cursor-pointer" /><span>Cian</span></label>
+          <label class="flex flex-col items-center gap-1 cursor-pointer"><input id="colorTrail" type="color" value="#0077FF" class="w-7 h-5 rounded bg-transparent border border-slate-700 cursor-pointer" /><span>Estela</span></label>
+          <label class="flex flex-col items-center gap-1 cursor-pointer"><input id="colorEq" type="color" value="#00F0FF" class="w-7 h-5 rounded bg-transparent border border-slate-700 cursor-pointer" /><span>EQ</span></label>
         </div>
-        <div class="grid grid-cols-3 gap-2 text-center text-[10px] font-mono-tech text-slate-300">
-          <label class="flex flex-col items-center gap-1 cursor-pointer">
-            <input id="colorBg" type="color" value="#040D14" class="w-8 h-6 rounded bg-transparent border border-slate-700 cursor-pointer" />
-            <span>Fondo</span>
-          </label>
-          <label class="flex flex-col items-center gap-1 cursor-pointer">
-            <input id="colorDanger" type="color" value="#FF1E6E" class="w-8 h-6 rounded bg-transparent border border-slate-700 cursor-pointer" />
-            <span>Ataques</span>
-          </label>
-          <label class="flex flex-col items-center gap-1 cursor-pointer">
-            <input id="colorCyan" type="color" value="#00F0FF" class="w-8 h-6 rounded bg-transparent border border-slate-700 cursor-pointer" />
-            <span>Cian</span>
-          </label>
+        <button id="btnResetColors" class="w-full py-1 rounded bg-slate-800/80 hover:bg-slate-700 text-[10px] font-mono-tech text-[#00F0FF] cursor-pointer">Restaurar Auto ADN</button>
+      </details>
+
+      <!-- ACCORDION 2: ENEMIGO PNG PERSONALIZADO -->
+      <details class="studio-acc rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
+        <summary class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-300">
+          <span>🖼️ Enemigo PNG + Marco</span>
+          <span class="acc-arrow text-[#00F0FF]">▸</span>
+        </summary>
+        <p class="text-[10px] text-slate-400 mt-1.5 mb-2.5 leading-relaxed">Sube una imagen PNG como jefe. Se estirará y parpadeará en blanco/rojo al beat.</p>
+        <div class="space-y-2">
+          <div class="flex gap-2">
+            <label for="bossPngInput" class="flex-1 text-center py-1.5 rounded-lg bg-[#FF1F71]/15 hover:bg-[#FF1F71]/25 border border-[#FF1F71]/40 text-[#FF1F71] text-[11px] font-semibold cursor-pointer">Subir PNG</label>
+            <input id="bossPngInput" type="file" accept="image/*" class="hidden" />
+            <button id="btnClearBossPng" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 cursor-pointer">Quitar</button>
+          </div>
+          <div class="flex items-center justify-between text-[10px] font-mono-tech text-slate-300">
+            <span>MARCO:</span>
+            <select id="bossFrameSelect" class="bg-[#090b1a] border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200">
+              <option value="circle">Circular</option>
+              <option value="square">Cubo / Cuadrado</option>
+              <option value="spiky">Circular con Púas</option>
+              <option value="none">Sin Marco</option>
+            </select>
+          </div>
         </div>
-      </div>
+      </details>
+
+      <!-- ACCORDION 3: RITMO, CÁMARA Y EFECTOS -->
+      <details class="studio-acc rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
+        <summary class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-300">
+          <span>🎛️ Ritmo, Jefe y Cámara</span>
+          <span class="acc-arrow text-[#00F0FF]">▸</span>
+        </summary>
+        <p class="text-[10px] text-slate-400 mt-1.5 mb-3 leading-relaxed">Ajusta precisión de beats, tamaño del jefe, temblor, zoom y ecualizador con las flechas.</p>
+        <div class="space-y-2.5 text-[10px] font-mono-tech">
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-slate-300">OFFSET BEATS</span><span id="valSync" class="text-[#00F0FF]">0ms</span></div>
+            <div class="flex items-center gap-1.5"><button data-step-dec="sliderSync" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSync" type="range" min="-200" max="200" step="10" value="0" class="studio-slider flex-1" /><button data-step-inc="sliderSync" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-slate-300">TAMAÑO JEFE</span><span id="valBoss" class="text-[#00F0FF]">1.0x</span></div>
+            <div class="flex items-center gap-1.5"><button data-step-dec="sliderBoss" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderBoss" type="range" min="0.6" max="1.6" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderBoss" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-slate-300">VELOCIDAD ATAQUES</span><span id="valSpeed" class="text-[#00F0FF]">1.0x</span></div>
+            <div class="flex items-center gap-1.5"><button data-step-dec="sliderSpeed" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSpeed" type="range" min="0.5" max="2.0" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderSpeed" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-slate-300">SCREEN SHAKE</span><span id="valShake" class="text-[#00F0FF]">1.0x</span></div>
+            <div class="flex items-center gap-1.5"><button data-step-dec="sliderShake" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderShake" type="range" min="0" max="2.0" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderShake" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-slate-300">ZOOM PUNCH</span><span id="valZoom" class="text-[#00F0FF]">1.0x</span></div>
+            <div class="flex items-center gap-1.5"><button data-step-dec="sliderZoom" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderZoom" type="range" min="0" max="2.0" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderZoom" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-slate-300">OPACIDAD EQ</span><span id="valEqAlpha" class="text-[#00F0FF]">14%</span></div>
+            <div class="flex items-center gap-1.5"><button data-step-dec="sliderEqAlpha" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderEqAlpha" type="range" min="0" max="0.6" step="0.05" value="0.14" class="studio-slider flex-1" /><button data-step-inc="sliderEqAlpha" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+          </div>
+        </div>
+      </details>
 
       <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5 space-y-2.5">
         <div class="flex items-center justify-between">
@@ -211,6 +267,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=31"></script>
+  <script type="module" src="src/main.js?v=32"></script>
 </body>
 </html>

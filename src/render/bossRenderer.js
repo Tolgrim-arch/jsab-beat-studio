@@ -81,6 +81,48 @@ export function drawProceduralBoss(ctx) {
     ctx.restore();
   }
 
+  // Custom PNG Boss Mode (inherits squash-and-stretch, tilt, jitter, and beat white/danger flash!)
+  if (state.customBoss?.img) {
+    const frame = state.customBoss.frame || "circle";
+    const s = b.r * 1.15;
+    ctx.save();
+    ctx.beginPath();
+    if (frame === "circle" || frame === "spiky") {
+      ctx.arc(0, 0, s, 0, Math.PI * 2);
+    } else if (frame === "square") {
+      ctx.roundRect(-s, -s, s * 2, s * 2, 18);
+    }
+    if (frame !== "none") ctx.clip();
+
+    ctx.drawImage(state.customBoss.img, -s, -s, s * 2, s * 2);
+
+    // Beat flash overlay (pure white on hard pulse, danger tint on beat)
+    if (flash) {
+      ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
+      ctx.fillRect(-s, -s, s * 2, s * 2);
+    } else if (b.pulse > 0.35) {
+      ctx.fillStyle = danger;
+      ctx.globalAlpha = (b.pulse - 0.35) * 0.45;
+      ctx.fillRect(-s, -s, s * 2, s * 2);
+      ctx.globalAlpha = 1;
+    }
+    ctx.restore();
+
+    // Draw crisp outer frame border
+    if (frame !== "none") {
+      ctx.save();
+      ctx.strokeStyle = flash ? COLORS.white : danger;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      if (frame === "circle" || frame === "spiky") ctx.arc(0, 0, s, 0, Math.PI * 2);
+      else ctx.roundRect(-s, -s, s * 2, s * 2, 18);
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+    return;
+  }
+
   // Main Boss Body Silhouette
   ctx.fillStyle = flash ? COLORS.white : danger;
   ctx.strokeStyle = danger;

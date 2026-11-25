@@ -215,12 +215,12 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
           state.entities.push(AttackFactory.lycanthropySpike(pos, H * (0.14 + wave * 0.28), W / count + 4, lt, 0.4, side));
         }
       } else {
-        // Dual Lateral Pincer (left + right closing in)
-        const count = 5;
+        // Symmetric Dual Lateral Pincer (3 left + 3 right closing in cleanly)
+        const count = 6;
         for (let k = 0; k < count; k++) {
           const pos = (H / count) * (k + 0.5);
-          const d = W * (0.22 + ((k + ev.step) % 2) * 0.12);
-          state.entities.push(AttackFactory.lycanthropySpike(pos, d, H / count + 4, lt, 0.4, k % 2 === 0 ? "left" : "right"));
+          const d = W * (0.26 + ((k + ev.step) % 2) * 0.1);
+          state.entities.push(AttackFactory.lycanthropySpike(pos, d, H / count + 4, lt, 0.42, k % 2 === 0 ? "left" : "right"));
         }
       }
       break;
