@@ -60,8 +60,11 @@ export const state = {
     spikesLayer: "behind",// "behind" | "above"
     spikeCount: 12,       // 4 to 20
     spikeRadiusMul: 1.0,  // 0.5 to 2.2
-    handsShape: "auto",   // "auto" | "square" | "circle" | "triangle" | "claws" | "none"
+    handsShape: "auto",   // "auto" | "square" | "circle" | "triangle" | "claws" | "peace" | "none"
     handsLayer: "behind", // "behind" | "above"
+    handsDistanceMul: 1.0,// 0.5 to 2.2
+    handsAnim: "alternating", // "alternating" | "sync" | "orbit" | "vibe" | "wave"
+    handsRotate: "tilt",  // "tilt" | "spin" | "none"
     flashIntensity: 0.72  // 0 to 1
   },
   disabledAttacks: {},

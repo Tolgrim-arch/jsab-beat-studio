@@ -19,6 +19,9 @@ function savePrefs() {
         spikeRadiusMul: state.customBoss.spikeRadiusMul,
         handsShape: state.customBoss.handsShape,
         handsLayer: state.customBoss.handsLayer,
+        handsDistanceMul: state.customBoss.handsDistanceMul,
+        handsAnim: state.customBoss.handsAnim,
+        handsRotate: state.customBoss.handsRotate,
         flashIntensity: state.customBoss.flashIntensity,
         dataUrl: state.customBoss.dataUrl || null
       }
@@ -563,7 +566,9 @@ export function initStudioControls(showToast) {
     ["bossSpikesShapeSelect", "spikesShape"],
     ["bossSpikesLayerSelect", "spikesLayer"],
     ["bossHandsSelect", "handsShape"],
-    ["bossHandsLayerSelect", "handsLayer"]
+    ["bossHandsLayerSelect", "handsLayer"],
+    ["bossHandsAnimSelect", "handsAnim"],
+    ["bossHandsRotateSelect", "handsRotate"]
   ];
   selects.forEach(([id, key]) => {
     const el = document.getElementById(id);
@@ -587,6 +592,7 @@ export function initStudioControls(showToast) {
     { id: "sliderFrameWidth", target: state.customBoss, key: "frameWidth",     valId: "valFrameWidth", step: 1,    fmt: v => `${v}px` },
     { id: "sliderSpikeCount",  target: state.customBoss, key: "spikeCount",     valId: "valSpikeCount",  step: 2,    fmt: v => `${v}` },
     { id: "sliderSpikeSpread", target: state.customBoss, key: "spikeRadiusMul", valId: "valSpikeSpread", step: 0.05, fmt: v => `${v.toFixed(2)}x` },
+    { id: "sliderHandsDist",   target: state.customBoss, key: "handsDistanceMul", valId: "valHandsDist", step: 0.05, fmt: v => `${v.toFixed(2)}x` },
     { id: "sliderFlashInt",   target: state.customBoss, key: "flashIntensity", valId: "valFlashInt",   step: 0.1,  fmt: v => `${Math.round(v * 100)}%` }
   ];
 

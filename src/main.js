@@ -4,8 +4,8 @@ import { state, spawnParticles, resetWorldEntities } from "./state.js";
 import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js";
 import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=56";
 import { updateCyanAI } from "./combat/cyanAI.js";
-import { renderFrame, drawTimeline } from "./render/renderer.js?v=59";
-import { initStudioControls } from "./ui/controls.js?v=59";
+import { renderFrame, drawTimeline } from "./render/renderer.js?v=60";
+import { initStudioControls } from "./ui/controls.js?v=60";
 
 const dom = {
   canvas: document.getElementById("gameCanvas"),
@@ -591,12 +591,42 @@ function updateSimulation(dt) {
   for (const tr of b.trail) tr.alpha -= dt * 3.0;
   b.trail = b.trail.filter(tr => tr.alpha > 0);
 
-  const handSpread = b.mood === "tense" ? 1.55 : (b.mood === "frenzy" ? 2.45 : 2.05);
-  const handBounce = Math.sin(t * 6) * (b.mood === "frenzy" ? 32 : 16);
-  b.leftHand.x = Utils.lerp(b.leftHand.x, b.x - b.r * handSpread, dt * 8);
-  b.leftHand.y = Utils.lerp(b.leftHand.y, b.y + 24 + handBounce, dt * 8);
-  b.rightHand.x = Utils.lerp(b.rightHand.x, b.x + b.r * handSpread, dt * 8);
-  b.rightHand.y = Utils.lerp(b.rightHand.y, b.y + 24 - handBounce, dt * 8);
+  const distMul = state.customBoss?.handsDistanceMul ?? 1.0;
+  const handAnim = state.customBoss?.handsAnim || "alternating";
+  const handSpread = (b.mood === "tense" ? 1.55 : (b.mood === "frenzy" ? 2.45 : 2.05)) * distMul;
+  const amp = b.mood === "frenzy" ? 36 : 20;
+  let lx = b.x - b.r * handSpread, ly = b.y + 24;
+  let rx = b.x + b.r * handSpread, ry = b.y + 24;
+
+  if (handAnim === "alternating") {
+    const hb = Math.sin(t * 6) * amp;
+    ly += hb; ry -= hb;
+  } else if (handAnim === "sync") {
+    const hb = Math.sin(t * 6) * amp;
+    ly += hb; ry += hb;
+  } else if (handAnim === "orbit") {
+    const rad = b.r * handSpread;
+    const a = t * 2.4;
+    lx = b.x + Math.cos(a + Math.PI) * rad;
+    ly = b.y + Math.sin(a + Math.PI) * rad;
+    rx = b.x + Math.cos(a) * rad;
+    ry = b.y + Math.sin(a) * rad;
+  } else if (handAnim === "vibe") {
+    const groove = Math.abs(Math.sin(t * 7.5)) * -amp * 1.15;
+    const sway = Math.cos(t * 3.75) * 18;
+    lx += sway; rx += sway;
+    ly += groove; ry += groove;
+  } else if (handAnim === "wave") {
+    lx += Math.sin(t * 5) * 24;
+    rx -= Math.sin(t * 5) * 24;
+    ly += Math.cos(t * 5) * amp;
+    ry += Math.cos(t * 5) * amp;
+  }
+
+  b.leftHand.x = Utils.lerp(b.leftHand.x, lx, dt * 8);
+  b.leftHand.y = Utils.lerp(b.leftHand.y, ly, dt * 8);
+  b.rightHand.x = Utils.lerp(b.rightHand.x, rx, dt * 8);
+  b.rightHand.y = Utils.lerp(b.rightHand.y, ry, dt * 8);
 
   const entDt = dt * (state.settings?.attackSpeed ?? 1);
   for (const ent of state.entities) ent.update(entDt, W, H);

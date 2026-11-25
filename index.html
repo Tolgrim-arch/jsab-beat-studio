@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v59 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v60 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -24,7 +24,7 @@
         <h1 class="font-display text-xs sm:text-base font-bold tracking-wider uppercase flex items-center gap-2 truncate">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v59 • STUDIO PRO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v60 • STUDIO PRO</span>
         </h1>
       </div>
     </div>
@@ -273,6 +273,7 @@
               <span>MANOS</span>
               <select id="bossHandsSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
                 <option value="auto">Auto ADN</option>
+                <option value="peace">Señal de Paz ✌️</option>
                 <option value="square">Cuadrados</option>
                 <option value="circle">Círculos</option>
                 <option value="triangle">Triángulos</option>
@@ -286,6 +287,29 @@
                 <option value="behind">Detrás del cuerpo</option>
                 <option value="above">Encima del cuerpo</option>
               </select>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>MOV. MANOS</span>
+              <select id="bossHandsAnimSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                <option value="alternating">Alternado (Arriba/Abajo)</option>
+                <option value="sync">Juntas (Suben/Bajan)</option>
+                <option value="vibe">Ritmo / Disfrute</option>
+                <option value="wave">Saludo / Ola</option>
+                <option value="orbit">Órbita Circular</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>ROTACIÓN MANOS</span>
+              <select id="bossHandsRotateSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                <option value="tilt">Sutil (pocos grados)</option>
+                <option value="spin">Giro continuo</option>
+                <option value="none">Sin rotación</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">DISTANCIA MANOS</span><span id="valHandsDist" class="text-[#00F0FF]">1.00x</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderHandsDist" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderHandsDist" type="range" min="0.5" max="2.2" step="0.05" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderHandsDist" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
             </div>
 
             <div>
@@ -464,6 +488,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=59"></script>
+  <script type="module" src="src/main.js?v=60"></script>
 </body>
 </html>

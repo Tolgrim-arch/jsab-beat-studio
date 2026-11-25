@@ -33,20 +33,43 @@ export function drawProceduralBoss(ctx) {
   const cb = state.customBoss || {};
   const handsShape = cb.handsShape || "auto";
   const handsLayer = cb.handsLayer || "behind";
+  const handsRotate = cb.handsRotate || "tilt";
   const spikesLayer = cb.spikesLayer || "behind";
+  const bgCol = (state.customColors?.enabled ? state.customColors.bg : state.analysis?.dna?.palette?.bg) || "#040D14";
 
   const drawHands = () => {
     if (state.phase < 2 || handsShape === "none") return;
     if (state.entities?.some(e => !e.dead && e.type === "articulatedArms")) return;
+    const col = flash ? COLORS.white : danger;
     [b.leftHand, b.rightHand].forEach((h, idx) => {
       const side = idx === 0 ? -1 : 1;
       ctx.save();
       ctx.translate(h.x, h.y);
-      ctx.rotate(side * 0.35 + Math.sin(state.currentTime * 4) * 0.15);
-      ctx.fillStyle = flash ? COLORS.white : danger;
+      if (handsRotate === "spin") {
+        ctx.rotate(state.currentTime * 2.8 * side);
+      } else if (handsRotate === "tilt") {
+        ctx.rotate(side * 0.22 + Math.sin(state.currentTime * 4) * 0.16);
+      }
+      ctx.fillStyle = col;
 
       const resolved = handsShape === "auto" ? bossCfg.limbStyle : handsShape;
-      if (resolved === "triangle" || resolved === "floating_triangles") {
+      if (resolved === "peace" && typeof Path2D !== "undefined") {
+        const sc = (b.r * 0.86) / 128;
+        ctx.scale(side * sc, sc);
+        ctx.translate(-128, -128);
+        const bodyPath = new Path2D("M 92 144 L 70 56 A 12.4 12.4 0 0 1 94 50 L 113 126 L 141 42 A 12.7 12.7 0 0 1 165 50 L 138 131 L 185 160.5 C 185 204 161 226 130.5 226 C 98 226 76 204 76 174 L 76 158 Q 76 144 90 144 Z");
+        ctx.fill(bodyPath);
+        ctx.strokeStyle = bgCol;
+        ctx.lineWidth = 6;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        const f1 = new Path2D("M 150 116 A 12 12 0 0 1 162 128 L 162 154 A 12 12 0 0 1 138 154 L 138 128 A 12 12 0 0 1 150 116 Z");
+        const f2 = new Path2D("M 173.5 128 A 11.5 11.5 0 0 1 185 139.5 L 185 160.5 A 11.5 11.5 0 0 1 162 160.5 L 162 139.5 A 11.5 11.5 0 0 1 173.5 128 Z");
+        const thumb = new Path2D("M 76 174 L 76 158 Q 76 144 90 144 L 136 144 A 12 12 0 0 1 136 168 L 114 168 Q 100 168 98 188");
+        ctx.fill(f1); ctx.stroke(f1);
+        ctx.fill(f2); ctx.stroke(f2);
+        ctx.fill(thumb); ctx.stroke(thumb);
+      } else if (resolved === "triangle" || resolved === "floating_triangles") {
         Utils.drawPolygon(ctx, 0, 0, 3, b.r * 0.48, side > 0 ? 0 : Math.PI);
         ctx.fill();
       } else if (resolved === "square" || resolved === "orbit_cannons") {
