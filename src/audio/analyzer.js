@@ -77,7 +77,7 @@ export function analyzeAudioBuffer(audioBuffer) {
   const ch0 = audioBuffer.getChannelData(0);
   const ch1 = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : ch0;
   const duration = audioBuffer.duration;
-  const fps = 30;
+  const fps = 60;
   const totalFrames = Math.ceil(duration * fps);
   const hop = Math.floor(sr / fps);
 
@@ -93,7 +93,6 @@ export function analyzeAudioBuffer(audioBuffer) {
 
     for (let i = start; i < end; i += 2) {
       const s = 0.5 * (ch0[i] + ch1[i]);
-      // 2-pole cascaded filters for sharper Sub-Bass / Mid / High separation
       lp1 += 0.042 * (s - lp1);
       lp2 += 0.042 * (lp1 - lp2);
       bp1 += 0.24 * (s - bp1);
@@ -117,11 +116,11 @@ export function analyzeAudioBuffer(audioBuffer) {
     const snareOnset = Math.max(0, mid - prevMid);
     const highOnset = Math.max(0, high - prevHigh);
 
-    prevBass = bass * 0.62 + prevBass * 0.38;
-    prevMid = mid * 0.62 + prevMid * 0.38;
-    prevHigh = high * 0.62 + prevHigh * 0.38;
+    prevBass = bass * 0.58 + prevBass * 0.42;
+    prevMid = mid * 0.58 + prevMid * 0.42;
+    prevHigh = high * 0.58 + prevHigh * 0.42;
 
-    frames[f] = { t: f / fps, rms, bass, mid, high, kickOnset, snareOnset, highOnset, onset: kickOnset * 1.15 + snareOnset * 0.65 };
+    frames[f] = { t: f / fps, rms, bass, mid, high, kickOnset, snareOnset, highOnset, onset: kickOnset * 1.25 + snareOnset * 0.7 };
   }
 
   const normBand = (key) => {
@@ -131,9 +130,25 @@ export function analyzeAudioBuffer(audioBuffer) {
   };
   ["rms", "bass", "mid", "high", "kickOnset", "snareOnset", "highOnset", "onset"].forEach(normBand);
 
+  // Adaptive Local Thresholding for sharp real peak detection
+  const winHalf = Math.floor(fps * 0.25);
+  const realPeaks = [];
+  for (let f = 2; f < frames.length - 2; f++) {
+    let sum = 0, cnt = 0;
+    for (let k = Math.max(0, f - winHalf); k <= Math.min(frames.length - 1, f + winHalf); k++) {
+      sum += frames[k].onset;
+      cnt++;
+    }
+    const localMean = sum / cnt;
+    const cur = frames[f].onset;
+    if (cur > localMean * 1.45 && cur > 0.16 && cur >= frames[f - 1].onset && cur >= frames[f + 1].onset) {
+      realPeaks.push(frames[f].t);
+    }
+  }
+
   // BPM via autocorrelation
   const onsets = frames.map(fr => fr.onset);
-  let bestLag = 14, bestCorr = -1;
+  let bestLag = Math.floor(fps * 0.46), bestCorr = -1;
   const minLag = Math.floor((fps * 60) / 185);
   const maxLag = Math.floor((fps * 60) / 72);
   for (let lag = minLag; lag <= maxLag; lag++) {
@@ -144,39 +159,45 @@ export function analyzeAudioBuffer(audioBuffer) {
   const bpm = Math.round((60 * fps) / bestLag);
   const beatDur = 60 / bpm;
 
-  // Exact Beat Phase Alignment (find offset in [0, beatDur) that maximizes onset alignment)
+  // Exact Beat Phase Alignment
   let bestOffset = 0, bestPhaseScore = -1;
-  const phaseSteps = 20;
+  const phaseSteps = 24;
   for (let p = 0; p < phaseSteps; p++) {
     const off = (p / phaseSteps) * beatDur;
     let score = 0;
     for (let t = off; t < duration; t += beatDur) {
       const fIdx = Utils.clamp(Math.floor(t * fps), 0, frames.length - 1);
-      score += frames[fIdx].onset + frames[fIdx].kickOnset * 0.5;
+      score += frames[fIdx].onset + frames[fIdx].kickOnset * 0.6;
     }
     if (score > bestPhaseScore) { bestPhaseScore = score; bestOffset = off; }
   }
 
-  // Build phase-aligned beat grid + detect silences & syncopated off-beats
+  // Build phase-aligned beat grid, snapping each beat to nearest real audio peak within ±75ms
   const beats = [];
+  let peakPtr = 0;
   for (let t = bestOffset; t < duration - 0.25; t += beatDur) {
     if (t < 0.2) continue;
-    const fIdx = Utils.clamp(Math.floor(t * fps), 0, frames.length - 1);
+    while (peakPtr < realPeaks.length && realPeaks[peakPtr] < t - 0.075) peakPtr++;
+    let snappedT = t;
+    if (peakPtr < realPeaks.length && Math.abs(realPeaks[peakPtr] - t) <= 0.075) {
+      snappedT = realPeaks[peakPtr];
+    }
+
+    const fIdx = Utils.clamp(Math.floor(snappedT * fps), 0, frames.length - 1);
     const fr = frames[fIdx];
     beats.push({
-      t, bass: fr.bass, mid: fr.mid, high: fr.high, rms: fr.rms,
+      t: snappedT, bass: fr.bass, mid: fr.mid, high: fr.high, rms: fr.rms,
       isSilent: fr.rms < 0.08,
-      isKick: fr.kickOnset > 0.24 || fr.bass > 0.52,
-      isSnare: fr.snareOnset > 0.26,
+      isKick: fr.kickOnset > 0.22 || fr.bass > 0.5,
+      isSnare: fr.snareOnset > 0.24,
       isSyncopated: false
     });
 
-    // Check half-beat for strong syncopated snare/synth fill
-    const halfT = t + beatDur * 0.5;
+    const halfT = snappedT + beatDur * 0.5;
     if (halfT < duration - 0.25) {
       const hIdx = Utils.clamp(Math.floor(halfT * fps), 0, frames.length - 1);
       const hFr = frames[hIdx];
-      if (hFr.rms > 0.22 && (hFr.snareOnset > 0.58 || hFr.highOnset > 0.68)) {
+      if (hFr.rms > 0.2 && (hFr.snareOnset > 0.52 || hFr.highOnset > 0.62)) {
         beats.push({
           t: halfT, bass: hFr.bass, mid: hFr.mid, high: hFr.high, rms: hFr.rms,
           isSilent: false, isKick: false, isSnare: true, isSyncopated: true
