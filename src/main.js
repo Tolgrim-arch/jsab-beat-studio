@@ -564,6 +564,13 @@ function mainLoop(now) {
     dom.timeCurrent.textContent = Utils.formatTime(state.currentTime);
     updateSimulation(dt);
     drawTimeline(tCtx, dom.timelineCanvas);
+  } else if (state.bossDefeated) {
+    // Keep victory explosion particles & flash fading smoothly after audio ends!
+    for (const p of state.particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }
+    state.particles = state.particles.filter(p => p.life > 0);
+    state.shake = Math.max(0, state.shake - dt * 24);
+    state.zoomPunch = Utils.lerp(state.zoomPunch, 0, dt * 8);
+    state.flashAlpha = Math.max(0, state.flashAlpha - dt * 1.4);
   }
   renderFrame(ctx);
   requestAnimationFrame(mainLoop);
