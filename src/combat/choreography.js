@@ -58,7 +58,7 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   const W = state.width, H = state.height;
   const b = state.blixer;
   const cx = state.cyan.x, cy = state.cyan.y;
-  const spdMul = PHASES[ev.phase - 1].speedMul;
+  const spdMul = PHASES[ev.phase - 1].speedMul * (state.settings?.attackSpeed ?? 1);
   const lt = ev.leadTime;
   const danger = state.analysis?.dna?.palette?.danger || "#FF1E6E";
 

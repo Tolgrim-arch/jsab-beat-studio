@@ -333,7 +333,8 @@ function updateSimulation(dt) {
     spawnParticles(state.blixer.x, state.blixer.y, COLORS.pink, 32, 120, 440);
   }
 
-  while (state.nextEventIdx < state.schedule.length && state.schedule[state.nextEventIdx].spawnTime <= t) {
+  const syncT = t + ((state.settings?.syncOffsetMs || 0) / 1000);
+  while (state.nextEventIdx < state.schedule.length && state.schedule[state.nextEventIdx].spawnTime <= syncT) {
     spawnSetpieceEvent(state.schedule[state.nextEventIdx], dom.statSetpiece);
     state.nextEventIdx++;
   }

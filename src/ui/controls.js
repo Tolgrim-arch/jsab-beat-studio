@@ -1,6 +1,47 @@
 import { state } from "../state.js";
 
+const STORAGE_KEY = "jsab_studio_prefs_v1";
+
+function savePrefs() {
+  try {
+    const payload = {
+      customColors: state.customColors,
+      settings: state.settings,
+      customBoss: {
+        frame: state.customBoss.frame,
+        frameWidth: state.customBoss.frameWidth,
+        spikesMode: state.customBoss.spikesMode,
+        spikeCount: state.customBoss.spikeCount,
+        handsShape: state.customBoss.handsShape,
+        flashIntensity: state.customBoss.flashIntensity,
+        dataUrl: state.customBoss.dataUrl || null
+      }
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch {}
+}
+
+function loadPrefs() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.customColors) Object.assign(state.customColors, data.customColors);
+    if (data.settings) Object.assign(state.settings, data.settings);
+    if (data.customBoss) {
+      Object.assign(state.customBoss, data.customBoss);
+      if (data.customBoss.dataUrl) {
+        const img = new Image();
+        img.onload = () => { state.customBoss.img = img; };
+        img.src = data.customBoss.dataUrl;
+      }
+    }
+  } catch {}
+}
+
 export function initStudioControls(showToast) {
+  loadPrefs();
+
   // 1. Color pickers
   const colorMap = [
     ["colorBg", "bg"],
@@ -11,55 +52,73 @@ export function initStudioControls(showToast) {
   ];
   colorMap.forEach(([id, key]) => {
     const el = document.getElementById(id);
-    el?.addEventListener("input", () => {
+    if (!el) return;
+    if (state.customColors[key]) el.value = state.customColors[key];
+    el.addEventListener("input", () => {
       state.customColors.enabled = true;
       state.customColors[key] = el.value;
+      savePrefs();
     });
   });
 
   document.getElementById("btnResetColors")?.addEventListener("click", () => {
     state.customColors.enabled = false;
-    const defaults = { colorBg: "#040D14", colorDanger: "#FF1E6E", colorCyan: "#00F0FF", colorTrail: "#0077FF", colorEq: "#00F0FF" };
-    Object.entries(defaults).forEach(([id, val]) => {
+    const defaults = { bg: "#040D14", danger: "#FF1E6E", cyan: "#00F0FF", trail: "#0077FF", eq: "#00F0FF" };
+    Object.assign(state.customColors, defaults);
+    colorMap.forEach(([id, key]) => {
       const el = document.getElementById(id);
-      if (el) el.value = val;
+      if (el) el.value = defaults[key];
     });
+    savePrefs();
     showToast("Colores restaurados a Auto ADN", "info");
   });
 
-  // 2. Custom PNG Boss uploader & Frame selector
+  // 2. Custom PNG Boss uploader & Selectors
   const pngInput = document.getElementById("bossPngInput");
   const btnClearPng = document.getElementById("btnClearBossPng");
-  const frameSelect = document.getElementById("bossFrameSelect");
 
   pngInput?.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    const img = new Image();
-    img.onload = () => {
-      state.customBoss.img = img;
-      showToast(`Enemigo PNG cargado: ${file.name}`, "success");
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      const img = new Image();
+      img.onload = () => {
+        state.customBoss.img = img;
+        state.customBoss.dataUrl = dataUrl.length < 2_000_000 ? dataUrl : null;
+        savePrefs();
+        showToast(`Enemigo PNG guardado: ${file.name}`, "success");
+      };
+      img.src = dataUrl;
     };
-    img.src = URL.createObjectURL(file);
+    reader.readAsDataURL(file);
   });
 
   btnClearPng?.addEventListener("click", () => {
     state.customBoss.img = null;
+    state.customBoss.dataUrl = null;
     if (pngInput) pngInput.value = "";
+    savePrefs();
     showToast("Jefe restaurado a modo Procedural", "info");
   });
 
-  frameSelect?.addEventListener("change", (e) => {
-    state.customBoss.frame = e.target.value;
-  });
-  document.getElementById("bossSpikesSelect")?.addEventListener("change", (e) => {
-    state.customBoss.spikesMode = e.target.value;
-  });
-  document.getElementById("bossHandsSelect")?.addEventListener("change", (e) => {
-    state.customBoss.handsShape = e.target.value;
+  const selects = [
+    ["bossFrameSelect", "frame"],
+    ["bossSpikesSelect", "spikesMode"],
+    ["bossHandsSelect", "handsShape"]
+  ];
+  selects.forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (state.customBoss[key]) el.value = state.customBoss[key];
+    el.addEventListener("change", () => {
+      state.customBoss[key] = el.value;
+      savePrefs();
+    });
   });
 
-  // 3. Sliders with ◀ / ▶ stepper arrows (DRY)
+  // 3. Sliders with ◀ / ▶ stepper arrows + persistence
   const sliders = [
     { id: "sliderSync",       target: state.settings,   key: "syncOffsetMs",   valId: "valSync",       step: 10,   fmt: v => `${v}ms` },
     { id: "sliderSpeed",      target: state.settings,   key: "attackSpeed",    valId: "valSpeed",      step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
@@ -77,12 +136,16 @@ export function initStudioControls(showToast) {
     const label = document.getElementById(valId);
     if (!input) return;
 
-    const apply = (val) => {
+    const apply = (val, persist = true) => {
       const clamped = Math.max(Number(input.min), Math.min(Number(input.max), val));
       input.value = clamped;
       target[key] = clamped;
       if (label) label.textContent = fmt(clamped);
+      if (persist) savePrefs();
     };
+
+    // Sync UI to loaded localStorage value on startup
+    if (Number.isFinite(target[key])) apply(target[key], false);
 
     input.addEventListener("input", () => apply(Number(input.value)));
     document.querySelector(`[data-step-dec="${id}"]`)?.addEventListener("click", () => apply(Number(input.value) - step));
