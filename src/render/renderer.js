@@ -99,8 +99,21 @@ export function renderFrame(ctx) {
 
   for (const p of state.particles) {
     ctx.globalAlpha = Utils.clamp(p.life / p.maxLife, 0, 1);
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+    if (p.expandRate) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      if (p.isRing) {
+        ctx.strokeStyle = p.color;
+        ctx.lineWidth = Math.max(3, p.r * 0.28);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = p.color;
+        ctx.fill();
+      }
+    } else {
+      ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+    }
   }
   ctx.globalAlpha = 1;
 

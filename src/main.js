@@ -358,12 +358,26 @@ function updateSimulation(dt) {
 
     if (timeLeft <= 0.85 && !state.bossDefeated) {
       state.bossDefeated = true;
-      state.flashAlpha = 0.85;
+      state.flashAlpha = 0.75;
       state.shake = 22;
       state.zoomPunch = 0.06;
-      spawnParticles(b.x, b.y, COLORS.white, 40, 140, 520);
-      spawnParticles(b.x, b.y, COLORS.cyan, 30, 100, 420);
-      spawnParticles(b.x, b.y, COLORS.pink, 35, 120, 460);
+      // JSAB Boss Defeat: expanding white circles (some solid, some hollow rings)
+      for (let k = 0; k < 16; k++) {
+        const ang = Math.random() * Math.PI * 2;
+        const dist = Math.random() * 65;
+        state.particles.push({
+          x: b.x + Math.cos(ang) * dist,
+          y: b.y + Math.sin(ang) * dist,
+          vx: Math.cos(ang) * (20 + Math.random() * 50),
+          vy: Math.sin(ang) * (20 + Math.random() * 50),
+          r: 10 + Math.random() * 14,
+          expandRate: 110 + Math.random() * 120,
+          isRing: k % 2 === 0,
+          color: COLORS.white,
+          life: 0.45 + Math.random() * 0.45,
+          maxLife: 0.9
+        });
+      }
     }
 
     b.mood = "sad";
@@ -566,7 +580,11 @@ function mainLoop(now) {
     drawTimeline(tCtx, dom.timelineCanvas);
   } else if (state.bossDefeated) {
     // Keep victory explosion particles & flash fading smoothly after audio ends!
-    for (const p of state.particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }
+    for (const p of state.particles) {
+      p.x += p.vx * dt; p.y += p.vy * dt;
+      if (p.expandRate) p.r += p.expandRate * dt;
+      p.life -= dt;
+    }
     state.particles = state.particles.filter(p => p.life > 0);
     state.shake = Math.max(0, state.shake - dt * 24);
     state.zoomPunch = Utils.lerp(state.zoomPunch, 0, dt * 8);
