@@ -27,12 +27,24 @@ export function updateCyanAI(dt) {
   if (c.invuln > 0) c.invuln -= dt;
   c.squash = Utils.lerp(c.squash, 1, dt * 12);
 
+  if (c.dashRing) {
+    c.dashRing.r += dt * 480;
+    c.dashRing.alpha -= dt * 5.8;
+    if (c.dashRing.alpha <= 0) c.dashRing = null;
+  }
+
+  for (const tr of c.trail) {
+    tr.x += (tr.vx || 0) * dt;
+    tr.y += (tr.vy || 0) * dt;
+    tr.alpha -= dt * 3.4;
+  }
+  c.trail = c.trail.filter(tr => tr.alpha > 0.02);
+
   if (c.dashTimer > 0) {
     c.dashTimer -= dt;
     const dashSpd = 1040;
     c.x = Utils.clamp(c.x + c.dashDirX * dashSpd * dt, 24, W - 24);
     c.y = Utils.clamp(c.y + c.dashDirY * dashSpd * dt, 24, H - 24);
-    c.trail.push({ x: c.x, y: c.y, alpha: 0.95 });
     return;
   }
 
@@ -59,7 +71,20 @@ export function updateCyanAI(dt) {
     c.dashDirX = bestX;
     c.dashDirY = bestY;
     c.rot = Math.atan2(bestY, bestX);
-    c.dashRing = { x: c.x, y: c.y, r: c.r * 1.4, maxR: c.r * 4.8, alpha: 0.95 };
+    c.dashRing = { x: c.x, y: c.y, r: c.r * 1.4, alpha: 0.95 };
+    // Burst of scattered blue squares exploding outward on Dash!
+    for (let k = 0; k < 16; k++) {
+      const a = Math.random() * Math.PI * 2;
+      const spd = 90 + Math.random() * 240;
+      c.trail.push({
+        x: c.x + (Math.random() - 0.5) * 14,
+        y: c.y + (Math.random() - 0.5) * 14,
+        vx: Math.cos(a) * spd,
+        vy: Math.sin(a) * spd,
+        alpha: 0.95,
+        size: 2.5 + Math.random() * 3.5
+      });
+    }
     return;
   }
 
@@ -69,21 +94,16 @@ export function updateCyanAI(dt) {
   c.y = Utils.clamp(c.y + c.vy * dt, 24, H - 24);
   c.rot = Math.atan2(c.vy, c.vx);
 
-  if (c.dashRing) {
-    c.dashRing.r += dt * 420;
-    c.dashRing.alpha -= dt * 5.2;
-    if (c.dashRing.alpha <= 0) c.dashRing = null;
-  }
-
-  if (Math.hypot(c.vx, c.vy) > 55) {
+  // Scattered blue squares when moving (spread out, not a solid line)
+  if (Math.hypot(c.vx, c.vy) > 60 && Math.random() < 0.65) {
     c.trail.push({
-      x: c.x + (Math.random() - 0.5) * 10,
-      y: c.y + (Math.random() - 0.5) * 10,
-      alpha: 0.9,
-      size: 3 + Math.random() * 3.5
+      x: c.x + (Math.random() - 0.5) * 22,
+      y: c.y + (Math.random() - 0.5) * 22,
+      vx: -c.vx * 0.15 + (Math.random() - 0.5) * 55,
+      vy: -c.vy * 0.15 + (Math.random() - 0.5) * 55,
+      alpha: 0.85,
+      size: 2.5 + Math.random() * 2.5
     });
   }
-  if (c.trail.length > 14) c.trail.shift();
-  for (const tr of c.trail) tr.alpha -= dt * 3.2;
-  c.trail = c.trail.filter(tr => tr.alpha > 0.02);
+  if (c.trail.length > 32) c.trail.splice(0, c.trail.length - 32);
 }
