@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v32 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v33 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -24,7 +24,7 @@
         <h1 class="font-display text-sm sm:text-base font-bold tracking-wider uppercase flex items-center gap-2">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">v32 • MODULAR</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">v33 • MODULAR</span>
         </h1>
       </div>
     </div>
@@ -140,27 +140,57 @@
         <button id="btnResetColors" class="w-full py-1 rounded bg-slate-800/80 hover:bg-slate-700 text-[10px] font-mono-tech text-[#00F0FF] cursor-pointer">Restaurar Auto ADN</button>
       </details>
 
-      <!-- ACCORDION 2: ENEMIGO PNG PERSONALIZADO -->
+      <!-- ACCORDION 2: ENEMIGO PNG + PERSONALIZACIÓN TOTAL -->
       <details class="studio-acc rounded-xl bg-[#121530] border border-slate-800/90 p-3.5">
         <summary class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-300">
-          <span>🖼️ Enemigo PNG + Marco</span>
+          <span>🖼️ Enemigo, Marco, Púas y Manos</span>
           <span class="acc-arrow text-[#00F0FF]">▸</span>
         </summary>
-        <p class="text-[10px] text-slate-400 mt-1.5 mb-2.5 leading-relaxed">Sube una imagen PNG como jefe. Se estirará y parpadeará en blanco/rojo al beat.</p>
-        <div class="space-y-2">
+        <p class="text-[10px] text-slate-400 mt-1.5 mb-2.5 leading-relaxed">Sube un PNG como jefe y personaliza su marco, púas adaptables, manos y flash.</p>
+        <div class="space-y-2.5 text-[10px] font-mono-tech">
           <div class="flex gap-2">
             <label for="bossPngInput" class="flex-1 text-center py-1.5 rounded-lg bg-[#FF1F71]/15 hover:bg-[#FF1F71]/25 border border-[#FF1F71]/40 text-[#FF1F71] text-[11px] font-semibold cursor-pointer">Subir PNG</label>
             <input id="bossPngInput" type="file" accept="image/*" class="hidden" />
             <button id="btnClearBossPng" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 cursor-pointer">Quitar</button>
           </div>
-          <div class="flex items-center justify-between text-[10px] font-mono-tech text-slate-300">
-            <span>MARCO:</span>
+          <div class="flex items-center justify-between text-slate-300">
+            <span>MARCO PNG:</span>
             <select id="bossFrameSelect" class="bg-[#090b1a] border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200">
               <option value="circle">Circular</option>
               <option value="square">Cubo / Cuadrado</option>
-              <option value="spiky">Circular con Púas</option>
               <option value="none">Sin Marco</option>
             </select>
+          </div>
+          <div class="flex items-center justify-between text-slate-300">
+            <span>PÚAS:</span>
+            <select id="bossSpikesSelect" class="bg-[#090b1a] border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200">
+              <option value="phase3">En medio (Fase 3+)</option>
+              <option value="always">Desde el inicio</option>
+              <option value="never">Sin púas</option>
+            </select>
+          </div>
+          <div class="flex items-center justify-between text-slate-300">
+            <span>MANOS:</span>
+            <select id="bossHandsSelect" class="bg-[#090b1a] border border-slate-700 rounded px-2 py-1 text-[10px] text-slate-200">
+              <option value="auto">Auto ADN</option>
+              <option value="square">Cuadrados</option>
+              <option value="circle">Círculos</option>
+              <option value="triangle">Triángulos</option>
+              <option value="claws">Garras</option>
+              <option value="none">Sin manos</option>
+            </select>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-slate-300">GROSOR MARCO</span><span id="valFrameWidth" class="text-[#00F0FF]">6px</span></div>
+            <div class="flex items-center gap-1.5"><button data-step-dec="sliderFrameWidth" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderFrameWidth" type="range" min="0" max="16" step="1" value="6" class="studio-slider flex-1" /><button data-step-inc="sliderFrameWidth" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-slate-300">CANTIDAD PÚAS</span><span id="valSpikeCount" class="text-[#00F0FF]">12</span></div>
+            <div class="flex items-center gap-1.5"><button data-step-dec="sliderSpikeCount" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSpikeCount" type="range" min="4" max="20" step="2" value="12" class="studio-slider flex-1" /><button data-step-inc="sliderSpikeCount" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-slate-300">FLASH AL BEAT</span><span id="valFlashInt" class="text-[#00F0FF]">72%</span></div>
+            <div class="flex items-center gap-1.5"><button data-step-dec="sliderFlashInt" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderFlashInt" type="range" min="0" max="1" step="0.1" value="0.72" class="studio-slider flex-1" /><button data-step-inc="sliderFlashInt" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
           </div>
         </div>
       </details>
@@ -267,6 +297,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=32"></script>
+  <script type="module" src="src/main.js?v=33"></script>
 </body>
 </html>

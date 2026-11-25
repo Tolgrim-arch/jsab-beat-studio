@@ -48,7 +48,12 @@ export const state = {
   },
   customBoss: {
     img: null,
-    frame: "circle" // "none" | "circle" | "square" | "spiky"
+    frame: "circle",      // "none" | "circle" | "square"
+    frameWidth: 6,        // 0 to 16 px
+    spikesMode: "phase3", // "always" | "phase3" | "never"
+    spikeCount: 12,       // 4 to 20
+    handsShape: "auto",   // "auto" | "square" | "circle" | "triangle" | "claws" | "none"
+    flashIntensity: 0.72  // 0 to 1
   },
   entities: [],
   particles: [],

@@ -30,19 +30,28 @@ export function drawProceduralBoss(ctx) {
     }
   }
 
-  // Articulated Limbs in Phase 2+
-  if (state.phase >= 2) {
+  const cb = state.customBoss || {};
+  const handsShape = cb.handsShape || "auto";
+
+  // Articulated Limbs in Phase 2+ (or hidden if handsShape === "none")
+  if (state.phase >= 2 && handsShape !== "none") {
     [b.leftHand, b.rightHand].forEach((h, idx) => {
       const side = idx === 0 ? -1 : 1;
       ctx.save();
       ctx.translate(h.x, h.y);
       ctx.rotate(side * 0.35 + Math.sin(state.currentTime * 4) * 0.15);
       ctx.fillStyle = flash ? COLORS.white : danger;
-      if (bossCfg.limbStyle === "floating_triangles") {
+
+      const resolved = handsShape === "auto" ? bossCfg.limbStyle : handsShape;
+      if (resolved === "triangle" || resolved === "floating_triangles") {
         Utils.drawPolygon(ctx, 0, 0, 3, b.r * 0.48, side > 0 ? 0 : Math.PI);
         ctx.fill();
-      } else if (bossCfg.limbStyle === "orbit_cannons") {
+      } else if (resolved === "square" || resolved === "orbit_cannons") {
         ctx.fillRect(-b.r * 0.28, -b.r * 0.28, b.r * 0.56, b.r * 0.56);
+      } else if (resolved === "circle") {
+        ctx.beginPath();
+        ctx.arc(0, 0, b.r * 0.36, 0, Math.PI * 2);
+        ctx.fill();
       } else {
         Utils.drawPolygon(ctx, 0, 0, 5, b.r * 0.45, 0.3);
         ctx.fill();
@@ -58,63 +67,97 @@ export function drawProceduralBoss(ctx) {
   ctx.rotate(b.tilt || 0);
   ctx.scale(b.scaleX || 1, b.scaleY || 1);
 
-  // Detached floating pink triangles around boss (like Annihilate reference!)
-  if (bossCfg.shape === "titan" || state.phase >= 3) {
-    const spikes = bossCfg.spikeCount + 4;
+  // Detached floating pink triangles around boss (respects spikesMode & adapts to square vs circular frame!)
+  const spikesMode = cb.spikesMode || "phase3";
+  const showSpikes = spikesMode === "always" || (spikesMode === "phase3" && (bossCfg.shape === "titan" || state.phase >= 3));
+  if (showSpikes) {
+    const spikes = cb.spikeCount || (bossCfg.spikeCount + 4);
+    const isSquareFrame = cb.img && cb.frame === "square";
     ctx.save();
-    ctx.rotate(b.rot * 0.45);
     ctx.fillStyle = flash ? COLORS.white : danger;
-    for (let i = 0; i < spikes; i++) {
-      const a = (Math.PI * 2 * i) / spikes;
-      const dist = b.r * (1.25 + b.pulse * 0.18);
-      ctx.save();
-      ctx.translate(Math.cos(a) * dist, Math.sin(a) * dist);
-      ctx.rotate(a);
-      ctx.beginPath();
-      ctx.moveTo(b.r * 0.26, 0);
-      ctx.lineTo(-b.r * 0.12, -b.r * 0.14);
-      ctx.lineTo(-b.r * 0.12, b.r * 0.14);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
+    if (isSquareFrame) {
+      // Distribute spikes neatly along all 4 sides of the square frame!
+      const perSide = Math.max(1, Math.round(spikes / 4));
+      const s = b.r * (1.22 + b.pulse * 0.14);
+      const sides = [
+        { nx: 0, ny: -1, rot: -Math.PI / 2 }, // top
+        { nx: 1, ny: 0,  rot: 0 },            // right
+        { nx: 0, ny: 1,  rot: Math.PI / 2 },  // bottom
+        { nx: -1, ny: 0, rot: Math.PI }       // left
+      ];
+      sides.forEach(({ nx, ny, rot }) => {
+        for (let i = 0; i < perSide; i++) {
+          const t = ((i + 0.5) / perSide) * 2 - 1; // -1..1 along edge
+          const px = nx !== 0 ? nx * s : t * b.r * 0.9;
+          const py = ny !== 0 ? ny * s : t * b.r * 0.9;
+          ctx.save();
+          ctx.translate(px, py);
+          ctx.rotate(rot);
+          ctx.beginPath();
+          ctx.moveTo(b.r * 0.24, 0);
+          ctx.lineTo(-b.r * 0.1, -b.r * 0.14);
+          ctx.lineTo(-b.r * 0.1, b.r * 0.14);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+      });
+    } else {
+      ctx.rotate(b.rot * 0.45);
+      for (let i = 0; i < spikes; i++) {
+        const a = (Math.PI * 2 * i) / spikes;
+        const dist = b.r * (1.25 + b.pulse * 0.18);
+        ctx.save();
+        ctx.translate(Math.cos(a) * dist, Math.sin(a) * dist);
+        ctx.rotate(a);
+        ctx.beginPath();
+        ctx.moveTo(b.r * 0.26, 0);
+        ctx.lineTo(-b.r * 0.12, -b.r * 0.14);
+        ctx.lineTo(-b.r * 0.12, b.r * 0.14);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
     }
     ctx.restore();
   }
 
   // Custom PNG Boss Mode (inherits squash-and-stretch, tilt, jitter, and beat white/danger flash!)
-  if (state.customBoss?.img) {
-    const frame = state.customBoss.frame || "circle";
+  if (cb.img) {
+    const frame = cb.frame || "circle";
+    const fw = cb.frameWidth ?? 6;
+    const fInt = cb.flashIntensity ?? 0.72;
     const s = b.r * 1.15;
     ctx.save();
     ctx.beginPath();
-    if (frame === "circle" || frame === "spiky") {
+    if (frame === "circle") {
       ctx.arc(0, 0, s, 0, Math.PI * 2);
     } else if (frame === "square") {
       ctx.roundRect(-s, -s, s * 2, s * 2, 18);
     }
     if (frame !== "none") ctx.clip();
 
-    ctx.drawImage(state.customBoss.img, -s, -s, s * 2, s * 2);
+    ctx.drawImage(cb.img, -s, -s, s * 2, s * 2);
 
-    // Beat flash overlay (pure white on hard pulse, danger tint on beat)
-    if (flash) {
-      ctx.fillStyle = "rgba(255, 255, 255, 0.72)";
-      ctx.fillRect(-s, -s, s * 2, s * 2);
-    } else if (b.pulse > 0.35) {
-      ctx.fillStyle = danger;
-      ctx.globalAlpha = (b.pulse - 0.35) * 0.45;
-      ctx.fillRect(-s, -s, s * 2, s * 2);
-      ctx.globalAlpha = 1;
+    if (fInt > 0.01) {
+      if (flash) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${fInt})`;
+        ctx.fillRect(-s, -s, s * 2, s * 2);
+      } else if (b.pulse > 0.35) {
+        ctx.fillStyle = danger;
+        ctx.globalAlpha = (b.pulse - 0.35) * 0.55 * fInt;
+        ctx.fillRect(-s, -s, s * 2, s * 2);
+        ctx.globalAlpha = 1;
+      }
     }
     ctx.restore();
 
-    // Draw crisp outer frame border
-    if (frame !== "none") {
+    if (frame !== "none" && fw > 0) {
       ctx.save();
       ctx.strokeStyle = flash ? COLORS.white : danger;
-      ctx.lineWidth = 6;
+      ctx.lineWidth = fw;
       ctx.beginPath();
-      if (frame === "circle" || frame === "spiky") ctx.arc(0, 0, s, 0, Math.PI * 2);
+      if (frame === "circle") ctx.arc(0, 0, s, 0, Math.PI * 2);
       else ctx.roundRect(-s, -s, s * 2, s * 2, 18);
       ctx.stroke();
       ctx.restore();

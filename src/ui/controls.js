@@ -52,18 +52,27 @@ export function initStudioControls(showToast) {
   frameSelect?.addEventListener("change", (e) => {
     state.customBoss.frame = e.target.value;
   });
+  document.getElementById("bossSpikesSelect")?.addEventListener("change", (e) => {
+    state.customBoss.spikesMode = e.target.value;
+  });
+  document.getElementById("bossHandsSelect")?.addEventListener("change", (e) => {
+    state.customBoss.handsShape = e.target.value;
+  });
 
   // 3. Sliders with ◀ / ▶ stepper arrows (DRY)
   const sliders = [
-    { id: "sliderSync",    key: "syncOffsetMs",  valId: "valSync",    step: 10,   fmt: v => `${v}ms` },
-    { id: "sliderSpeed",   key: "attackSpeed",   valId: "valSpeed",   step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
-    { id: "sliderBoss",    key: "bossScale",     valId: "valBoss",    step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
-    { id: "sliderShake",   key: "shakeMul",      valId: "valShake",   step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
-    { id: "sliderZoom",    key: "zoomMul",       valId: "valZoom",    step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
-    { id: "sliderEqAlpha", key: "eqAlpha",       valId: "valEqAlpha", step: 0.05, fmt: v => `${Math.round(v * 100)}%` }
+    { id: "sliderSync",       target: state.settings,   key: "syncOffsetMs",   valId: "valSync",       step: 10,   fmt: v => `${v}ms` },
+    { id: "sliderSpeed",      target: state.settings,   key: "attackSpeed",    valId: "valSpeed",      step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
+    { id: "sliderBoss",       target: state.settings,   key: "bossScale",      valId: "valBoss",       step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
+    { id: "sliderShake",      target: state.settings,   key: "shakeMul",       valId: "valShake",      step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
+    { id: "sliderZoom",       target: state.settings,   key: "zoomMul",        valId: "valZoom",       step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
+    { id: "sliderEqAlpha",    target: state.settings,   key: "eqAlpha",        valId: "valEqAlpha",    step: 0.05, fmt: v => `${Math.round(v * 100)}%` },
+    { id: "sliderFrameWidth", target: state.customBoss, key: "frameWidth",     valId: "valFrameWidth", step: 1,    fmt: v => `${v}px` },
+    { id: "sliderSpikeCount", target: state.customBoss, key: "spikeCount",     valId: "valSpikeCount", step: 2,    fmt: v => `${v}` },
+    { id: "sliderFlashInt",   target: state.customBoss, key: "flashIntensity", valId: "valFlashInt",   step: 0.1,  fmt: v => `${Math.round(v * 100)}%` }
   ];
 
-  sliders.forEach(({ id, key, valId, step, fmt }) => {
+  sliders.forEach(({ id, target, key, valId, step, fmt }) => {
     const input = document.getElementById(id);
     const label = document.getElementById(valId);
     if (!input) return;
@@ -71,7 +80,7 @@ export function initStudioControls(showToast) {
     const apply = (val) => {
       const clamped = Math.max(Number(input.min), Math.min(Number(input.max), val));
       input.value = clamped;
-      state.settings[key] = clamped;
+      target[key] = clamped;
       if (label) label.textContent = fmt(clamped);
     };
 
