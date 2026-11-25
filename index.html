@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v55 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v56 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/main.css?v=55" />
+  <link rel="stylesheet" href="styles/main.css?v=56" />
 </head>
 <body class="h-screen overflow-hidden flex flex-col bg-[#050611] text-slate-100 select-none">
 
@@ -24,7 +24,7 @@
         <h1 class="font-display text-sm sm:text-base font-bold tracking-wider uppercase flex items-center gap-2">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v55 • STUDIO PRO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v56 • STUDIO PRO</span>
         </h1>
       </div>
     </div>
@@ -338,6 +338,10 @@
               <div class="flex justify-between mb-1"><span class="text-slate-300">OPACIDAD EQ</span><span id="valEqAlpha" class="text-[#00F0FF]">14%</span></div>
               <div class="flex items-center gap-1.5"><button data-step-dec="sliderEqAlpha" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderEqAlpha" type="range" min="0" max="0.6" step="0.05" value="0.14" class="studio-slider flex-1" /><button data-step-inc="sliderEqAlpha" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
             </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">FLASH IMPACTOS</span><span id="valImpactFlash" class="text-[#00F0FF]">55%</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderImpactFlash" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderImpactFlash" type="range" min="0" max="1" step="0.05" value="0.55" class="studio-slider flex-1" /><button data-step-inc="sliderImpactFlash" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
           </div>
 
           <div class="studio-card p-3.5 space-y-2.5">
@@ -439,6 +443,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=55"></script>
+  <script type="module" src="src/main.js?v=56"></script>
 </body>
 </html>

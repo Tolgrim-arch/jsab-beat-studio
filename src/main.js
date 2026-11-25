@@ -2,10 +2,10 @@ import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
 import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js";
-import { buildChoreographySchedule, spawnSetpieceEvent } from "./combat/choreography.js?v=55";
+import { buildChoreographySchedule, spawnSetpieceEvent } from "./combat/choreography.js?v=56";
 import { updateCyanAI } from "./combat/cyanAI.js";
-import { renderFrame, drawTimeline } from "./render/renderer.js?v=49";
-import { initStudioControls } from "./ui/controls.js?v=55";
+import { renderFrame, drawTimeline } from "./render/renderer.js?v=56";
+import { initStudioControls } from "./ui/controls.js?v=56";
 
 const dom = {
   canvas: document.getElementById("gameCanvas"),

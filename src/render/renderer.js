@@ -155,8 +155,11 @@ export function renderFrame(ctx) {
   }
 
   if (state.flashAlpha > 0.01) {
-    ctx.fillStyle = `rgba(255, 255, 255, ${state.flashAlpha * 0.65})`;
-    ctx.fillRect(0, 0, W, H);
+    const fMul = state.settings?.impactFlashMul ?? 0.55;
+    if (fMul > 0.01) {
+      ctx.fillStyle = `rgba(255, 255, 255, ${state.flashAlpha * 0.55 * fMul})`;
+      ctx.fillRect(0, 0, W, H);
+    }
   }
 
   if (state.showHud) {

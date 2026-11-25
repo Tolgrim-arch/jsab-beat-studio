@@ -1,7 +1,7 @@
 import { PHASES } from "../config.js";
 import { Utils } from "../utils.js";
 import { state, spawnParticles } from "../state.js";
-import { AttackFactory } from "./attacks.js?v=55";
+import { AttackFactory } from "./attacks.js?v=56";
 
 export const ATTACK_CATALOG = [
   { id: "DROP_EXPLOSION",    icon: "💥", name: "Explosión Drop",       desc: "Onda de choque, 4 láseres en cruz, anillo de diamantes y Mega-Rayo." },

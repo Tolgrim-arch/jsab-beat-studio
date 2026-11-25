@@ -45,6 +45,7 @@ export const state = {
     shakeMul: 1.0,
     zoomMul: 1.0,
     eqAlpha: 0.14,
+    impactFlashMul: 0.55,
     phonkMode: false
   },
   velocityTimer: 0,

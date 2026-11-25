@@ -475,7 +475,8 @@ export function initStudioControls(showToast) {
     { id: "sliderBoss",       target: state.settings,   key: "bossScale",      valId: "valBoss",       step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
     { id: "sliderShake",      target: state.settings,   key: "shakeMul",       valId: "valShake",      step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
     { id: "sliderZoom",       target: state.settings,   key: "zoomMul",        valId: "valZoom",       step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
-    { id: "sliderEqAlpha",    target: state.settings,   key: "eqAlpha",        valId: "valEqAlpha",    step: 0.05, fmt: v => `${Math.round(v * 100)}%` },
+    { id: "sliderEqAlpha",     target: state.settings,   key: "eqAlpha",        valId: "valEqAlpha",     step: 0.05, fmt: v => `${Math.round(v * 100)}%` },
+    { id: "sliderImpactFlash", target: state.settings,   key: "impactFlashMul", valId: "valImpactFlash", step: 0.05, fmt: v => `${Math.round(v * 100)}%` },
     { id: "sliderFrameWidth", target: state.customBoss, key: "frameWidth",     valId: "valFrameWidth", step: 1,    fmt: v => `${v}px` },
     { id: "sliderSpikeCount", target: state.customBoss, key: "spikeCount",     valId: "valSpikeCount", step: 2,    fmt: v => `${v}` },
     { id: "sliderFlashInt",   target: state.customBoss, key: "flashIntensity", valId: "valFlashInt",   step: 0.1,  fmt: v => `${Math.round(v * 100)}%` }

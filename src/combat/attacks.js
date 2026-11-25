@@ -5,9 +5,16 @@ import { state, spawnParticles } from "../state.js";
 const dangerCol = () => (state.customColors?.enabled ? state.customColors.danger : state.analysis?.dna?.palette?.danger) || "#FF1E6E";
 const palePink = "#FFC2DC";
 
-// JSAB signature: pure white flash for the first 80ms of an attack/impact
+// JSAB signature: adjustable smooth white flash for the first 80ms of an attack/impact
+function flashMixAlpha(age, leadTime = 0, dur = 0.08) {
+  const mul = state.settings?.impactFlashMul ?? 0.55;
+  if (mul <= 0.01 || age < leadTime) return 0;
+  const dt = age - leadTime;
+  if (dt >= dur) return 0;
+  return (1 - dt / dur) * mul;
+}
 function isWhiteFlash(age, leadTime = 0) {
-  return age >= leadTime && (age - leadTime) < 0.08;
+  return flashMixAlpha(age, leadTime) > 0.35;
 }
 
 export const AttackFactory = {
@@ -145,18 +152,19 @@ export const AttackFactory = {
           else ctx.rect(this.pos - half, 0, curThick, H);
           ctx.clip();
 
+          const flashMul = state.settings?.impactFlashMul ?? 0.55;
           // Beam body
-          ctx.fillStyle = isFlash ? "#FFD8EC" : dangerCol();
+          ctx.fillStyle = dangerCol();
           ctx.globalAlpha = isFlash ? 1 : Utils.clamp(1 - Math.max(0, t - 0.78) * 3.5, 0.2, 1);
           if (isH) ctx.fillRect(0, this.pos - half, W, curThick);
           else ctx.fillRect(this.pos - half, 0, curThick, H);
 
-          // Stage 2: Bright white core during impact flash
-          if (isFlash) {
+          // Stage 2: Adjustable white core during impact flash
+          if (isFlash && flashMul > 0.01) {
             const flashP = activeAge / 0.095;
             ctx.fillStyle = COLORS.white;
-            ctx.globalAlpha = 0.85 * (1 - flashP * 0.5);
-            const coreH = curThick * 0.52;
+            ctx.globalAlpha = 0.78 * flashMul * (1 - flashP * 0.5);
+            const coreH = curThick * 0.55;
             if (isH) ctx.fillRect(0, this.pos - coreH * 0.5, W, coreH);
             else ctx.fillRect(this.pos - coreH * 0.5, 0, coreH, H);
           }
@@ -288,9 +296,15 @@ export const AttackFactory = {
           ctx.strokeRect(this.x + 3, this.y + 3, this.w - 6, this.h - 6);
         } else {
           const a = 1 - (this.age - this.leadTime) / this.activeTime;
-          ctx.fillStyle = isWhiteFlash(this.age, this.leadTime) ? COLORS.white : dangerCol();
-          ctx.globalAlpha = a;
+          ctx.fillStyle = dangerCol();
+          ctx.globalAlpha = a * 0.85;
           ctx.fillRect(this.x + 3, this.y + 3, this.w - 6, this.h - 6);
+          const fAlpha = flashMixAlpha(this.age, this.leadTime, 0.09) * 0.45;
+          if (fAlpha > 0.01) {
+            ctx.fillStyle = COLORS.white;
+            ctx.globalAlpha = fAlpha * a;
+            ctx.fillRect(this.x + 3, this.y + 3, this.w - 6, this.h - 6);
+          }
         }
         ctx.restore();
       }
