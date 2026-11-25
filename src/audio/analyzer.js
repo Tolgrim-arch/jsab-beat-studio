@@ -137,7 +137,10 @@ export function analyzeAudioBuffer(audioBuffer) {
     prevHigh = high * 0.52 + prevHigh * 0.48;
 
     const flux = kickOnset * 1.45 + snareOnset * 0.9 + highOnset * 0.45;
-    frames[f] = { t: f / fps, rms, sub, bass, lowMid, mid, high, zcr, kickOnset, snareOnset, highOnset, onset: flux };
+    const totSpec = Math.max(0.0001, sub + bass + lowMid + mid + high);
+    const brightness = (mid * 0.45 + high * 0.95) / totSpec;
+    const tension = zcr * 0.55 + (snareOnset + highOnset) * 0.45;
+    frames[f] = { t: f / fps, rms, sub, bass, lowMid, mid, high, zcr, brightness, tension, kickOnset, snareOnset, highOnset, onset: flux };
   }
 
   const normBand = (key) => {
@@ -145,7 +148,7 @@ export function analyzeAudioBuffer(audioBuffer) {
     const p97 = sorted[Math.floor(sorted.length * 0.97)] || 0.001;
     for (const fr of frames) fr[key] = Utils.clamp(fr[key] / p97, 0, 1.4);
   };
-  ["rms", "sub", "bass", "lowMid", "mid", "high", "zcr", "kickOnset", "snareOnset", "highOnset", "onset"].forEach(normBand);
+  ["rms", "sub", "bass", "lowMid", "mid", "high", "zcr", "brightness", "tension", "kickOnset", "snareOnset", "highOnset", "onset"].forEach(normBand);
 
   // Adaptive Local Thresholding (detect EVERY real musical impact peak)
   const winHalf = Math.floor(fps * 0.22);

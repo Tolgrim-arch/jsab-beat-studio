@@ -1,7 +1,7 @@
 import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
-import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=63";
+import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=64";
 import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=63";
 import { updateCyanAI } from "./combat/cyanAI.js";
 import { renderFrame, drawTimeline } from "./render/renderer.js?v=61";
@@ -32,9 +32,15 @@ const dom = {
   statSetpiece: document.getElementById("statSetpiece"),
   phaseBadge: document.getElementById("phaseBadge"),
   phaseName: document.getElementById("phaseName"),
+  barSub: document.getElementById("barSub"),
   barBass: document.getElementById("barBass"),
+  barLowMid: document.getElementById("barLowMid"),
   barMid: document.getElementById("barMid"),
   barHigh: document.getElementById("barHigh"),
+  barBright: document.getElementById("barBright"),
+  barTension: document.getElementById("barTension"),
+  telInstrument: document.getElementById("telInstrument"),
+  telRhythm: document.getElementById("telRhythm"),
   timeCurrent: document.getElementById("timeCurrent"),
   timeTotal: document.getElementById("timeTotal"),
   resolutionLabel: document.getElementById("resolutionLabel"),
@@ -382,12 +388,25 @@ function updateSimulation(dt) {
       for (let i = s; i < e; i++) sum += bins[i];
       return sum / Math.max(1, (e - s) * 255);
     };
-    bass = avg(0, 8);
-    mid = avg(8, 36);
-    high = avg(36, 96);
+    const sub = avg(0, 3);
+    bass = avg(2, 9);
+    const lowMid = avg(9, 20);
+    mid = avg(20, 44);
+    high = avg(44, 100);
+    const bright = Math.min(1, (mid * 0.45 + high * 0.95) / Math.max(0.05, sub + bass + lowMid + mid + high));
+    const tension = Math.min(1, Math.abs(bass - (state.livePrevBass || 0)) * 2.8 + high * 0.65);
+
+    if (dom.barSub) dom.barSub.style.width = `${Math.min(100, sub * 115)}%`;
     dom.barBass.style.width = `${Math.min(100, bass * 115)}%`;
+    if (dom.barLowMid) dom.barLowMid.style.width = `${Math.min(100, lowMid * 115)}%`;
     dom.barMid.style.width = `${Math.min(100, mid * 115)}%`;
     dom.barHigh.style.width = `${Math.min(100, high * 115)}%`;
+    if (dom.barBright) dom.barBright.style.width = `${Math.min(100, bright * 120)}%`;
+    if (dom.barTension) dom.barTension.style.width = `${Math.min(100, tension * 115)}%`;
+    if (dom.telInstrument) {
+      dom.telInstrument.textContent = sub > bass && sub > mid ? "SUB_BASS" : high > bass ? "ARP_HYPER" : mid > bass ? "SYNTH_LEAD" : "PERCUSSION";
+    }
+    if (dom.telRhythm) dom.telRhythm.textContent = tension > 0.68 ? "DOUBLE_TIME" : "LIVE";
     if (bass > 0.62) {
       state.zoomPunch = Math.max(state.zoomPunch, 0.024);
       state.bgPulse = Math.max(state.bgPulse, 0.7);
@@ -420,9 +439,13 @@ function updateSimulation(dt) {
     const idx = Utils.clamp(Math.floor(t * state.analysis.fps), 0, state.analysis.frames.length - 1);
     const fr = state.analysis.frames[idx];
     bass = fr.bass; mid = fr.mid; high = fr.high;
+    if (dom.barSub) dom.barSub.style.width = `${Math.min(100, (fr.sub || 0) * 90)}%`;
     dom.barBass.style.width = `${Math.min(100, bass * 90)}%`;
+    if (dom.barLowMid) dom.barLowMid.style.width = `${Math.min(100, (fr.lowMid || 0) * 90)}%`;
     dom.barMid.style.width = `${Math.min(100, mid * 90)}%`;
     dom.barHigh.style.width = `${Math.min(100, high * 90)}%`;
+    if (dom.barBright) dom.barBright.style.width = `${Math.min(100, (fr.brightness || 0) * 90)}%`;
+    if (dom.barTension) dom.barTension.style.width = `${Math.min(100, (fr.tension || 0) * 90)}%`;
 
     if (state.phonkCooldown > 0) state.phonkCooldown -= dt;
     if (fr.kickOnset > 0.48 && (state.phonkCooldown || 0) <= 0) {
@@ -439,7 +462,11 @@ function updateSimulation(dt) {
     }
 
     const sec = state.analysis.sections.find(s => t >= s.start && t < s.end);
-    if (sec) dom.statSection.textContent = sec.instrument ? `${sec.type} • ${sec.instrument}` : sec.type;
+    if (sec) {
+      dom.statSection.textContent = sec.instrument ? `${sec.type} • ${sec.instrument}` : sec.type;
+      if (dom.telInstrument && sec.instrument) dom.telInstrument.textContent = sec.instrument;
+      if (dom.telRhythm && sec.rhythm) dom.telRhythm.textContent = sec.rhythm;
+    }
   }
 
   const prog = state.duration > 0 ? t / state.duration : 0;
