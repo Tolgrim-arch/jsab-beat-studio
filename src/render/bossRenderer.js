@@ -131,30 +131,52 @@ export function drawProceduralBoss(ctx) {
     else if (frame === "triangle") Utils.drawPolygon(ctx, 0, 0, 3, s * 1.32, -Math.PI / 2);
   };
 
-  // Custom PNG Boss Mode
+  // Offscreen scratch canvas for alpha-preserving beat flash (source-atop)
+  if (!drawProceduralBoss._scratch && typeof document !== "undefined") {
+    drawProceduralBoss._scratch = document.createElement("canvas");
+  }
+
+  // Custom PNG / Animated GIF Boss Mode
   if (cb.img) {
     const frame = cb.frame || "circle";
     const fw = cb.frameWidth ?? 6;
     const fInt = cb.flashIntensity ?? 0.72;
     const s = b.r * 1.15;
+    const drawSize = Math.max(4, Math.ceil(s * 2.5));
+
     ctx.save();
     if (frame !== "none") {
       traceFramePath(frame, s);
       ctx.clip();
     }
 
-    ctx.drawImage(cb.img, -s * 1.25, -s * 1.25, s * 2.5, s * 2.5);
-
-    if (fInt > 0.01) {
-      if (flash) {
-        ctx.fillStyle = `rgba(255, 255, 255, ${fInt})`;
-        ctx.fillRect(-s * 1.4, -s * 1.4, s * 2.8, s * 2.8);
-      } else if (b.pulse > 0.35) {
-        ctx.fillStyle = danger;
-        ctx.globalAlpha = (b.pulse - 0.35) * 0.55 * fInt;
-        ctx.fillRect(-s * 1.4, -s * 1.4, s * 2.8, s * 2.8);
-        ctx.globalAlpha = 1;
+    const scratch = drawProceduralBoss._scratch;
+    if (scratch) {
+      if (scratch.width !== drawSize || scratch.height !== drawSize) {
+        scratch.width = drawSize;
+        scratch.height = drawSize;
       }
+      const sCtx = scratch.getContext("2d");
+      sCtx.clearRect(0, 0, drawSize, drawSize);
+      sCtx.globalCompositeOperation = "source-over";
+      sCtx.drawImage(cb.img, 0, 0, drawSize, drawSize);
+
+      // source-atop ONLY tints non-transparent pixels of the PNG/GIF!
+      if (fInt > 0.01 && (flash || b.pulse > 0.35)) {
+        sCtx.globalCompositeOperation = "source-atop";
+        if (flash) {
+          sCtx.fillStyle = `rgba(255, 255, 255, ${fInt})`;
+        } else {
+          sCtx.fillStyle = danger;
+          sCtx.globalAlpha = (b.pulse - 0.35) * 0.55 * fInt;
+        }
+        sCtx.fillRect(0, 0, drawSize, drawSize);
+        sCtx.globalAlpha = 1;
+        sCtx.globalCompositeOperation = "source-over";
+      }
+      ctx.drawImage(scratch, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+    } else {
+      ctx.drawImage(cb.img, -s * 1.25, -s * 1.25, s * 2.5, s * 2.5);
     }
     ctx.restore();
 

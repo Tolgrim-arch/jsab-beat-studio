@@ -21,6 +21,21 @@ function savePrefs() {
   } catch {}
 }
 
+function mountBossImage(src, onReady) {
+  let el = document.getElementById("hiddenBossGifHost");
+  if (!el) {
+    el = document.createElement("img");
+    el.id = "hiddenBossGifHost";
+    el.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:2px;height:2px;opacity:0.01;pointer-events:none;";
+    document.body.appendChild(el);
+  }
+  el.onload = () => {
+    state.customBoss.img = el;
+    if (onReady) onReady();
+  };
+  el.src = src;
+}
+
 function loadPrefs() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -30,11 +45,7 @@ function loadPrefs() {
     if (data.settings) Object.assign(state.settings, data.settings);
     if (data.customBoss) {
       Object.assign(state.customBoss, data.customBoss);
-      if (data.customBoss.dataUrl) {
-        const img = new Image();
-        img.onload = () => { state.customBoss.img = img; };
-        img.src = data.customBoss.dataUrl;
-      }
+      if (data.customBoss.dataUrl) mountBossImage(data.customBoss.dataUrl);
     }
   } catch {}
 }
@@ -73,7 +84,7 @@ export function initStudioControls(showToast) {
     showToast("Colores restaurados a Auto ADN", "info");
   });
 
-  // 2. Custom PNG Boss uploader & Selectors
+  // 2. Custom PNG / Animated GIF Boss uploader & Selectors
   const pngInput = document.getElementById("bossPngInput");
   const btnClearPng = document.getElementById("btnClearBossPng");
 
@@ -83,14 +94,11 @@ export function initStudioControls(showToast) {
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = reader.result;
-      const img = new Image();
-      img.onload = () => {
-        state.customBoss.img = img;
-        state.customBoss.dataUrl = dataUrl.length < 2_000_000 ? dataUrl : null;
+      mountBossImage(dataUrl, () => {
+        state.customBoss.dataUrl = dataUrl.length < 2_500_000 ? dataUrl : null;
         savePrefs();
-        showToast(`Enemigo PNG guardado: ${file.name}`, "success");
-      };
-      img.src = dataUrl;
+        showToast(`Enemigo PNG/GIF cargado: ${file.name}`, "success");
+      });
     };
     reader.readAsDataURL(file);
   });
