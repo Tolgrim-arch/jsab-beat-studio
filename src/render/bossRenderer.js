@@ -97,25 +97,104 @@ export function drawProceduralBoss(ctx) {
   ctx.rotate(b.tilt || 0);
   ctx.scale((b.scaleX || 1) * userScale, (b.scaleY || 1) * userScale);
 
-  // Detached floating pink triangles around boss (respects spikesMode, spikesShape & spikesLayer)
+  // Detached floating spikes around boss (full customization: 7 styles, 8 orbits, 5 anims, size/speed/fill/color)
   const spikesMode = cb.spikesMode || "phase3";
   const showSpikes = spikesMode === "always" || (spikesMode === "phase3" && (bossCfg.shape === "titan" || state.phase >= 3));
   const drawSpikes = () => {
     if (!showSpikes) return;
     const spikes = cb.spikeCount || (bossCfg.spikeCount + 4);
     const spread = cb.spikeRadiusMul ?? 1.0;
+    const spSize = cb.spikeSize ?? 1.0;
+    const spSpeed = cb.spikeSpeed ?? 1.0;
+    const spStyle = cb.spikeStyle || "classic";
+    const spAnim = cb.spikeAnim || "spin";
+    const isOutline = (cb.spikeFill || "solid") === "outline";
+
+    let spColor = danger;
+    if (cb.spikeColorMode === "white") spColor = COLORS.white;
+    else if (cb.spikeColorMode === "cyan") spColor = (state.customColors?.enabled ? state.customColors.cyan : COLORS.cyan);
+    else if (cb.spikeColorMode === "custom" && cb.spikeCustomColor) spColor = cb.spikeCustomColor;
+    const finalCol = flash ? COLORS.white : spColor;
+
     let shape = cb.spikesShape || "auto";
     if (shape === "auto") {
       if (cb.img && (cb.frame === "square" || cb.frame === "hexagon" || cb.frame === "triangle")) shape = cb.frame;
       else shape = "circle";
     }
+
+    const drawSingleSpike = (sizeMul = 1) => {
+      const sz = b.r * spSize * sizeMul;
+      ctx.beginPath();
+      if (spStyle === "needle") {
+        ctx.moveTo(sz * 0.42, 0);
+        ctx.lineTo(-sz * 0.14, -sz * 0.08);
+        ctx.lineTo(-sz * 0.14, sz * 0.08);
+        ctx.closePath();
+      } else if (spStyle === "saw") {
+        ctx.moveTo(sz * 0.28, -sz * 0.12);
+        ctx.lineTo(-sz * 0.12, -sz * 0.16);
+        ctx.lineTo(-sz * 0.06, sz * 0.16);
+        ctx.closePath();
+      } else if (spStyle === "diamond") {
+        ctx.moveTo(sz * 0.30, 0);
+        ctx.lineTo(0, -sz * 0.14);
+        ctx.lineTo(-sz * 0.22, 0);
+        ctx.lineTo(0, sz * 0.14);
+        ctx.closePath();
+      } else if (spStyle === "claw") {
+        ctx.moveTo(sz * 0.34, -sz * 0.08);
+        ctx.quadraticCurveTo(sz * 0.06, -sz * 0.20, -sz * 0.14, -sz * 0.12);
+        ctx.lineTo(-sz * 0.10, sz * 0.14);
+        ctx.quadraticCurveTo(sz * 0.12, sz * 0.04, sz * 0.34, -sz * 0.08);
+        ctx.closePath();
+      } else if (spStyle === "gear") {
+        ctx.moveTo(sz * 0.22, -sz * 0.09);
+        ctx.lineTo(sz * 0.22, sz * 0.09);
+        ctx.lineTo(-sz * 0.12, sz * 0.15);
+        ctx.lineTo(-sz * 0.12, -sz * 0.15);
+        ctx.closePath();
+      } else if (spStyle === "star") {
+        for (let k = 0; k < 8; k++) {
+          const rad = k % 2 === 0 ? sz * 0.24 : sz * 0.09;
+          const ang = (Math.PI * k) / 4;
+          if (k === 0) ctx.moveTo(Math.cos(ang) * rad, Math.sin(ang) * rad);
+          else ctx.lineTo(Math.cos(ang) * rad, Math.sin(ang) * rad);
+        }
+        ctx.closePath();
+      } else {
+        ctx.moveTo(sz * 0.26, 0);
+        ctx.lineTo(-sz * 0.12, -sz * 0.14);
+        ctx.lineTo(-sz * 0.12, sz * 0.14);
+        ctx.closePath();
+      }
+      if (isOutline) {
+        ctx.strokeStyle = finalCol;
+        ctx.lineWidth = Math.max(2, b.r * 0.045);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = finalCol;
+        ctx.fill();
+      }
+    };
+
+    const t = state.currentTime || 0;
+    const dir = spAnim === "spinReverse" ? -1 : 1;
+    const baseRot = b.rot * 0.42 * spSpeed * dir;
+
+    const animRadialOffset = (idx, total) => {
+      if (spAnim === "pulse") return b.r * (0.28 * b.pulse + 0.08 * Math.sin(t * 8));
+      if (spAnim === "wave") return b.r * 0.22 * Math.sin(t * 7 - (idx / Math.max(1, total)) * Math.PI * 2);
+      if (spAnim === "jitter") return (Math.random() - 0.5) * b.r * (0.14 + b.pulse * 0.2);
+      return b.r * b.pulse * 0.16;
+    };
+
     ctx.save();
-    ctx.fillStyle = flash ? COLORS.white : danger;
 
     const drawPolygonSpikes = (sidesCount, radiusMul, rotOffset) => {
       const perSide = Math.max(1, Math.round(spikes / sidesCount));
-      const rad = b.r * (radiusMul * spread + b.pulse * 0.16);
-      ctx.rotate(b.rot * 0.32);
+      const rad = b.r * (radiusMul * spread) + (spAnim === "pulse" ? b.r * b.pulse * 0.26 : b.r * b.pulse * 0.16);
+      ctx.rotate(baseRot * 0.75);
+      let idx = 0;
       for (let sideIdx = 0; sideIdx < sidesCount; sideIdx++) {
         const a0 = rotOffset + (Math.PI * 2 * sideIdx) / sidesCount;
         const a1 = rotOffset + (Math.PI * 2 * (sideIdx + 1)) / sidesCount;
@@ -124,17 +203,13 @@ export function drawProceduralBoss(ctx) {
         const outAngle = (a0 + a1) * 0.5;
         for (let i = 0; i < perSide; i++) {
           const u = (i + 0.5) / perSide;
-          const px = x0 + (x1 - x0) * u;
-          const py = y0 + (y1 - y0) * u;
+          const off = animRadialOffset(idx++, spikes);
+          const px = x0 + (x1 - x0) * u + Math.cos(outAngle) * off;
+          const py = y0 + (y1 - y0) * u + Math.sin(outAngle) * off;
           ctx.save();
           ctx.translate(px, py);
           ctx.rotate(outAngle);
-          ctx.beginPath();
-          ctx.moveTo(b.r * 0.25, 0);
-          ctx.lineTo(-b.r * 0.11, -b.r * 0.14);
-          ctx.lineTo(-b.r * 0.11, b.r * 0.14);
-          ctx.closePath();
-          ctx.fill();
+          drawSingleSpike(1);
           ctx.restore();
         }
       }
@@ -146,20 +221,56 @@ export function drawProceduralBoss(ctx) {
       drawPolygonSpikes(6, 1.32, 0);
     } else if (shape === "triangle") {
       drawPolygonSpikes(3, 1.65, -Math.PI / 2);
-    } else {
-      ctx.rotate(b.rot * 0.45);
+    } else if (shape === "doubleRing") {
+      [0, 1].forEach((ring) => {
+        ctx.save();
+        ctx.rotate(baseRot * (ring === 0 ? 1 : -1.25));
+        const rMul = ring === 0 ? 1.15 : 1.55;
+        for (let i = 0; i < spikes; i++) {
+          const a = (Math.PI * 2 * i) / spikes;
+          const dist = b.r * (rMul * spread) + animRadialOffset(i, spikes);
+          ctx.save();
+          ctx.translate(Math.cos(a) * dist, Math.sin(a) * dist);
+          ctx.rotate(a);
+          drawSingleSpike(ring === 0 ? 0.85 : 1.05);
+          ctx.restore();
+        }
+        ctx.restore();
+      });
+    } else if (shape === "saturn") {
+      ctx.rotate(-0.35 + baseRot * 0.2);
       for (let i = 0; i < spikes; i++) {
-        const a = (Math.PI * 2 * i) / spikes;
-        const dist = b.r * (1.25 * spread + b.pulse * 0.18);
+        const a = (Math.PI * 2 * i) / spikes + baseRot;
+        const rx = b.r * 1.68 * spread + animRadialOffset(i, spikes);
+        const ry = b.r * 0.62 * spread;
+        const px = Math.cos(a) * rx, py = Math.sin(a) * ry;
+        ctx.save();
+        ctx.translate(px, py);
+        ctx.rotate(Math.atan2(py, px));
+        drawSingleSpike(0.95);
+        ctx.restore();
+      }
+    } else if (shape === "spiral") {
+      ctx.rotate(baseRot);
+      for (let i = 0; i < spikes; i++) {
+        const a = (Math.PI * 2 * i) / spikes * 1.5;
+        const dist = b.r * ((0.95 + (i / Math.max(1, spikes - 1)) * 0.78) * spread) + animRadialOffset(i, spikes);
         ctx.save();
         ctx.translate(Math.cos(a) * dist, Math.sin(a) * dist);
         ctx.rotate(a);
-        ctx.beginPath();
-        ctx.moveTo(b.r * 0.26, 0);
-        ctx.lineTo(-b.r * 0.12, -b.r * 0.14);
-        ctx.lineTo(-b.r * 0.12, b.r * 0.14);
-        ctx.closePath();
-        ctx.fill();
+        drawSingleSpike(0.75 + (i / spikes) * 0.5);
+        ctx.restore();
+      }
+    } else {
+      ctx.rotate(baseRot);
+      for (let i = 0; i < spikes; i++) {
+        const a = (Math.PI * 2 * i) / spikes;
+        const alt = shape === "starCrown" ? (i % 2 === 0 ? 1.18 : 0.82) : 1.0;
+        const dist = b.r * (1.25 * spread * alt) + animRadialOffset(i, spikes);
+        ctx.save();
+        ctx.translate(Math.cos(a) * dist, Math.sin(a) * dist);
+        ctx.rotate(a);
+        drawSingleSpike(shape === "starCrown" ? (i % 2 === 0 ? 1.25 : 0.75) : 1);
         ctx.restore();
       }
     }

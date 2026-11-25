@@ -57,8 +57,15 @@ export const state = {
     frame: "circle",      // "none" | "circle" | "square"
     frameWidth: 6,        // 0 to 16 px
     spikesMode: "phase3", // "always" | "phase3" | "never"
-    spikesShape: "auto",  // "auto" | "circle" | "square" | "hexagon" | "triangle"
+    spikesShape: "auto",  // "auto" | "circle" | "square" | "hexagon" | "triangle" | "doubleRing" | "starCrown" | "saturn" | "spiral"
     spikesLayer: "behind",// "behind" | "above"
+    spikeStyle: "classic",// "classic" | "needle" | "saw" | "diamond" | "claw" | "gear" | "star"
+    spikeAnim: "spin",    // "spin" | "spinReverse" | "pulse" | "wave" | "jitter"
+    spikeSpeed: 1.0,      // 0 to 3.0
+    spikeSize: 1.0,       // 0.4 to 2.2
+    spikeFill: "solid",   // "solid" | "outline"
+    spikeColorMode: "boss", // "boss" | "white" | "cyan" | "custom"
+    spikeCustomColor: "#FF1E6E",
     spikeCount: 12,       // 4 to 20
     spikeRadiusMul: 1.0,  // 0.5 to 2.2
     handsShape: "auto",   // "auto" | "square" | "circle" | "triangle" | "claws" | "peace" | "none"

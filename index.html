@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v64 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v65 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -24,7 +24,7 @@
         <h1 class="font-display text-xs sm:text-base font-bold tracking-wider uppercase flex items-center gap-2 truncate">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v64 • STUDIO PRO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v65 • STUDIO PRO</span>
         </h1>
       </div>
     </div>
@@ -290,7 +290,49 @@
                 <option value="square">Cúbico / Cuadrado</option>
                 <option value="hexagon">Hexagonal</option>
                 <option value="triangle">Triangular</option>
+                <option value="doubleRing">Doble Anillo</option>
+                <option value="starCrown">Corona Alternada</option>
+                <option value="saturn">Órbita Saturno</option>
+                <option value="spiral">Espiral</option>
               </select>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>ESTILO PÚA</span>
+              <select id="bossSpikeStyleSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                <option value="classic">Clásica (Triángulo)</option>
+                <option value="needle">Aguja / Lanza</option>
+                <option value="saw">Sierra Inclinada</option>
+                <option value="diamond">Diamante / Cristal</option>
+                <option value="claw">Garra / Colmillo</option>
+                <option value="gear">Diente Mecánico</option>
+                <option value="star">Estrella 4 Puntas</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>ANIMACIÓN PÚAS</span>
+              <select id="bossSpikeAnimSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                <option value="spin">Giro Horario</option>
+                <option value="spinReverse">Giro Anti-Horario</option>
+                <option value="pulse">Latido al Beat</option>
+                <option value="wave">Ola Circular</option>
+                <option value="jitter">Temblor / Tensión</option>
+              </select>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span>RELLENO / COLOR</span>
+              <div class="flex items-center gap-1">
+                <select id="bossSpikeFillSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-1.5 py-1 text-[10px] text-slate-200">
+                  <option value="solid">Sólido</option>
+                  <option value="outline">Hueco</option>
+                </select>
+                <select id="bossSpikeColorModeSelect" class="bg-[#070917] border border-slate-700 rounded-lg px-1.5 py-1 text-[10px] text-slate-200">
+                  <option value="boss">Jefe</option>
+                  <option value="white">Blanco</option>
+                  <option value="cyan">Cian</option>
+                  <option value="custom">Propio</option>
+                </select>
+                <input id="colorSpikeCustom" type="color" value="#FF1E6E" class="studio-swatch w-5 h-5 cursor-pointer" title="Color propio de púas" />
+              </div>
             </div>
             <div class="flex items-center justify-between text-slate-300">
               <span>CAPA PÚAS</span>
@@ -360,6 +402,14 @@
             <div>
               <div class="flex justify-between mb-1"><span class="text-slate-300">AMPLIACIÓN PÚAS</span><span id="valSpikeSpread" class="text-[#00F0FF]">1.00x</span></div>
               <div class="flex items-center gap-1.5"><button data-step-dec="sliderSpikeSpread" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSpikeSpread" type="range" min="0.5" max="2.2" step="0.05" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderSpikeSpread" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">TAMAÑO PÚAS</span><span id="valSpikeSize" class="text-[#00F0FF]">1.00x</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderSpikeSize" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSpikeSize" type="range" min="0.4" max="2.2" step="0.05" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderSpikeSize" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">VELOCIDAD PÚAS</span><span id="valSpikeSpeed" class="text-[#00F0FF]">1.0x</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderSpikeSpeed" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSpikeSpeed" type="range" min="0" max="3.0" step="0.1" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderSpikeSpeed" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
             </div>
             <div>
               <div class="flex justify-between mb-1"><span class="text-slate-300">FLASH AL BEAT</span><span id="valFlashInt" class="text-[#00F0FF]">72%</span></div>

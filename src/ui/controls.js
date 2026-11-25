@@ -15,6 +15,13 @@ function savePrefs() {
         spikesMode: state.customBoss.spikesMode,
         spikesShape: state.customBoss.spikesShape,
         spikesLayer: state.customBoss.spikesLayer,
+        spikeStyle: state.customBoss.spikeStyle,
+        spikeAnim: state.customBoss.spikeAnim,
+        spikeSpeed: state.customBoss.spikeSpeed,
+        spikeSize: state.customBoss.spikeSize,
+        spikeFill: state.customBoss.spikeFill,
+        spikeColorMode: state.customBoss.spikeColorMode,
+        spikeCustomColor: state.customBoss.spikeCustomColor,
         spikeCount: state.customBoss.spikeCount,
         spikeRadiusMul: state.customBoss.spikeRadiusMul,
         handsShape: state.customBoss.handsShape,
@@ -565,6 +572,10 @@ export function initStudioControls(showToast) {
     ["bossFrameSelect", "frame"],
     ["bossSpikesSelect", "spikesMode"],
     ["bossSpikesShapeSelect", "spikesShape"],
+    ["bossSpikeStyleSelect", "spikeStyle"],
+    ["bossSpikeAnimSelect", "spikeAnim"],
+    ["bossSpikeFillSelect", "spikeFill"],
+    ["bossSpikeColorModeSelect", "spikeColorMode"],
     ["bossSpikesLayerSelect", "spikesLayer"],
     ["bossHandsSelect", "handsShape"],
     ["bossHandsModeSelect", "handsMode"],
@@ -582,6 +593,18 @@ export function initStudioControls(showToast) {
     });
   });
 
+  const spikeColorEl = document.getElementById("colorSpikeCustom");
+  if (spikeColorEl) {
+    if (state.customBoss.spikeCustomColor) spikeColorEl.value = state.customBoss.spikeCustomColor;
+    spikeColorEl.addEventListener("input", () => {
+      state.customBoss.spikeCustomColor = spikeColorEl.value;
+      state.customBoss.spikeColorMode = "custom";
+      const modeSel = document.getElementById("bossSpikeColorModeSelect");
+      if (modeSel) modeSel.value = "custom";
+      savePrefs();
+    });
+  }
+
   // 3. Sliders with ◀ / ▶ stepper arrows + persistence
   const sliders = [
     { id: "sliderSync",       target: state.settings,   key: "syncOffsetMs",   valId: "valSync",       step: 10,   fmt: v => `${v}ms` },
@@ -594,6 +617,8 @@ export function initStudioControls(showToast) {
     { id: "sliderFrameWidth", target: state.customBoss, key: "frameWidth",     valId: "valFrameWidth", step: 1,    fmt: v => `${v}px` },
     { id: "sliderSpikeCount",  target: state.customBoss, key: "spikeCount",     valId: "valSpikeCount",  step: 2,    fmt: v => `${v}` },
     { id: "sliderSpikeSpread", target: state.customBoss, key: "spikeRadiusMul", valId: "valSpikeSpread", step: 0.05, fmt: v => `${v.toFixed(2)}x` },
+    { id: "sliderSpikeSize",   target: state.customBoss, key: "spikeSize",      valId: "valSpikeSize",   step: 0.05, fmt: v => `${v.toFixed(2)}x` },
+    { id: "sliderSpikeSpeed",  target: state.customBoss, key: "spikeSpeed",     valId: "valSpikeSpeed",  step: 0.1,  fmt: v => `${v.toFixed(1)}x` },
     { id: "sliderHandsDist",   target: state.customBoss, key: "handsDistanceMul", valId: "valHandsDist", step: 0.05, fmt: v => `${v.toFixed(2)}x` },
     { id: "sliderFlashInt",   target: state.customBoss, key: "flashIntensity", valId: "valFlashInt",   step: 0.1,  fmt: v => `${Math.round(v * 100)}%` }
   ];

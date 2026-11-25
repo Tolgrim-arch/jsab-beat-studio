@@ -1,7 +1,7 @@
 import { COLORS, PHASES } from "../config.js";
 import { Utils } from "../utils.js";
 import { state } from "../state.js";
-import { drawProceduralBoss } from "./bossRenderer.js?v=61";
+import { drawProceduralBoss } from "./bossRenderer.js?v=65";
 
 function getCyanColor() {
   return state.customColors?.enabled ? state.customColors.cyan : COLORS.cyan;
