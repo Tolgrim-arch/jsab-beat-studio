@@ -48,13 +48,65 @@ export const state = {
     eqAlpha: 0.14,
     impactFlashMul: 0.55,
     phonkMode: false,
-    touhouMode: false
+    touhouMode: false,
+    biomeBgEnabled: true,
+    biomeBgStyle: "auto", // "auto" | "flat" | "seismic" | "tunnel" | "perspective" | "vortex"
+    biomeBgIntensity: 0.75,
+    exportFps: 60,
+    exportBitrateMbps: 12
   },
   velocityTimer: 0,
   rgbSplit: 0,
   whipDir: 1,
+  nearMissCount: 0,
+  nearMissCooldown: 0,
+  nearMissFlash: 0,
+  studio: {
+    commentCard: {
+      enabled: false,
+      user: "@FanJSAB",
+      text: "Haz a este Boss con esta canción!! 🔥",
+      duration: 4.5,
+      position: "top-left" // "top-left" | "top-center" | "bottom-left"
+    },
+    vsIntro: {
+      enabled: false,
+      bossName: "CUSTOM BOSS",
+      songTitle: "",
+      duration: 2.4
+    },
+    bossBar: {
+      enabled: false,
+      showNearMiss: true,
+      position: "top" // "top" | "bottom"
+    },
+    endCta: {
+      enabled: false,
+      text: "¿Qué Boss y canción hago después? Comenta 👇",
+      subtext: "SUSCRÍBETE PARA MÁS",
+      duration: 3.5
+    },
+    clip: {
+      enabled: false,
+      start: 0,
+      end: 35
+    },
+    thumbnail: {
+      showText: true,
+      title: "VS BOSS",
+      subtitle: "NO-HIT CHALLENGE"
+    }
+  },
+  batchQueue: [],
+  batchRunning: false,
   customBoss: {
     img: null,
+    gifFrames: null,
+    gifAnimate: true,
+    gifBpmSync: true,
+    gifSpeed: 1.0,
+    gifTime: 0,
+    autoPalette: false,
     frame: "circle",      // "none" | "circle" | "square"
     frameWidth: 6,        // 0 to 16 px
     spikesMode: "phase3", // "always" | "phase3" | "never"
@@ -127,6 +179,9 @@ export function resetWorldEntities() {
   state.bgPulse = 0;
   state.finaleTriggered = false;
   state.bossDefeated = false;
+  state.nearMissCount = 0;
+  state.nearMissCooldown = 0;
+  state.nearMissFlash = 0;
   state.blixer.x = W * 0.5;
   state.blixer.y = H * 0.26;
   state.cyan.x = W * 0.5;

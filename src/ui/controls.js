@@ -1,5 +1,7 @@
 import { state } from "../state.js";
 import { ATTACK_CATALOG } from "../combat/choreography.js?v=54";
+import { initYoutubeStudioControls } from "./youtubeControls.js";
+import { extractPaletteFromImage } from "../studio/creatorTools.js";
 
 const STORAGE_KEY = "jsab_studio_prefs_v1";
 
@@ -73,6 +75,7 @@ function mountBossImage(src, onReady) {
   }
   el.onload = () => {
     state.customBoss.img = el;
+    if (state.customBoss.autoPalette) extractPaletteFromImage(el);
     const thumb = document.getElementById("bossPreviewThumb");
     if (thumb) {
       thumb.innerHTML = "";
@@ -110,7 +113,7 @@ function loadPrefs() {
   } catch {}
 }
 
-export function initStudioControls(showToast) {
+export function initStudioControls(showToast, hooks = {}) {
   loadPrefs();
 
   // 1. Color pickers
@@ -828,4 +831,5 @@ export function initStudioControls(showToast) {
   });
 
   renderAttackToggles();
+  initYoutubeStudioControls(showToast, hooks, savePrefs);
 }

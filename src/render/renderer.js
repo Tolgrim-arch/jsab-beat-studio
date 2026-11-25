@@ -12,8 +12,115 @@ function getDangerColor() {
 }
 
 function drawBiomeBackground(ctx, W, H) {
-  ctx.fillStyle = state.customColors?.enabled ? state.customColors.bg : "#040D14";
+  const arch = state.analysis?.archetype;
+  const bgBase = state.customColors?.enabled
+    ? state.customColors.bg
+    : (arch?.bgTint || "#040D14");
+  ctx.fillStyle = bgBase;
   ctx.fillRect(0, 0, W, H);
+
+  const biomeEnabled = state.settings?.biomeBgEnabled !== false;
+  const biomeInt = state.settings?.biomeBgIntensity ?? 0.75;
+  if (biomeEnabled && biomeInt > 0.01) {
+    let style = state.settings?.biomeBgStyle || "auto";
+    if (style === "auto") style = arch?.bgStyle || "seismic";
+
+    if (style !== "flat") {
+      const t = state.currentTime || 0;
+      const pulse = state.bgPulse || 0;
+      const sub = state.audioTelemetry?.sub || 0;
+      const danger = getDangerColor();
+      const cyan = getCyanColor();
+
+      ctx.save();
+      if (style === "seismic") {
+        // Expanding concentric shockwave rings + horizontal seismic grid
+        const cx = W * 0.5, cy = H * 0.35;
+        const maxR = Math.hypot(W, H) * 0.65;
+        ctx.strokeStyle = danger;
+        ctx.lineWidth = 1.8;
+        for (let i = 0; i < 6; i++) {
+          const prog = ((t * 0.45 + i / 6) % 1);
+          const r = prog * maxR;
+          ctx.globalAlpha = (1 - prog) * 0.24 * biomeInt * (1 + pulse * 0.9);
+          ctx.beginPath();
+          ctx.arc(cx, cy, r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 0.08 * biomeInt;
+        ctx.strokeStyle = cyan;
+        const step = 64;
+        const offY = (t * 28) % step;
+        for (let y = offY; y < H; y += step) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(W, y);
+          ctx.stroke();
+        }
+      } else if (style === "tunnel") {
+        // Hypnotic zooming geometric tunnel
+        const cx = W * 0.5, cy = H * 0.5;
+        const maxS = Math.max(W, H) * 0.85;
+        ctx.strokeStyle = danger;
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 8; i++) {
+          const prog = ((t * 0.75 + i / 8) % 1);
+          const sz = prog * prog * maxS;
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(t * 0.25 + prog * 0.65);
+          ctx.globalAlpha = Math.sin(prog * Math.PI) * 0.26 * biomeInt * (1 + sub * 0.8);
+          ctx.strokeRect(-sz / 2, -sz / 2, sz, sz);
+          ctx.restore();
+        }
+      } else if (style === "perspective") {
+        // Retro-synthwave perspective horizon grid
+        const horizon = H * 0.42;
+        ctx.strokeStyle = danger;
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = (0.18 + pulse * 0.14) * biomeInt;
+        // Horizontal receding lines
+        for (let i = 0; i < 10; i++) {
+          const prog = ((t * 0.85 + i / 10) % 1);
+          const y = horizon + prog * prog * (H - horizon);
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(W, y);
+          ctx.stroke();
+        }
+        // Vertical perspective rays
+        const rays = 12;
+        for (let i = -rays; i <= rays; i++) {
+          ctx.beginPath();
+          ctx.moveTo(W * 0.5 + i * 24, horizon);
+          ctx.lineTo(W * 0.5 + i * (W * 0.16), H);
+          ctx.stroke();
+        }
+      } else if (style === "vortex") {
+        // Rotating abyssal spiral arms
+        const cx = W * 0.5, cy = H * 0.45;
+        const maxR = Math.hypot(W, H) * 0.6;
+        ctx.strokeStyle = danger;
+        ctx.lineWidth = 2.2;
+        ctx.globalAlpha = (0.16 + pulse * 0.18) * biomeInt;
+        const arms = 6;
+        for (let a = 0; a < arms; a++) {
+          ctx.beginPath();
+          for (let step = 0; step <= 20; step++) {
+            const u = step / 20;
+            const ang = (Math.PI * 2 * a) / arms + u * 3.2 - t * 1.1;
+            const r = u * maxR;
+            const px = cx + Math.cos(ang) * r;
+            const py = cy + Math.sin(ang) * r;
+            if (step === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+      }
+      ctx.restore();
+    }
+  }
 
   const eqCol = state.customColors?.enabled ? (state.customColors.eq || getCyanColor()) : getCyanColor();
   const eqAlpha = state.settings?.eqAlpha ?? 0.14;
@@ -204,7 +311,191 @@ export function renderFrame(ctx) {
     ctx.fillText(`SETPIECE: ${state.activeSetpiece.replace(/_/g, " ")} • MOOD: ${(state.blixer.mood || "SMUG").toUpperCase()}`, 24, 54);
   }
 
+  drawStudioOverlays(ctx, W, H);
+
   ctx.restore();
+}
+
+function drawStudioOverlays(ctx, W, H) {
+  const st = state.studio;
+  if (!st) return;
+
+  const clip = st.clip;
+  const startT = (clip?.enabled && clip.start > 0) ? clip.start : 0;
+  const endT = (clip?.enabled && clip.end > startT && state.duration > 0)
+    ? Math.min(clip.end, state.duration)
+    : (state.duration || 0);
+  const relT = Math.max(0, (state.currentTime || 0) - startT);
+  const totalDur = Math.max(0.1, endT - startT);
+  const danger = getDangerColor();
+  const cyan = getCyanColor();
+
+  // 1. Boss HP / Progress Bar + Near-Miss Counter
+  if (st.bossBar?.enabled) {
+    const isBottom = st.bossBar.position === "bottom";
+    const barW = Math.min(W * 0.54, 540);
+    const barH = 12;
+    const bx = (W - barW) / 2;
+    const by = isBottom ? H - 36 : 22;
+    const hpFrac = state.bossDefeated ? 0 : Utils.clamp(1 - relT / totalDur, 0, 1);
+
+    ctx.save();
+    ctx.fillStyle = "rgba(6, 9, 20, 0.78)";
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(bx - 4, by - 4, barW + 8, barH + 8, 8);
+    else ctx.rect(bx - 4, by - 4, barW + 8, barH + 8);
+    ctx.fill();
+
+    ctx.fillStyle = danger;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(bx, by, Math.max(0, barW * hpFrac), barH, 5);
+    else ctx.rect(bx, by, Math.max(0, barW * hpFrac), barH);
+    ctx.fill();
+
+    ctx.strokeStyle = "rgba(255,255,255,0.28)";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(bx - 4, by - 4, barW + 8, barH + 8);
+
+    const bossLabel = (st.vsIntro?.bossName || "BOSS HP").toUpperCase();
+    ctx.font = "700 10px 'JetBrains Mono', monospace";
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "left";
+    ctx.fillText(bossLabel, bx, by - 8);
+    ctx.textAlign = "right";
+    ctx.fillText(`${Math.round(hpFrac * 100)}%`, bx + barW, by - 8);
+
+    if (st.bossBar.showNearMiss) {
+      const nm = state.nearMissCount || 0;
+      const nmScale = 1 + (state.nearMissFlash || 0) * 0.18;
+      ctx.save();
+      ctx.translate(W - 24, isBottom ? H - 24 : 34);
+      ctx.scale(nmScale, nmScale);
+      ctx.textAlign = "right";
+      ctx.font = "800 13px Orbitron, sans-serif";
+      ctx.fillStyle = (state.nearMissFlash || 0) > 0.2 ? "#FFFFFF" : cyan;
+      ctx.fillText(`NEAR MISS: ${nm}`, 0, 0);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  // 2. YouTube / TikTok Comment Card Overlay
+  if (st.commentCard?.enabled && relT <= (st.commentCard.duration || 4.5)) {
+    const dur = st.commentCard.duration || 4.5;
+    const fadeIn = Utils.clamp(relT / 0.35, 0, 1);
+    const fadeOut = Utils.clamp((dur - relT) / 0.4, 0, 1);
+    const alpha = Math.min(fadeIn, fadeOut);
+    const slide = (1 - fadeIn) * 28;
+
+    const cardW = Math.min(W * 0.78, 380);
+    const cardH = 74;
+    let cx = 24, cy = 78;
+    if (st.commentCard.position === "top-center") { cx = (W - cardW) / 2; cy = 62; }
+    else if (st.commentCard.position === "bottom-left") { cx = 24; cy = H - cardH - 52; }
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(0, -slide);
+    ctx.fillStyle = "rgba(15, 19, 36, 0.92)";
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(cx, cy, cardW, cardH, 14);
+    else ctx.rect(cx, cy, cardW, cardH);
+    ctx.fill();
+    ctx.stroke();
+
+    // Avatar circle
+    ctx.fillStyle = danger;
+    ctx.beginPath();
+    ctx.arc(cx + 30, cy + cardH / 2, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "800 14px Orbitron, sans-serif";
+    ctx.textAlign = "center";
+    const initial = (st.commentCard.user || "@").replace(/^@/, "").charAt(0).toUpperCase() || "U";
+    ctx.fillText(initial, cx + 30, cy + cardH / 2 + 5);
+
+    ctx.textAlign = "left";
+    ctx.fillStyle = cyan;
+    ctx.font = "700 12px 'JetBrains Mono', monospace";
+    ctx.fillText((st.commentCard.user || "@FanJSAB").slice(0, 28), cx + 58, cy + 28);
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.font = "600 14px Inter, sans-serif";
+    ctx.fillText((st.commentCard.text || "").slice(0, 42), cx + 58, cy + 50);
+    ctx.restore();
+  }
+
+  // 3. VS / Boss Intro Banner
+  if (st.vsIntro?.enabled && relT <= (st.vsIntro.duration || 2.4)) {
+    const dur = st.vsIntro.duration || 2.4;
+    const fadeIn = Utils.clamp(relT / 0.22, 0, 1);
+    const fadeOut = Utils.clamp((dur - relT) / 0.35, 0, 1);
+    const alpha = Math.min(fadeIn, fadeOut);
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const bandH = Math.min(H * 0.22, 148);
+    const by = H * 0.44 - bandH / 2;
+    ctx.fillStyle = "rgba(5, 7, 18, 0.86)";
+    ctx.fillRect(0, by, W, bandH);
+    ctx.fillStyle = danger;
+    ctx.fillRect(0, by, W, 4);
+    ctx.fillRect(0, by + bandH - 4, W, 4);
+
+    ctx.textAlign = "center";
+    ctx.fillStyle = cyan;
+    ctx.font = "700 13px 'JetBrains Mono', monospace";
+    ctx.fillText("NEXT BOSS BATTLE", W / 2, by + 32);
+
+    ctx.fillStyle = "#FFFFFF";
+    const titleSz = Math.round(Math.min(W, H) * 0.068);
+    ctx.font = `900 ${titleSz}px Orbitron, sans-serif`;
+    ctx.fillText(`VS ${(st.vsIntro.bossName || "BOSS").toUpperCase()}`, W / 2, by + bandH * 0.62);
+
+    const songLabel = st.vsIntro.songTitle || state.trackTitle || "";
+    if (songLabel) {
+      ctx.fillStyle = "#FFD166";
+      ctx.font = "600 13px 'JetBrains Mono', monospace";
+      ctx.fillText(`♪ ${songLabel.slice(0, 48)}`, W / 2, by + bandH - 18);
+    }
+    ctx.restore();
+  }
+
+  // 4. End-Screen CTA Overlay
+  if (st.endCta?.enabled && endT > 0) {
+    const ctaDur = st.endCta.duration || 3.5;
+    const timeLeft = endT - (state.currentTime || 0);
+    if (timeLeft <= ctaDur || state.bossDefeated) {
+      const alpha = state.bossDefeated ? 1 : Utils.clamp((ctaDur - timeLeft) / 0.45, 0, 1);
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      const boxW = Math.min(W * 0.86, 620);
+      const boxH = 104;
+      const bx = (W - boxW) / 2;
+      const by = H * 0.62;
+
+      ctx.fillStyle = "rgba(8, 11, 26, 0.90)";
+      ctx.strokeStyle = cyan;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, by, boxW, boxH, 16);
+      else ctx.rect(bx, by, boxW, boxH);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "800 18px Inter, sans-serif";
+      ctx.fillText(st.endCta.text || "¿Qué Boss y canción hago después? Comenta 👇", W / 2, by + 44);
+
+      ctx.fillStyle = danger;
+      ctx.font = "800 13px Orbitron, sans-serif";
+      ctx.fillText((st.endCta.subtext || "SUSCRÍBETE PARA MÁS").toUpperCase(), W / 2, by + 76);
+      ctx.restore();
+    }
+  }
 }
 
 export function drawTimeline(tCtx, timelineCanvas) {
@@ -220,6 +511,18 @@ export function drawTimeline(tCtx, timelineCanvas) {
     const f = frames[Math.min(frames.length - 1, x * step)];
     const barH = Utils.clamp(f.rms * h * 0.85, 2, h);
     tCtx.fillRect(x, h - barH, 1, barH);
+  }
+
+  // Highlight Clip In / Out range if enabled
+  const clip = state.studio?.clip;
+  if (clip?.enabled && state.duration > 0) {
+    const x1 = Utils.clamp(clip.start / state.duration, 0, 1) * w;
+    const x2 = Utils.clamp(clip.end / state.duration, 0, 1) * w;
+    tCtx.fillStyle = "rgba(255, 209, 102, 0.18)";
+    tCtx.fillRect(x1, 0, Math.max(2, x2 - x1), h);
+    tCtx.fillStyle = "#FFD166";
+    tCtx.fillRect(x1, 0, 2, h);
+    tCtx.fillRect(x2 - 2, 0, 2, h);
   }
 
   const prog = state.duration > 0 ? state.currentTime / state.duration : 0;

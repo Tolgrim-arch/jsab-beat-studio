@@ -384,9 +384,23 @@ export function drawProceduralBoss(ctx) {
 
     // Select current animated GIF frame if decoded via ImageDecoder, else static/DOM img
     let activeImg = cb.img;
-    if (cb.gifFrames && cb.gifFrames.length > 0) {
-      const totalDur = cb.gifFrames.reduce((s, f) => s + f.dur, 0) || 1;
-      let tMod = ((performance.now() / 1000) % totalDur);
+    if (cb.gifFrames && cb.gifFrames.length > 0 && cb.gifAnimate !== false) {
+      const nowMs = typeof performance !== "undefined" ? performance.now() : Date.now();
+      const lastMs = drawProceduralBoss._lastGifMs || nowMs;
+      const dtGif = Math.min(0.08, Math.max(0, (nowMs - lastMs) / 1000));
+      drawProceduralBoss._lastGifMs = nowMs;
+
+      // Freeze GIF during hitstop, otherwise advance with optional BPM/bass boost
+      if ((state.hitstopTimer || 0) <= 0) {
+        const baseSpd = cb.gifSpeed ?? 1.0;
+        const bpmFactor = cb.gifBpmSync
+          ? ((state.analysis?.bpm || 128) / 128) * (1 + (state.audioTelemetry?.bass || 0) * 0.65)
+          : 1.0;
+        cb.gifTime = (cb.gifTime || 0) + dtGif * baseSpd * bpmFactor;
+      }
+
+      const totalDur = cb.gifFrames.reduce((acc, f) => acc + f.dur, 0) || 1;
+      let tMod = cb.gifTime % totalDur;
       for (const fr of cb.gifFrames) {
         if (tMod <= fr.dur) { activeImg = fr.bitmap; break; }
         tMod -= fr.dur;

@@ -65,27 +65,31 @@
     <!-- TABBED STUDIO SIDEBAR (Bottom drawer on mobile, left sidebar on desktop) -->
     <aside id="studioSidebar" class="order-2 lg:order-1 w-full lg:w-[350px] xl:w-[376px] border-t lg:border-t-0 lg:border-r border-slate-800/80 bg-[#0a0c1e] flex flex-col min-h-0 shrink-0 max-h-[45dvh] lg:max-h-none">
 
-      <!-- 5-TAB NAVIGATION BAR -->
-      <nav class="grid grid-cols-5 gap-1 p-2 border-b border-slate-800/80 bg-[#080a19] shrink-0">
-        <button type="button" data-studio-tab="track" class="studio-tab active py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
+      <!-- 6-TAB NAVIGATION BAR -->
+      <nav class="grid grid-cols-6 gap-1 p-2 border-b border-slate-800/80 bg-[#080a19] shrink-0">
+        <button type="button" data-studio-tab="track" class="studio-tab active py-2 px-0.5 rounded-lg flex flex-col items-center gap-0.5 text-[9px] font-mono-tech cursor-pointer">
           <span class="text-sm leading-none">🎵</span>
           <span>Track</span>
         </button>
-        <button type="button" data-studio-tab="colors" class="studio-tab py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
+        <button type="button" data-studio-tab="colors" class="studio-tab py-2 px-0.5 rounded-lg flex flex-col items-center gap-0.5 text-[9px] font-mono-tech cursor-pointer">
           <span class="text-sm leading-none">🎨</span>
           <span>Colores</span>
         </button>
-        <button type="button" data-studio-tab="boss" class="studio-tab py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
+        <button type="button" data-studio-tab="boss" class="studio-tab py-2 px-0.5 rounded-lg flex flex-col items-center gap-0.5 text-[9px] font-mono-tech cursor-pointer">
           <span class="text-sm leading-none">👾</span>
           <span>Jefe</span>
         </button>
-        <button type="button" data-studio-tab="combat" class="studio-tab py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
+        <button type="button" data-studio-tab="combat" class="studio-tab py-2 px-0.5 rounded-lg flex flex-col items-center gap-0.5 text-[9px] font-mono-tech cursor-pointer">
           <span class="text-sm leading-none">⚔️</span>
           <span>Combate</span>
         </button>
-        <button type="button" data-studio-tab="fx" class="studio-tab py-2 px-1 rounded-lg flex flex-col items-center gap-0.5 text-[10px] font-mono-tech cursor-pointer">
+        <button type="button" data-studio-tab="fx" class="studio-tab py-2 px-0.5 rounded-lg flex flex-col items-center gap-0.5 text-[9px] font-mono-tech cursor-pointer">
           <span class="text-sm leading-none">🎛️</span>
           <span>FX</span>
+        </button>
+        <button type="button" data-studio-tab="youtube" class="studio-tab py-2 px-0.5 rounded-lg flex flex-col items-center gap-0.5 text-[9px] font-mono-tech cursor-pointer">
+          <span class="text-sm leading-none">🎬</span>
+          <span>YouTube</span>
         </button>
       </nav>
 
@@ -128,10 +132,14 @@
               <span class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">Formato de Escenario</span>
               <span id="resolutionLabel" class="text-[10px] font-mono-tech text-[#00F0FF]">1280 × 720</span>
             </div>
-            <div class="grid grid-cols-3 gap-2">
-              <button data-aspect="16:9" class="aspect-btn py-2 px-2 rounded-lg text-[11px] font-semibold border border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF] cursor-pointer transition">16:9<br><span class="text-[9px] opacity-75 font-normal">YouTube</span></button>
-              <button data-aspect="9:16" class="aspect-btn py-2 px-2 rounded-lg text-[11px] font-semibold border border-slate-700/80 bg-[#090b1a] text-slate-300 hover:border-slate-500 cursor-pointer transition">9:16<br><span class="text-[9px] opacity-75 font-normal">TikTok</span></button>
-              <button data-aspect="1:1" class="aspect-btn py-2 px-2 rounded-lg text-[11px] font-semibold border border-slate-700/80 bg-[#090b1a] text-slate-300 hover:border-slate-500 cursor-pointer transition">1:1<br><span class="text-[9px] opacity-75 font-normal">Feed</span></button>
+            <div class="grid grid-cols-3 gap-1.5 mb-1.5">
+              <button data-aspect="16:9" class="aspect-btn py-1.5 px-2 rounded-lg text-[10px] font-semibold border border-[#00F0FF] bg-[#00F0FF]/15 text-[#00F0FF] cursor-pointer transition">16:9<br><span class="text-[8px] opacity-75 font-normal">720p</span></button>
+              <button data-aspect="9:16" class="aspect-btn py-1.5 px-2 rounded-lg text-[10px] font-semibold border border-slate-700/80 bg-[#090b1a] text-slate-300 hover:border-slate-500 cursor-pointer transition">9:16<br><span class="text-[8px] opacity-75 font-normal">720p</span></button>
+              <button data-aspect="1:1" class="aspect-btn py-1.5 px-2 rounded-lg text-[10px] font-semibold border border-slate-700/80 bg-[#090b1a] text-slate-300 hover:border-slate-500 cursor-pointer transition">1:1<br><span class="text-[8px] opacity-75 font-normal">1080p</span></button>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button data-aspect="16:9-hd" class="aspect-btn py-1.5 px-2 rounded-lg text-[10px] font-semibold border border-slate-700/80 bg-[#090b1a] text-slate-300 hover:border-slate-500 cursor-pointer transition">16:9 FULL HD<br><span class="text-[8px] opacity-75 font-normal">1920×1080 YT</span></button>
+              <button data-aspect="9:16-hd" class="aspect-btn py-1.5 px-2 rounded-lg text-[10px] font-semibold border border-slate-700/80 bg-[#090b1a] text-slate-300 hover:border-slate-500 cursor-pointer transition">9:16 FULL HD<br><span class="text-[8px] opacity-75 font-normal">1080×1920 Shorts</span></button>
             </div>
           </div>
 
@@ -259,6 +267,29 @@
               <div id="giphyHistoryChips" class="flex flex-wrap gap-1"></div>
               <input id="giphyApiKeyInput" type="password" placeholder="GIPHY API Key (developers.giphy.com)" class="w-full bg-[#070917] border border-slate-800/80 focus:border-[#00F0FF] outline-none rounded-lg px-2.5 py-1 text-[9px] text-slate-300 placeholder:text-slate-500" />
               <div id="tenorResultsGrid" class="hidden grid grid-cols-4 gap-1.5 max-h-44 overflow-y-auto p-1.5 rounded-lg bg-[#070917] border border-slate-800/80"></div>
+
+              <!-- GIF Animation & Auto-Palette Controls -->
+              <div class="pt-2 border-t border-slate-800/70 space-y-2 text-[10px] font-mono-tech">
+                <label class="flex items-center justify-between text-slate-300 cursor-pointer">
+                  <span>🎞️ Animar GIF en Canvas</span>
+                  <input id="toggleGifAnimate" type="checkbox" checked class="accent-[#00F0FF] w-3.5 h-3.5 cursor-pointer" />
+                </label>
+                <label class="flex items-center justify-between text-slate-300 cursor-pointer">
+                  <span>⚡ Sincronizar GIF al BPM/Bajo</span>
+                  <input id="toggleGifBpmSync" type="checkbox" checked class="accent-[#FF1F71] w-3.5 h-3.5 cursor-pointer" />
+                </label>
+                <div>
+                  <div class="flex justify-between mb-1"><span class="text-slate-300">VELOCIDAD GIF</span><span id="valGifSpeed" class="text-[#00F0FF]">1.0x</span></div>
+                  <input id="sliderGifSpeed" type="range" min="0.2" max="3.0" step="0.1" value="1.0" class="studio-slider w-full" />
+                </div>
+                <div class="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/60">
+                  <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer">
+                    <input id="toggleAutoPalette" type="checkbox" class="accent-[#00F0FF] w-3.5 h-3.5 cursor-pointer" />
+                    <span>🎨 Auto-Paleta del GIF</span>
+                  </label>
+                  <button id="btnExtractPaletteNow" type="button" class="px-2 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/35 border border-purple-400/40 text-[9px] text-purple-200 cursor-pointer">Aplicar</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -474,12 +505,51 @@
               <div class="flex justify-between mb-1"><span class="text-slate-300">FLASH IMPACTOS</span><span id="valImpactFlash" class="text-[#00F0FF]">55%</span></div>
               <div class="flex items-center gap-1.5"><button data-step-dec="sliderImpactFlash" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderImpactFlash" type="range" min="0" max="1" step="0.05" value="0.55" class="studio-slider flex-1" /><button data-step-inc="sliderImpactFlash" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
             </div>
+            <div class="pt-2 border-t border-slate-800/70 space-y-2">
+              <label class="flex items-center justify-between text-slate-200 cursor-pointer">
+                <span>🌌 FONDO DE BIOMA REACTIVO</span>
+                <input id="toggleBiomeBg" type="checkbox" checked class="accent-[#00F0FF] w-3.5 h-3.5 cursor-pointer" />
+              </label>
+              <div class="flex items-center justify-between text-slate-300">
+                <span>ESTILO BIOMA</span>
+                <select id="selectBiomeBgStyle" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                  <option value="auto">Auto (según Arquetipo)</option>
+                  <option value="seismic">Seismic (Ondas)</option>
+                  <option value="tunnel">Tunnel (Túnel 3D)</option>
+                  <option value="perspective">Perspective (Synthwave)</option>
+                  <option value="vortex">Vortex (Espiral)</option>
+                  <option value="flat">Plano (Minimal)</option>
+                </select>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span class="text-slate-300">INTENSIDAD BIOMA</span><span id="valBiomeBgInt" class="text-[#00F0FF]">75%</span></div>
+                <input id="sliderBiomeBgInt" type="range" min="0" max="1.5" step="0.05" value="0.75" class="studio-slider w-full" />
+              </div>
+            </div>
           </div>
 
           <div class="studio-card p-3.5 space-y-2.5">
             <div class="flex items-center justify-between">
               <span class="text-[10px] font-mono-tech uppercase tracking-wider text-slate-400">Exportar Video</span>
-              <span class="text-[10px] font-mono-tech text-[#00F0FF]">WebM 60fps</span>
+              <span id="exportQualityBadge" class="text-[10px] font-mono-tech text-[#00F0FF]">WebM 60fps • 12M</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-[10px] font-mono-tech">
+              <label class="flex flex-col gap-1 text-slate-300">
+                <span>FPS</span>
+                <select id="selectExportFps" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                  <option value="60" selected>60 FPS (Fluido)</option>
+                  <option value="30">30 FPS (Ligero)</option>
+                </select>
+              </label>
+              <label class="flex flex-col gap-1 text-slate-300">
+                <span>BITRATE</span>
+                <select id="selectExportBitrate" class="bg-[#070917] border border-slate-700 rounded-lg px-2 py-1 text-[10px] text-slate-200">
+                  <option value="6">6 Mbps (Std)</option>
+                  <option value="12" selected>12 Mbps (HD)</option>
+                  <option value="20">20 Mbps (Ultra)</option>
+                </select>
+              </label>
             </div>
 
             <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
@@ -492,6 +562,170 @@
               <span id="recBtnText">Grabar Video Completo</span>
             </button>
           </div>
+        </div>
+
+        <!-- PANEL 6: YOUTUBE / SHORTS CREATOR STUDIO -->
+        <div data-studio-panel="youtube" class="hidden space-y-3 text-[10px] font-mono-tech">
+
+          <!-- 1-CLICK STYLE PRESETS & JSON -->
+          <div class="studio-card p-3.5 space-y-2.5">
+            <div class="text-[10px] uppercase tracking-wider text-slate-400">⚡ Presets de 1 Clic</div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <button type="button" data-style-preset="viral_short" class="py-1.5 px-2 rounded-lg bg-[#FF1F71]/15 hover:bg-[#FF1F71]/30 border border-[#FF1F71]/40 text-[#FF4D8D] font-semibold cursor-pointer">🔥 Short Viral 9:16</button>
+              <button type="button" data-style-preset="phonk_short" class="py-1.5 px-2 rounded-lg bg-purple-500/15 hover:bg-purple-500/30 border border-purple-400/40 text-purple-300 font-semibold cursor-pointer">💀 Phonk Edit 9:16</button>
+              <button type="button" data-style-preset="touhou_chaos" class="py-1.5 px-2 rounded-lg bg-amber-500/15 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 font-semibold cursor-pointer">🌀 Touhou 16:9 HD</button>
+              <button type="button" data-style-preset="clean_jsab" class="py-1.5 px-2 rounded-lg bg-[#00F0FF]/15 hover:bg-[#00F0FF]/30 border border-[#00F0FF]/40 text-[#00F0FF] font-semibold cursor-pointer">✨ Clean JSAB HD</button>
+            </div>
+            <div class="grid grid-cols-4 gap-1 pt-1.5 border-t border-slate-800/70">
+              <button id="btnSaveLocalPreset" type="button" class="py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer">💾 Guardar</button>
+              <button id="btnLoadLocalPreset" type="button" class="py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer">📂 Cargar</button>
+              <button id="btnExportJsonPreset" type="button" class="py-1 rounded bg-slate-800 hover:bg-slate-700 text-[#00F0FF] cursor-pointer">⬇ JSON</button>
+              <label class="py-1 rounded bg-slate-800 hover:bg-slate-700 text-emerald-300 text-center cursor-pointer">
+                ⬆ JSON
+                <input id="inputImportJsonPreset" type="file" accept=".json,application/json" class="hidden" />
+              </label>
+            </div>
+          </div>
+
+          <!-- CLIP IN / OUT FOR SHORTS -->
+          <div class="studio-card p-3.5 space-y-2">
+            <label class="flex items-center justify-between text-slate-200 cursor-pointer">
+              <span class="uppercase tracking-wider text-[#FFD166]">✂️ Recorte de Clip (Shorts)</span>
+              <input id="toggleClipRange" type="checkbox" class="accent-[#FFD166] w-4 h-4 cursor-pointer" />
+            </label>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <div class="text-slate-400 mb-1">INICIO (seg)</div>
+                <div class="flex gap-1">
+                  <input id="inputClipStart" type="number" min="0" step="1" value="0" class="w-full bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+                  <button id="btnMarkClipStart" type="button" title="Usar tiempo actual" class="px-1.5 rounded bg-slate-800 hover:bg-slate-700 text-[#FFD166] cursor-pointer">⏱</button>
+                </div>
+              </div>
+              <div>
+                <div class="text-slate-400 mb-1">FIN (seg)</div>
+                <div class="flex gap-1">
+                  <input id="inputClipEnd" type="number" min="1" step="1" value="35" class="w-full bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+                  <button id="btnMarkClipEnd" type="button" title="Usar tiempo actual" class="px-1.5 rounded bg-slate-800 hover:bg-slate-700 text-[#FFD166] cursor-pointer">⏱</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RETENTION OVERLAYS -->
+          <div class="studio-card p-3.5 space-y-3">
+            <div class="text-[10px] uppercase tracking-wider text-slate-400">📺 Overlays de Retención</div>
+
+            <!-- Comment Card -->
+            <div class="space-y-1.5 pb-2.5 border-b border-slate-800/70">
+              <label class="flex items-center justify-between text-slate-200 cursor-pointer">
+                <span>💬 Tarjeta de Comentario</span>
+                <input id="toggleCommentCard" type="checkbox" class="accent-[#00F0FF] w-3.5 h-3.5 cursor-pointer" />
+              </label>
+              <div class="grid grid-cols-2 gap-1.5">
+                <input id="inputCommentUser" type="text" value="@FanJSAB" placeholder="@usuario" class="bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+                <select id="selectCommentPos" class="bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200">
+                  <option value="top-left">Arriba Izq</option>
+                  <option value="top-center">Arriba Centro</option>
+                  <option value="bottom-left">Abajo Izq</option>
+                </select>
+              </div>
+              <input id="inputCommentText" type="text" value="Haz a este Boss con esta canción!! 🔥" placeholder="Texto del comentario..." class="w-full bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-slate-400">Duración (s)</span>
+                <input id="inputCommentDur" type="number" min="1" max="15" step="0.5" value="4.5" class="w-16 bg-[#070917] border border-slate-700 rounded px-2 py-0.5 text-slate-200" />
+              </div>
+            </div>
+
+            <!-- VS Intro -->
+            <div class="space-y-1.5 pb-2.5 border-b border-slate-800/70">
+              <label class="flex items-center justify-between text-slate-200 cursor-pointer">
+                <span>⚔️ Banner Intro "VS BOSS"</span>
+                <input id="toggleVsIntro" type="checkbox" class="accent-[#FF1F71] w-3.5 h-3.5 cursor-pointer" />
+              </label>
+              <div class="grid grid-cols-2 gap-1.5">
+                <input id="inputVsBossName" type="text" value="CUSTOM BOSS" placeholder="Nombre del Boss" class="bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+                <input id="inputVsSongTitle" type="text" value="" placeholder="Canción (auto)" class="bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+              </div>
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-slate-400">Duración (s)</span>
+                <input id="inputVsDur" type="number" min="1" max="8" step="0.2" value="2.4" class="w-16 bg-[#070917] border border-slate-700 rounded px-2 py-0.5 text-slate-200" />
+              </div>
+            </div>
+
+            <!-- Boss HP Bar + Near-Miss -->
+            <div class="space-y-1.5 pb-2.5 border-b border-slate-800/70">
+              <label class="flex items-center justify-between text-slate-200 cursor-pointer">
+                <span>❤️ Barra HP del Boss</span>
+                <input id="toggleBossBar" type="checkbox" class="accent-[#FF1F71] w-3.5 h-3.5 cursor-pointer" />
+              </label>
+              <div class="flex items-center justify-between gap-2">
+                <label class="flex items-center gap-1.5 text-slate-300 cursor-pointer">
+                  <input id="toggleNearMiss" type="checkbox" checked class="accent-[#00F0FF] w-3.5 h-3.5 cursor-pointer" />
+                  <span>Contador Near-Miss</span>
+                </label>
+                <select id="selectBossBarPos" class="bg-[#070917] border border-slate-700 rounded px-2 py-0.5 text-slate-200">
+                  <option value="top">Arriba</option>
+                  <option value="bottom">Abajo</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- End CTA -->
+            <div class="space-y-1.5">
+              <label class="flex items-center justify-between text-slate-200 cursor-pointer">
+                <span>📢 Pantalla CTA Final</span>
+                <input id="toggleEndCta" type="checkbox" class="accent-[#00F0FF] w-3.5 h-3.5 cursor-pointer" />
+              </label>
+              <input id="inputEndCtaText" type="text" value="¿Qué Boss y canción hago después? Comenta 👇" class="w-full bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+              <div class="flex items-center gap-1.5">
+                <input id="inputEndCtaSub" type="text" value="SUSCRÍBETE PARA MÁS" class="flex-1 bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+                <input id="inputEndCtaDur" type="number" min="1" max="10" step="0.5" value="3.5" title="Duración (s)" class="w-14 bg-[#070917] border border-slate-700 rounded px-1.5 py-1 text-slate-200" />
+              </div>
+            </div>
+          </div>
+
+          <!-- THUMBNAIL GENERATOR -->
+          <div class="studio-card p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="uppercase tracking-wider text-slate-400">📸 Generador de Miniatura</span>
+              <label class="flex items-center gap-1 text-slate-300 cursor-pointer">
+                <input id="toggleThumbText" type="checkbox" checked class="accent-[#00F0FF] w-3.5 h-3.5 cursor-pointer" />
+                <span>Texto</span>
+              </label>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5">
+              <input id="inputThumbTitle" type="text" value="VS BOSS" placeholder="Título grande" class="bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+              <input id="inputThumbSub" type="text" value="NO-HIT CHALLENGE" placeholder="Subtítulo" class="bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+            </div>
+            <button id="btnCaptureThumbnail" type="button" class="w-full py-2 rounded-xl bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/50 text-[#00F0FF] font-semibold cursor-pointer">
+              📸 Capturar Miniatura PNG
+            </button>
+          </div>
+
+          <!-- BATCH RENDER QUEUE -->
+          <div class="studio-card p-3.5 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="uppercase tracking-wider text-slate-400">🏭 Cola de Render en Masa</span>
+              <span id="batchQueueCount" class="text-[#00F0FF]">0 en cola</span>
+            </div>
+            <div class="space-y-1.5">
+              <input id="batchAudioInput" type="file" accept="audio/*,video/mp4" class="w-full text-[9px] text-slate-300 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-slate-800 file:text-slate-200" />
+              <input id="batchBossUrl" type="text" placeholder="URL directa GIF/PNG del Boss (opcional)" class="w-full bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+              <div class="grid grid-cols-2 gap-1.5">
+                <input id="batchBossName" type="text" placeholder="Nombre Boss" class="bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+                <input id="batchCommentText" type="text" placeholder="Comentario (opc.)" class="bg-[#070917] border border-slate-700 rounded px-2 py-1 text-slate-200" />
+              </div>
+              <button id="btnAddBatchItem" type="button" class="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600/60 text-slate-200 font-semibold cursor-pointer">
+                + Añadir a la Cola
+              </button>
+            </div>
+            <div id="batchQueueList" class="space-y-1 max-h-28 overflow-y-auto"></div>
+            <div class="grid grid-cols-2 gap-1.5 pt-1">
+              <button id="btnRunBatchQueue" type="button" class="py-2 rounded-lg bg-gradient-to-r from-[#FF1F71] to-[#d9145c] hover:from-[#ff337e] text-white font-bold cursor-pointer">▶ Renderizar Cola</button>
+              <button id="btnClearBatchQueue" type="button" class="py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer">🗑 Limpiar</button>
+            </div>
+          </div>
+
         </div>
 
       </div>

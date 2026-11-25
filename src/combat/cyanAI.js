@@ -62,7 +62,16 @@ export function updateCyanAI(dt) {
     if (score < bestScore) { bestScore = score; bestX = dx; bestY = dy; }
   }
 
+  if (state.nearMissCooldown > 0) state.nearMissCooldown -= dt;
+  if (state.nearMissFlash > 0) state.nearMissFlash = Math.max(0, state.nearMissFlash - dt * 2.5);
+
   const currentDanger = evaluateDangerAt(c.x, c.y, 0.05);
+  if (currentDanger > 48 && state.nearMissCooldown <= 0) {
+    state.nearMissCount = (state.nearMissCount || 0) + 1;
+    state.nearMissCooldown = 0.55;
+    state.nearMissFlash = 1.0;
+  }
+
   if (currentDanger > 72 && c.dashCooldown <= 0 && (bestX !== 0 || bestY !== 0)) {
     c.dashTimer = 0.16;
     c.dashCooldown = 0.36;

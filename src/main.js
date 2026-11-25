@@ -337,34 +337,48 @@ function loadMediaElementFallback(file) {
   });
 }
 
-function startRecordingFullTrack() {
+let activeRecordingCallback = null;
+
+function startRecordingFullTrack(customFileName = null, onFinished = null) {
   if ((!state.audioBuffer && !state.mediaEl) || state.isRecording) return;
-  const stream = dom.canvas.captureStream(60);
+  const fps = state.settings?.exportFps || 60;
+  const bitrate = Math.round((state.settings?.exportBitrateMbps || 12) * 1_000_000);
+  const stream = dom.canvas.captureStream(fps);
   if (state.mediaDest) state.mediaDest.stream.getAudioTracks().forEach(t => stream.addTrack(t));
   const mime = MediaRecorder.isTypeSupported("video/webm;codecs=vp9,opus") ? "video/webm;codecs=vp9,opus" : "video/webm";
 
+  activeRecordingCallback = onFinished;
   state.recordedChunks = [];
-  state.mediaRecorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: 6000000 });
+  state.mediaRecorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: bitrate });
   state.mediaRecorder.ondataavailable = e => { if (e.data.size > 0) state.recordedChunks.push(e.data); };
   state.mediaRecorder.onstop = () => {
     const blob = new Blob(state.recordedChunks, { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `jsab_v2_${state.aspect.replace(":", "x")}_${Date.now()}.webm`;
+    const base = customFileName || `jsab_${state.aspect.replace(":", "x")}_${Date.now()}`;
+    a.download = `${base.replace(/[^a-z0-9_-]/gi, "_")}.webm`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast("Video exportado correctamente", "success");
+    showToast(`Video exportado (${state.width}×${state.height} @ ${fps}fps)`, "success");
+    const cb = activeRecordingCallback;
+    activeRecordingCallback = null;
+    if (cb) cb();
   };
+
+  const clip = state.studio?.clip;
+  const startOffset = (clip?.enabled && clip.start > 0 && clip.start < state.duration) ? clip.start : 0;
 
   state.isRecording = true;
   dom.recIcon.classList.add("rec-dot");
   dom.recBtnText.textContent = "Grabando... (Detener)";
-  state.pauseOffset = 0;
-  state.nextEventIdx = 0;
+  state.pauseOffset = startOffset;
+  state.currentTime = startOffset;
+  state.nextEventIdx = state.schedule.findIndex(ev => ev.spawnTime >= startOffset);
+  if (state.nextEventIdx === -1) state.nextEventIdx = state.schedule.length;
   resetWorldEntities();
   state.mediaRecorder.start();
-  startPlayback(0);
+  startPlayback(startOffset);
 }
 
 function stopRecordingAndDownload() {
@@ -685,24 +699,54 @@ function updateSimulation(dt) {
   state.bgPulse = Math.max(0, state.bgPulse - dt * 2.6);
 }
 
-// Event Listeners
-dom.audioInput.addEventListener("change", async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
+async function loadAudioFile(file) {
+  if (!file) return false;
   dom.trackStatus.textContent = "Analizando...";
   try {
     const ac = ensureAudioContext();
     const buf = await file.arrayBuffer();
     const decoded = await ac.decodeAudioData(buf.slice(0));
     loadAudioBuffer(decoded, file.name);
+    return true;
   } catch {
     try {
       await loadMediaElementFallback(file);
+      return true;
     } catch {
       dom.trackStatus.textContent = "Error";
       showToast("No se pudo decodificar este formato de archivo", "error");
+      return false;
     }
   }
+}
+
+function applyAspect(aspect) {
+  const preset = ASPECT_PRESETS[aspect];
+  if (!preset) return;
+  state.aspect = aspect;
+  state.width = preset.w;
+  state.height = preset.h;
+  dom.canvas.width = preset.w;
+  dom.canvas.height = preset.h;
+  dom.resolutionLabel.textContent = preset.label;
+
+  document.querySelectorAll(".aspect-btn").forEach(b => {
+    const active = b.dataset.aspect === aspect;
+    b.classList.toggle("border-[#00F0FF]", active);
+    b.classList.toggle("bg-[#00F0FF]/15", active);
+    b.classList.toggle("text-[#00F0FF]", active);
+    b.classList.toggle("border-slate-700", !active);
+    b.classList.toggle("bg-[#090b1a]", !active);
+    b.classList.toggle("text-slate-300", !active);
+  });
+  resetWorldEntities();
+}
+
+// Event Listeners
+dom.audioInput.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  await loadAudioFile(file);
 });
 
 dom.demoBtns.forEach(btn => {
@@ -715,14 +759,28 @@ dom.demoBtns.forEach(btn => {
 
 dom.btnPlayPause.addEventListener("click", () => {
   if (state.isPlaying) pausePlayback();
-  else startPlayback(state.pauseOffset);
+  else {
+    const clip = state.studio?.clip;
+    let offset = state.pauseOffset;
+    if (clip?.enabled && (offset < clip.start || offset >= clip.end)) {
+      offset = clip.start;
+      state.pauseOffset = offset;
+      state.nextEventIdx = state.schedule.findIndex(ev => ev.spawnTime >= offset);
+      if (state.nextEventIdx === -1) state.nextEventIdx = state.schedule.length;
+      resetWorldEntities();
+    }
+    startPlayback(offset);
+  }
 });
 
 dom.btnRestart.addEventListener("click", () => {
-  state.pauseOffset = 0;
-  state.nextEventIdx = 0;
+  const clip = state.studio?.clip;
+  const startT = (clip?.enabled && clip.start > 0 && clip.start < state.duration) ? clip.start : 0;
+  state.pauseOffset = startT;
+  state.nextEventIdx = state.schedule.findIndex(ev => ev.spawnTime >= startT);
+  if (state.nextEventIdx === -1) state.nextEventIdx = state.schedule.length;
   resetWorldEntities();
-  startPlayback(0);
+  startPlayback(startT);
 });
 
 dom.btnRecord.addEventListener("click", () => {
@@ -733,27 +791,7 @@ dom.btnRecord.addEventListener("click", () => {
 dom.toggleHud.addEventListener("change", (e) => { state.showHud = e.target.checked; });
 
 dom.aspectBtns.forEach(btn => {
-  btn.addEventListener("click", () => {
-    const aspect = btn.dataset.aspect;
-    const preset = ASPECT_PRESETS[aspect];
-    state.aspect = aspect;
-    state.width = preset.w;
-    state.height = preset.h;
-    dom.canvas.width = preset.w;
-    dom.canvas.height = preset.h;
-    dom.resolutionLabel.textContent = preset.label;
-
-    dom.aspectBtns.forEach(b => {
-      const active = b.dataset.aspect === aspect;
-      b.classList.toggle("border-[#00F0FF]", active);
-      b.classList.toggle("bg-[#00F0FF]/15", active);
-      b.classList.toggle("text-[#00F0FF]", active);
-      b.classList.toggle("border-slate-700", !active);
-      b.classList.toggle("bg-[#090b1a]", !active);
-      b.classList.toggle("text-slate-300", !active);
-    });
-    resetWorldEntities();
-  });
+  btn.addEventListener("click", () => applyAspect(btn.dataset.aspect));
 });
 
 document.getElementById("btnCaptureTab")?.addEventListener("click", startTabAudioCapture);
@@ -785,6 +823,14 @@ function mainLoop(now) {
     dom.timeCurrent.textContent = Utils.formatTime(state.currentTime);
     updateSimulation(dt);
     drawTimeline(tCtx, dom.timelineCanvas);
+
+    // Enforce Clip Out range when enabled
+    const clip = state.studio?.clip;
+    if (clip?.enabled && clip.end > clip.start && state.currentTime >= clip.end) {
+      pausePlayback();
+      state.pauseOffset = clip.start;
+      if (state.isRecording) stopRecordingAndDownload();
+    }
   } else if (state.bossDefeated) {
     // Keep victory explosion particles & flash fading smoothly after audio ends!
     for (const p of state.particles) {
@@ -801,7 +847,14 @@ function mainLoop(now) {
   requestAnimationFrame(mainLoop);
 }
 
-initStudioControls(showToast);
+initStudioControls(showToast, {
+  canvas: dom.canvas,
+  setAspect: applyAspect,
+  loadAudioFile,
+  startRecordingFullTrack,
+  stopRecordingAndDownload,
+  redrawTimeline: () => drawTimeline(tCtx, dom.timelineCanvas)
+});
 
 const resizeTimeline = () => {
   dom.timelineCanvas.width = dom.timelineWrapper.clientWidth || 400;
