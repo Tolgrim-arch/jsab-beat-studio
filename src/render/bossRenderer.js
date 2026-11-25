@@ -32,13 +32,14 @@ export function drawProceduralBoss(ctx) {
 
   const cb = state.customBoss || {};
   const handsShape = cb.handsShape || "auto";
+  const handsMode = cb.handsMode || "phase2";
   const handsLayer = cb.handsLayer || "behind";
   const handsRotate = cb.handsRotate || "tilt";
   const spikesLayer = cb.spikesLayer || "behind";
   const bgCol = (state.customColors?.enabled ? state.customColors.bg : state.analysis?.dna?.palette?.bg) || "#040D14";
 
   const drawHands = () => {
-    if (state.phase < 2 || handsShape === "none") return;
+    if ((handsMode !== "always" && state.phase < 2) || handsShape === "none") return;
     if (state.entities?.some(e => !e.dead && e.type === "articulatedArms")) return;
     const col = flash ? COLORS.white : danger;
     [b.leftHand, b.rightHand].forEach((h, idx) => {

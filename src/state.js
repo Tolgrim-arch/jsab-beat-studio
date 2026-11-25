@@ -61,6 +61,7 @@ export const state = {
     spikeCount: 12,       // 4 to 20
     spikeRadiusMul: 1.0,  // 0.5 to 2.2
     handsShape: "auto",   // "auto" | "square" | "circle" | "triangle" | "claws" | "peace" | "none"
+    handsMode: "phase2",  // "phase2" | "always"
     handsLayer: "behind", // "behind" | "above"
     handsDistanceMul: 1.0,// 0.5 to 2.2
     handsAnim: "alternating", // "alternating" | "sync" | "orbit" | "vibe" | "wave"

@@ -18,6 +18,7 @@ function savePrefs() {
         spikeCount: state.customBoss.spikeCount,
         spikeRadiusMul: state.customBoss.spikeRadiusMul,
         handsShape: state.customBoss.handsShape,
+        handsMode: state.customBoss.handsMode,
         handsLayer: state.customBoss.handsLayer,
         handsDistanceMul: state.customBoss.handsDistanceMul,
         handsAnim: state.customBoss.handsAnim,
@@ -566,6 +567,7 @@ export function initStudioControls(showToast) {
     ["bossSpikesShapeSelect", "spikesShape"],
     ["bossSpikesLayerSelect", "spikesLayer"],
     ["bossHandsSelect", "handsShape"],
+    ["bossHandsModeSelect", "handsMode"],
     ["bossHandsLayerSelect", "handsLayer"],
     ["bossHandsAnimSelect", "handsAnim"],
     ["bossHandsRotateSelect", "handsRotate"]
