@@ -327,8 +327,8 @@ export const AttackFactory = {
           ctx.fillStyle = i <= 2 ? COLORS.white : (i <= 6 ? palePink : dangerCol());
           ctx.beginPath(); ctx.arc(pt.x, pt.y, rad, 0, Math.PI * 2); ctx.fill();
         }
-        // Spiky JSAB head
-        ctx.fillStyle = dangerCol();
+        // Spiky JSAB head (white on spawn for 80ms, then danger color)
+        ctx.fillStyle = isWhiteFlash(this.age, 0) ? COLORS.white : dangerCol();
         ctx.beginPath();
         for (let i = 0; i < 16; i++) {
           const rad = i % 2 === 0 ? this.r * 1.2 : this.r * 0.92;
@@ -421,8 +421,9 @@ export const AttackFactory = {
 
   sweepBar(axis, pos, dir, speed, thickness = 34, gapCenter = null, gapSize = 165) {
     return {
-      type: "sweepBar", axis, pos, dir, speed, thickness, gapCenter, gapSize, dead: false,
+      type: "sweepBar", axis, pos, dir, speed, thickness, gapCenter, gapSize, age: 0, dead: false,
       update(dt, W, H) {
+        this.age += dt;
         this.pos += this.dir * this.speed * dt;
         const limit = this.axis === "x" ? W : H;
         if (this.pos < -100 || this.pos > limit + 100) this.dead = true;
@@ -442,7 +443,7 @@ export const AttackFactory = {
         return Math.abs((this.axis === "x" ? px : py) - this.pos) < (this.thickness * 0.5 + r);
       },
       draw(ctx, W, H) {
-        ctx.fillStyle = dangerCol();
+        ctx.fillStyle = isWhiteFlash(this.age, 0) ? COLORS.white : dangerCol();
         if (this.axis === "x") {
           if (this.gapCenter !== null) {
             const gTop = this.gapCenter - this.gapSize * 0.5;
