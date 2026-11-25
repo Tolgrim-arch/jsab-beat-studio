@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v58 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v59 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -24,7 +24,7 @@
         <h1 class="font-display text-xs sm:text-base font-bold tracking-wider uppercase flex items-center gap-2 truncate">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v58 • STUDIO PRO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v59 • STUDIO PRO</span>
         </h1>
       </div>
     </div>
@@ -297,6 +297,10 @@
               <div class="flex items-center gap-1.5"><button data-step-dec="sliderSpikeCount" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSpikeCount" type="range" min="4" max="20" step="2" value="12" class="studio-slider flex-1" /><button data-step-inc="sliderSpikeCount" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
             </div>
             <div>
+              <div class="flex justify-between mb-1"><span class="text-slate-300">AMPLIACIÓN PÚAS</span><span id="valSpikeSpread" class="text-[#00F0FF]">1.00x</span></div>
+              <div class="flex items-center gap-1.5"><button data-step-dec="sliderSpikeSpread" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderSpikeSpread" type="range" min="0.5" max="2.2" step="0.05" value="1.0" class="studio-slider flex-1" /><button data-step-inc="sliderSpikeSpread" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
+            </div>
+            <div>
               <div class="flex justify-between mb-1"><span class="text-slate-300">FLASH AL BEAT</span><span id="valFlashInt" class="text-[#00F0FF]">72%</span></div>
               <div class="flex items-center gap-1.5"><button data-step-dec="sliderFlashInt" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">◀</button><input id="sliderFlashInt" type="range" min="0" max="1" step="0.1" value="0.72" class="studio-slider flex-1" /><button data-step-inc="sliderFlashInt" class="px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 cursor-pointer">▶</button></div>
             </div>
@@ -460,6 +464,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=58"></script>
+  <script type="module" src="src/main.js?v=59"></script>
 </body>
 </html>

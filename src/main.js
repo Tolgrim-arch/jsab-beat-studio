@@ -4,8 +4,8 @@ import { state, spawnParticles, resetWorldEntities } from "./state.js";
 import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js";
 import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=56";
 import { updateCyanAI } from "./combat/cyanAI.js";
-import { renderFrame, drawTimeline } from "./render/renderer.js?v=56";
-import { initStudioControls } from "./ui/controls.js?v=58";
+import { renderFrame, drawTimeline } from "./render/renderer.js?v=59";
+import { initStudioControls } from "./ui/controls.js?v=59";
 
 const dom = {
   canvas: document.getElementById("gameCanvas"),

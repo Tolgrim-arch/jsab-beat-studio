@@ -59,6 +59,7 @@ export const state = {
     spikesShape: "auto",  // "auto" | "circle" | "square" | "hexagon" | "triangle"
     spikesLayer: "behind",// "behind" | "above"
     spikeCount: 12,       // 4 to 20
+    spikeRadiusMul: 1.0,  // 0.5 to 2.2
     handsShape: "auto",   // "auto" | "square" | "circle" | "triangle" | "claws" | "none"
     handsLayer: "behind", // "behind" | "above"
     flashIntensity: 0.72  // 0 to 1

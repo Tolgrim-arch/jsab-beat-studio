@@ -79,6 +79,7 @@ export function drawProceduralBoss(ctx) {
   const drawSpikes = () => {
     if (!showSpikes) return;
     const spikes = cb.spikeCount || (bossCfg.spikeCount + 4);
+    const spread = cb.spikeRadiusMul ?? 1.0;
     let shape = cb.spikesShape || "auto";
     if (shape === "auto") {
       if (cb.img && (cb.frame === "square" || cb.frame === "hexagon" || cb.frame === "triangle")) shape = cb.frame;
@@ -89,7 +90,7 @@ export function drawProceduralBoss(ctx) {
 
     const drawPolygonSpikes = (sidesCount, radiusMul, rotOffset) => {
       const perSide = Math.max(1, Math.round(spikes / sidesCount));
-      const rad = b.r * (radiusMul + b.pulse * 0.16);
+      const rad = b.r * (radiusMul * spread + b.pulse * 0.16);
       ctx.rotate(b.rot * 0.32);
       for (let sideIdx = 0; sideIdx < sidesCount; sideIdx++) {
         const a0 = rotOffset + (Math.PI * 2 * sideIdx) / sidesCount;
@@ -125,7 +126,7 @@ export function drawProceduralBoss(ctx) {
       ctx.rotate(b.rot * 0.45);
       for (let i = 0; i < spikes; i++) {
         const a = (Math.PI * 2 * i) / spikes;
-        const dist = b.r * (1.25 + b.pulse * 0.18);
+        const dist = b.r * (1.25 * spread + b.pulse * 0.18);
         ctx.save();
         ctx.translate(Math.cos(a) * dist, Math.sin(a) * dist);
         ctx.rotate(a);
