@@ -77,12 +77,12 @@ export function analyzeAudioBuffer(audioBuffer) {
   const ch0 = audioBuffer.getChannelData(0);
   const ch1 = audioBuffer.numberOfChannels > 1 ? audioBuffer.getChannelData(1) : ch0;
   const duration = audioBuffer.duration;
-  const fps = 60;
+  const fps = 100; // 10ms precision for ultra-tight beat sync
   const totalFrames = Math.ceil(duration * fps);
   const hop = Math.floor(sr / fps);
 
   const frames = new Array(totalFrames);
-  let lp1 = 0, lp2 = 0, bp1 = 0, bp2 = 0;
+  let lp1 = 0, lp2 = 0, bp1 = 0, bp2 = 0, hp1 = 0;
   let prevBass = 0, prevMid = 0, prevHigh = 0;
 
   for (let f = 0; f < totalFrames; f++) {
@@ -91,36 +91,38 @@ export function analyzeAudioBuffer(audioBuffer) {
     let sumSq = 0, bassSq = 0, midSq = 0, highSq = 0;
     const count = Math.max(1, end - start);
 
-    for (let i = start; i < end; i += 2) {
+    for (let i = start; i < end; i++) {
       const s = 0.5 * (ch0[i] + ch1[i]);
-      lp1 += 0.042 * (s - lp1);
-      lp2 += 0.042 * (lp1 - lp2);
-      bp1 += 0.24 * (s - bp1);
-      bp2 += 0.24 * (bp1 - bp2);
+      lp1 += 0.036 * (s - lp1);
+      lp2 += 0.036 * (lp1 - lp2);
+      bp1 += 0.22 * (s - bp1);
+      bp2 += 0.22 * (bp1 - bp2);
+      hp1 += 0.55 * (s - hp1);
       const low = lp2;
       const mid = bp2 - lp2;
-      const high = s - bp2;
+      const high = s - hp1;
       sumSq += s * s;
       bassSq += low * low;
       midSq += mid * mid;
       highSq += high * high;
     }
 
-    const n = Math.max(1, count / 2);
-    const rms = Math.sqrt(sumSq / n);
-    const bass = Math.sqrt(bassSq / n);
-    const mid = Math.sqrt(midSq / n);
-    const high = Math.sqrt(highSq / n);
+    const rms = Math.sqrt(sumSq / count);
+    const bass = Math.sqrt(bassSq / count);
+    const mid = Math.sqrt(midSq / count);
+    const high = Math.sqrt(highSq / count);
 
+    // Multi-band spectral flux (half-wave rectified positive energy derivatives)
     const kickOnset = Math.max(0, bass - prevBass);
     const snareOnset = Math.max(0, mid - prevMid);
     const highOnset = Math.max(0, high - prevHigh);
 
-    prevBass = bass * 0.58 + prevBass * 0.42;
-    prevMid = mid * 0.58 + prevMid * 0.42;
-    prevHigh = high * 0.58 + prevHigh * 0.42;
+    prevBass = bass * 0.52 + prevBass * 0.48;
+    prevMid = mid * 0.52 + prevMid * 0.48;
+    prevHigh = high * 0.52 + prevHigh * 0.48;
 
-    frames[f] = { t: f / fps, rms, bass, mid, high, kickOnset, snareOnset, highOnset, onset: kickOnset * 1.25 + snareOnset * 0.7 };
+    const flux = kickOnset * 1.4 + snareOnset * 0.85 + highOnset * 0.35;
+    frames[f] = { t: f / fps, rms, bass, mid, high, kickOnset, snareOnset, highOnset, onset: flux };
   }
 
   const normBand = (key) => {
@@ -130,9 +132,10 @@ export function analyzeAudioBuffer(audioBuffer) {
   };
   ["rms", "bass", "mid", "high", "kickOnset", "snareOnset", "highOnset", "onset"].forEach(normBand);
 
-  // Adaptive Local Thresholding for sharp real peak detection
-  const winHalf = Math.floor(fps * 0.25);
+  // Adaptive Local Thresholding (detect EVERY real musical impact peak)
+  const winHalf = Math.floor(fps * 0.22);
   const realPeaks = [];
+  let lastPeakT = -1;
   for (let f = 2; f < frames.length - 2; f++) {
     let sum = 0, cnt = 0;
     for (let k = Math.max(0, f - winHalf); k <= Math.min(frames.length - 1, f + winHalf); k++) {
@@ -141,68 +144,77 @@ export function analyzeAudioBuffer(audioBuffer) {
     }
     const localMean = sum / cnt;
     const cur = frames[f].onset;
-    if (cur > localMean * 1.45 && cur > 0.16 && cur >= frames[f - 1].onset && cur >= frames[f + 1].onset) {
-      realPeaks.push(frames[f].t);
+    if (
+      cur > localMean * 1.38 &&
+      cur > 0.14 &&
+      cur >= frames[f - 1].onset &&
+      cur >= frames[f + 1].onset &&
+      frames[f].t - lastPeakT >= 0.16
+    ) {
+      realPeaks.push({ t: frames[f].t, strength: cur, frame: frames[f] });
+      lastPeakT = frames[f].t;
     }
   }
 
-  // BPM via autocorrelation
+  // BPM via autocorrelation on 100fps onset flux
   const onsets = frames.map(fr => fr.onset);
   let bestLag = Math.floor(fps * 0.46), bestCorr = -1;
   const minLag = Math.floor((fps * 60) / 185);
   const maxLag = Math.floor((fps * 60) / 72);
   for (let lag = minLag; lag <= maxLag; lag++) {
     let corr = 0;
-    for (let i = 0; i < onsets.length - lag; i++) corr += onsets[i] * onsets[i + lag];
+    for (let i = 0; i < onsets.length - lag; i += 2) corr += onsets[i] * onsets[i + lag];
     if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
   }
   const bpm = Math.round((60 * fps) / bestLag);
   const beatDur = 60 / bpm;
 
-  // Exact Beat Phase Alignment
+  // Exact Beat Phase Alignment (32 phase steps)
   let bestOffset = 0, bestPhaseScore = -1;
-  const phaseSteps = 24;
+  const phaseSteps = 32;
   for (let p = 0; p < phaseSteps; p++) {
     const off = (p / phaseSteps) * beatDur;
     let score = 0;
     for (let t = off; t < duration; t += beatDur) {
       const fIdx = Utils.clamp(Math.floor(t * fps), 0, frames.length - 1);
-      score += frames[fIdx].onset + frames[fIdx].kickOnset * 0.6;
+      score += frames[fIdx].onset + frames[fIdx].kickOnset * 0.7;
     }
     if (score > bestPhaseScore) { bestPhaseScore = score; bestOffset = off; }
   }
 
-  // Build phase-aligned beat grid, snapping each beat to nearest real audio peak within ±75ms
+  // Merge phase-aligned grid (snapped to real peaks within ±85ms) + extra strong real peaks
   const beats = [];
-  let peakPtr = 0;
-  for (let t = bestOffset; t < duration - 0.25; t += beatDur) {
-    if (t < 0.2) continue;
-    while (peakPtr < realPeaks.length && realPeaks[peakPtr] < t - 0.075) peakPtr++;
-    let snappedT = t;
-    if (peakPtr < realPeaks.length && Math.abs(realPeaks[peakPtr] - t) <= 0.075) {
-      snappedT = realPeaks[peakPtr];
+  const usedPeakIdx = new Set();
+  for (let t = bestOffset; t < duration - 0.2; t += beatDur) {
+    if (t < 0.15) continue;
+    let bestP = -1, bestDist = 0.085;
+    for (let p = 0; p < realPeaks.length; p++) {
+      const d = Math.abs(realPeaks[p].t - t);
+      if (d < bestDist) { bestDist = d; bestP = p; }
     }
+    const snappedT = bestP !== -1 ? realPeaks[bestP].t : t;
+    if (bestP !== -1) usedPeakIdx.add(bestP);
 
     const fIdx = Utils.clamp(Math.floor(snappedT * fps), 0, frames.length - 1);
     const fr = frames[fIdx];
     beats.push({
       t: snappedT, bass: fr.bass, mid: fr.mid, high: fr.high, rms: fr.rms,
-      isSilent: fr.rms < 0.08,
-      isKick: fr.kickOnset > 0.22 || fr.bass > 0.5,
-      isSnare: fr.snareOnset > 0.24,
+      isSilent: fr.rms < 0.07,
+      isKick: fr.kickOnset > 0.2 || fr.bass > 0.48,
+      isSnare: fr.snareOnset > 0.22,
       isSyncopated: false
     });
+  }
 
-    const halfT = snappedT + beatDur * 0.5;
-    if (halfT < duration - 0.25) {
-      const hIdx = Utils.clamp(Math.floor(halfT * fps), 0, frames.length - 1);
-      const hFr = frames[hIdx];
-      if (hFr.rms > 0.2 && (hFr.snareOnset > 0.52 || hFr.highOnset > 0.62)) {
-        beats.push({
-          t: halfT, bass: hFr.bass, mid: hFr.mid, high: hFr.high, rms: hFr.rms,
-          isSilent: false, isKick: false, isSnare: true, isSyncopated: true
-        });
-      }
+  // Add any remaining strong real musical impacts (fills, drops, syncopated kicks) so NO beat is missed!
+  for (let p = 0; p < realPeaks.length; p++) {
+    if (usedPeakIdx.has(p)) continue;
+    const pk = realPeaks[p];
+    if (pk.strength > 0.55 && pk.frame.rms > 0.18) {
+      beats.push({
+        t: pk.t, bass: pk.frame.bass, mid: pk.frame.mid, high: pk.frame.high, rms: pk.frame.rms,
+        isSilent: false, isKick: pk.frame.kickOnset > 0.3, isSnare: true, isSyncopated: true
+      });
     }
   }
   beats.sort((a, b) => a.t - b.t);

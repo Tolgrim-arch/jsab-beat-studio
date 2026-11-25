@@ -29,15 +29,22 @@ export function buildChoreographySchedule() {
       setpiece = "BREAKDOWN_PULSE";
     }
 
+    const INSTANT_SETPIECES = new Set([
+      "BARRACUDA_SWARM", "ORB_RAIN", "WAVE_CORRIDOR",
+      "SAWBLADE_GAUNTLET", "MANDALA_BLOOM", "BREAKDOWN_PULSE", "SYNCOPATED_BURST"
+    ]);
+
     for (let step = 0; step < phraseLen && (i + step) < beats.length; step++) {
       const b = beats[i + step];
       if (b.isSilent || sec.type === "SILENCE") continue;
-      const leadTime = b.isSyncopated ? Math.min(0.28, beatDur * 0.42) : Math.min(0.55, beatDur * 0.88);
-      const spawnTime = Math.max(0.05, b.t - leadTime);
+      const chosenSetpiece = b.isSyncopated ? "SYNCOPATED_BURST" : setpiece;
+      const isInstant = INSTANT_SETPIECES.has(chosenSetpiece);
+      const leadTime = isInstant ? 0 : Math.min(0.52, beatDur * 0.88);
+      const spawnTime = Math.max(0.02, b.t - leadTime);
       schedule.push({
         spawnTime, impactTime: b.t, leadTime,
         phase, step,
-        setpiece: b.isSyncopated ? "SYNCOPATED_BURST" : setpiece,
+        setpiece: chosenSetpiece,
         section: sec.type, beat: b, seed: rng()
       });
     }
