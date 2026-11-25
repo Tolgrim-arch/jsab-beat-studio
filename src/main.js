@@ -1,8 +1,8 @@
 import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
-import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js";
-import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=62";
+import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=63";
+import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=63";
 import { updateCyanAI } from "./combat/cyanAI.js";
 import { renderFrame, drawTimeline } from "./render/renderer.js?v=61";
 import { initStudioControls } from "./ui/controls.js?v=62";
@@ -439,7 +439,7 @@ function updateSimulation(dt) {
     }
 
     const sec = state.analysis.sections.find(s => t >= s.start && t < s.end);
-    if (sec) dom.statSection.textContent = sec.type;
+    if (sec) dom.statSection.textContent = sec.instrument ? `${sec.type} • ${sec.instrument}` : sec.type;
   }
 
   const prog = state.duration > 0 ? t / state.duration : 0;

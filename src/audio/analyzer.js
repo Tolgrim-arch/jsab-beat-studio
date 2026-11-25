@@ -82,35 +82,50 @@ export function analyzeAudioBuffer(audioBuffer) {
   const hop = Math.floor(sr / fps);
 
   const frames = new Array(totalFrames);
-  let lp1 = 0, lp2 = 0, bp1 = 0, bp2 = 0, hp1 = 0;
+  let lpSub = 0, lp1 = 0, lp2 = 0, bpLowMid = 0, bp1 = 0, bp2 = 0, hp1 = 0;
   let prevBass = 0, prevMid = 0, prevHigh = 0;
 
   for (let f = 0; f < totalFrames; f++) {
     const start = f * hop;
     const end = Math.min(start + hop, ch0.length);
-    let sumSq = 0, bassSq = 0, midSq = 0, highSq = 0;
+    let sumSq = 0, subSq = 0, bassSq = 0, lowMidSq = 0, midSq = 0, highSq = 0;
+    let zc = 0, prevS = 0;
     const count = Math.max(1, end - start);
 
     for (let i = start; i < end; i++) {
       const s = 0.5 * (ch0[i] + ch1[i]);
+      if (i > start && ((s >= 0 && prevS < 0) || (s < 0 && prevS >= 0))) zc++;
+      prevS = s;
+
+      lpSub += 0.012 * (s - lpSub);
       lp1 += 0.036 * (s - lp1);
       lp2 += 0.036 * (lp1 - lp2);
-      bp1 += 0.22 * (s - bp1);
-      bp2 += 0.22 * (bp1 - bp2);
+      bpLowMid += 0.11 * (s - bpLowMid);
+      bp1 += 0.24 * (s - bp1);
+      bp2 += 0.24 * (bp1 - bp2);
       hp1 += 0.55 * (s - hp1);
+
+      const sub = lpSub;
       const low = lp2;
-      const mid = bp2 - lp2;
+      const lowMid = bpLowMid - lp2;
+      const mid = bp2 - bpLowMid;
       const high = s - hp1;
+
       sumSq += s * s;
+      subSq += sub * sub;
       bassSq += low * low;
+      lowMidSq += lowMid * lowMid;
       midSq += mid * mid;
       highSq += high * high;
     }
 
     const rms = Math.sqrt(sumSq / count);
+    const sub = Math.sqrt(subSq / count);
     const bass = Math.sqrt(bassSq / count);
+    const lowMid = Math.sqrt(lowMidSq / count);
     const mid = Math.sqrt(midSq / count);
     const high = Math.sqrt(highSq / count);
+    const zcr = zc / count;
 
     // Multi-band spectral flux (half-wave rectified positive energy derivatives)
     const kickOnset = Math.max(0, bass - prevBass);
@@ -121,8 +136,8 @@ export function analyzeAudioBuffer(audioBuffer) {
     prevMid = mid * 0.52 + prevMid * 0.48;
     prevHigh = high * 0.52 + prevHigh * 0.48;
 
-    const flux = kickOnset * 1.4 + snareOnset * 0.85 + highOnset * 0.35;
-    frames[f] = { t: f / fps, rms, bass, mid, high, kickOnset, snareOnset, highOnset, onset: flux };
+    const flux = kickOnset * 1.45 + snareOnset * 0.9 + highOnset * 0.45;
+    frames[f] = { t: f / fps, rms, sub, bass, lowMid, mid, high, zcr, kickOnset, snareOnset, highOnset, onset: flux };
   }
 
   const normBand = (key) => {
@@ -130,7 +145,7 @@ export function analyzeAudioBuffer(audioBuffer) {
     const p97 = sorted[Math.floor(sorted.length * 0.97)] || 0.001;
     for (const fr of frames) fr[key] = Utils.clamp(fr[key] / p97, 0, 1.4);
   };
-  ["rms", "bass", "mid", "high", "kickOnset", "snareOnset", "highOnset", "onset"].forEach(normBand);
+  ["rms", "sub", "bass", "lowMid", "mid", "high", "zcr", "kickOnset", "snareOnset", "highOnset", "onset"].forEach(normBand);
 
   // Adaptive Local Thresholding (detect EVERY real musical impact peak)
   const winHalf = Math.floor(fps * 0.22);
@@ -145,11 +160,11 @@ export function analyzeAudioBuffer(audioBuffer) {
     const localMean = sum / cnt;
     const cur = frames[f].onset;
     if (
-      cur > localMean * 1.38 &&
-      cur > 0.14 &&
+      cur > localMean * 1.35 &&
+      cur > 0.13 &&
       cur >= frames[f - 1].onset &&
       cur >= frames[f + 1].onset &&
-      frames[f].t - lastPeakT >= 0.16
+      frames[f].t - lastPeakT >= 0.14
     ) {
       realPeaks.push({ t: frames[f].t, strength: cur, frame: frames[f] });
       lastPeakT = frames[f].t;
@@ -210,10 +225,10 @@ export function analyzeAudioBuffer(audioBuffer) {
   for (let p = 0; p < realPeaks.length; p++) {
     if (usedPeakIdx.has(p)) continue;
     const pk = realPeaks[p];
-    if (pk.strength > 0.55 && pk.frame.rms > 0.18) {
+    if (pk.strength > 0.52 && pk.frame.rms > 0.16) {
       beats.push({
         t: pk.t, bass: pk.frame.bass, mid: pk.frame.mid, high: pk.frame.high, rms: pk.frame.rms,
-        isSilent: false, isKick: pk.frame.kickOnset > 0.3, isSnare: true, isSyncopated: true
+        isSilent: false, isKick: pk.frame.kickOnset > 0.28, isSnare: true, isSyncopated: true
       });
     }
   }
@@ -222,32 +237,55 @@ export function analyzeAudioBuffer(audioBuffer) {
   const avgBass = frames.reduce((s, f) => s + f.bass, 0) / frames.length;
   const avgHigh = frames.reduce((s, f) => s + f.high, 0) / frames.length;
   const avgRms = frames.reduce((s, f) => s + f.rms, 0) / frames.length;
+  const avgPeakRate = realPeaks.length / Math.max(1, duration);
 
   let archetype = ARCHETYPES.CLOCKWORK_SYNTH;
   if (bpm >= 140 && avgHigh >= avgBass * 0.7) archetype = ARCHETYPES.HYPER_BARRAGE;
   else if (avgBass > avgHigh * 1.18) archetype = ARCHETYPES.TITAN_CRUSHER;
   else if (bpm < 108) archetype = ARCHETYPES.ABYSSAL_ECLIPSE;
 
-  const secWin = beatDur * 8;
+  // Fine-grained 4-beat section windows for fast instrument & rhythm change detection
+  const secWin = beatDur * 4;
   const sections = [];
   for (let s = 0; s < duration; s += secWin) {
     const e = Math.min(duration, s + secWin);
     const fStart = Math.floor(s * fps);
     const fEnd = Math.min(frames.length, Math.floor(e * fps));
     const slice = frames.slice(fStart, Math.max(fStart + 1, fEnd));
-    const energy = slice.reduce((acc, x) => acc + x.rms, 0) / slice.length;
+    const lenS = Math.max(1, slice.length);
+
+    const energy = slice.reduce((acc, x) => acc + x.rms, 0) / lenS;
+    const sSub = slice.reduce((acc, x) => acc + x.sub, 0) / lenS;
+    const sBass = slice.reduce((acc, x) => acc + x.bass, 0) / lenS;
+    const sLowMid = slice.reduce((acc, x) => acc + x.lowMid, 0) / lenS;
+    const sMid = slice.reduce((acc, x) => acc + x.mid, 0) / lenS;
+    const sHigh = slice.reduce((acc, x) => acc + x.high, 0) / lenS;
+    const sZcr = slice.reduce((acc, x) => acc + x.zcr, 0) / lenS;
+
+    const localPeaks = realPeaks.filter(p => p.t >= s && p.t < e).length;
+    const localRate = localPeaks / Math.max(0.25, e - s);
+    const rhythmRatio = localRate / Math.max(0.1, avgPeakRate);
+    const rhythm = rhythmRatio > 1.32 ? "DOUBLE_TIME" : rhythmRatio < 0.68 ? "HALF_TIME" : "NORMAL";
+
+    // Dominant instrument / timbre classification
+    let instrument = "SYNTH_LEAD";
+    if (sSub > 0.55 && sBass > sMid * 1.08 && sBass > sHigh * 1.1) instrument = "SUB_BASS";
+    else if (sHigh > sBass * 1.05 && rhythm === "DOUBLE_TIME") instrument = "ARP_HYPER";
+    else if (sZcr > 0.52 && (sMid > 0.38 || sHigh > 0.38)) instrument = "PERCUSSION";
+    else if (sLowMid >= sMid * 0.92 && sLowMid >= sHigh && sZcr < 0.45) instrument = "MELODIC_PAD";
+
     const prevEnergy = sections.length > 0 ? sections[sections.length - 1].energy : energy;
     const prog = s / duration;
 
     let type = "VERSE";
-    if (energy < 0.09) type = "SILENCE";
-    else if (prog < 0.1) type = "INTRO";
-    else if (prog > 0.88) type = "OUTRO";
-    else if (energy > avgRms * 1.18) type = "DROP";
-    else if (energy > prevEnergy * 1.12 && energy < avgRms * 1.18) type = "BUILDUP";
+    if (energy < 0.08) type = "SILENCE";
+    else if (prog < 0.08) type = "INTRO";
+    else if (prog > 0.90) type = "OUTRO";
+    else if (energy > avgRms * 1.15) type = "DROP";
+    else if (energy > prevEnergy * 1.12 && energy < avgRms * 1.15) type = "BUILDUP";
     else if (energy < avgRms * 0.72) type = "BREAKDOWN";
 
-    sections.push({ start: s, end: e, energy, type });
+    sections.push({ start: s, end: e, energy, type, instrument, rhythm });
   }
 
   const baseAnalysis = { frames, fps, bpm, beatDur, bestOffset, beats, sections, archetype, profile: { avgBass, avgHigh, avgRms } };

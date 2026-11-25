@@ -31,22 +31,45 @@ export function buildChoreographySchedule() {
   const rng = Utils.seededRandom(Math.floor(bpm * 131 + analysis.profile.avgBass * 997));
   const schedule = [];
 
+  const INSTRUMENT_POOLS = {
+    SUB_BASS:    ["MEGA_MOUTH_BEAM", "DROP_EXPLOSION", "HYDRAULIC_CRUSH", "TWIN_HAND_SMASH"],
+    SYNTH_LEAD:  ["CLOCKWORK_LASERS", "CLOSE_TO_ME_ORBS", "MANDALA_BLOOM", "WAVE_CORRIDOR"],
+    PERCUSSION:  ["CHECKERBOARD_DANCE", "TWIN_HAND_SMASH", "SAWBLADE_GAUNTLET", "BUILDUP_LOCKON"],
+    ARP_HYPER:   ["BARRACUDA_SWARM", "TOUHOU_DANMAKU", "WAVE_CORRIDOR", "SAWBLADE_GAUNTLET"],
+    MELODIC_PAD: ["LYCANTHROPY_VINES", "ORB_RAIN", "BREAKDOWN_PULSE", "MANDALA_BLOOM"]
+  };
+
+  let prevKey = "";
+  let cycleIdx = 0;
   const phraseLen = 4;
   for (let i = 0; i < beats.length; i += phraseLen) {
     const t = beats[i].t;
     if (t < 0.5 || t > duration - 2.6) continue;
 
-    const sec = sections.find(s => t >= s.start && t < s.end) || { type: "VERSE" };
+    const sec = sections.find(s => t >= s.start && t < s.end) || { type: "VERSE", instrument: "SYNTH_LEAD", rhythm: "NORMAL" };
     const progress = t / duration;
     const phase = progress < 0.2 ? 1 : progress < 0.5 ? 2 : progress < 0.8 ? 3 : 4;
 
-    let setpiece = archetype.setpieces[Math.floor(rng() * archetype.setpieces.length)];
+    const curKey = `${sec.type}:${sec.instrument}:${sec.rhythm}`;
+    if (curKey !== prevKey) {
+      cycleIdx++;
+      prevKey = curKey;
+    }
+
+    const pool = INSTRUMENT_POOLS[sec.instrument] || archetype.setpieces;
+    let setpiece = pool[(cycleIdx + Math.floor(rng() * pool.length)) % pool.length];
     if (sec.type === "DROP") {
-      setpiece = (i % 8 === 0) ? "DROP_EXPLOSION" : archetype.setpieces[Math.floor(rng() * 3)];
+      setpiece = (i % 8 === 0) ? "DROP_EXPLOSION" : pool[cycleIdx % pool.length];
     } else if (sec.type === "BUILDUP") {
-      setpiece = "BUILDUP_LOCKON";
+      setpiece = sec.rhythm === "DOUBLE_TIME" ? "BARRACUDA_SWARM" : "BUILDUP_LOCKON";
     } else if (sec.type === "BREAKDOWN" || sec.type === "INTRO") {
-      setpiece = "BREAKDOWN_PULSE";
+      setpiece = sec.instrument === "MELODIC_PAD" ? "ORB_RAIN" : "BREAKDOWN_PULSE";
+    } else if (sec.rhythm === "DOUBLE_TIME") {
+      const fastPool = ["BARRACUDA_SWARM", "TOUHOU_DANMAKU", "SAWBLADE_GAUNTLET", "CLOCKWORK_LASERS"];
+      setpiece = fastPool[cycleIdx % fastPool.length];
+    } else if (sec.rhythm === "HALF_TIME") {
+      const heavyPool = ["MEGA_MOUTH_BEAM", "HYDRAULIC_CRUSH", "LYCANTHROPY_VINES", "TWIN_HAND_SMASH"];
+      setpiece = heavyPool[cycleIdx % heavyPool.length];
     }
 
     const INSTANT_SETPIECES = new Set([
