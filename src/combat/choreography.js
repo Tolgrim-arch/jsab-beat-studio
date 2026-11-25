@@ -1,7 +1,7 @@
 import { PHASES } from "../config.js";
 import { Utils } from "../utils.js";
 import { state, spawnParticles } from "../state.js";
-import { AttackFactory } from "./attacks.js?v=48";
+import { AttackFactory } from "./attacks.js?v=49";
 
 export function buildChoreographySchedule() {
   const { analysis, duration } = state;
@@ -199,6 +199,10 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
     }
 
     case "CLOCKWORK_LASERS": {
+      if (ev.step === 0 && !state.entities.some(e => e.type === "articulatedArms")) {
+        const spinDir = ev.phase % 2 === 0 ? 1 : -1;
+        state.entities.push(AttackFactory.articulatedArms(Math.max(4.0, state.analysis.beatDur * 4.5), spdMul, "tornado", spinDir));
+      }
       const base = ev.step * 0.35 + ev.seed * Math.PI;
       for (let k = 0; k < 6; k++) {
         const a = base + (Math.PI / 3) * k;

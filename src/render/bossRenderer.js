@@ -37,6 +37,7 @@ export function drawProceduralBoss(ctx) {
 
   const drawHands = () => {
     if (state.phase < 2 || handsShape === "none") return;
+    if (state.entities?.some(e => !e.dead && e.type === "articulatedArms")) return;
     [b.leftHand, b.rightHand].forEach((h, idx) => {
       const side = idx === 0 ? -1 : 1;
       ctx.save();

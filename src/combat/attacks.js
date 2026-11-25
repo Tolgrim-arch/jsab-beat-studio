@@ -681,7 +681,7 @@ export const AttackFactory = {
     };
   },
 
-  articulatedArms(duration = 4.2, speedMul = 1.0) {
+  articulatedArms(duration = 4.2, speedMul = 1.0, mode = "arms", spinDir = 1) {
     const bgCol = () => (state.customColors?.enabled ? state.customColors.bg : state.analysis?.dna?.palette?.bg) || "#040D14";
 
     const drawSpikedGear = (ctx, x, y, r, rot, col, isPalm) => {
@@ -722,9 +722,13 @@ export const AttackFactory = {
     };
 
     return {
-      type: "articulatedArms", duration, speedMul, age: 0, dead: false,
+      type: "articulatedArms", mode, spinDir, duration, speedMul, age: 0, dead: false,
       update(dt) {
         this.age += dt;
+        if (this.mode === "tornado" && state.blixer) {
+          state.blixer.targetX = state.width * 0.5;
+          state.blixer.targetY = state.height * 0.5;
+        }
         if (this.age >= this.duration) this.dead = true;
       },
       _computeSegments(t) {
@@ -736,12 +740,16 @@ export const AttackFactory = {
         const segs = [];
         const w = t * 2.3 * this.speedMul;
 
-        [-1, 1].forEach((side) => {
-          const baseAngle = side > 0 ? 0 : Math.PI;
-          const shoulderAng = baseAngle + side * (Math.sin(w) * 0.58 + Math.cos(w * 0.5) * 0.22);
-          const bend1 = side * (Math.sin(w * 1.35 - 0.7) * 0.52);
-          const bend2 = side * (Math.sin(w * 1.35 - 1.4) * 0.48);
-          const bend3 = side * (Math.sin(w * 1.35 - 2.1) * 0.42);
+        const armConfigs = this.mode === "tornado"
+          ? [0, 1, 2, 3].map(k => ({ baseAngle: (Math.PI / 2) * k + t * 1.45 * this.speedMul * this.spinDir, side: this.spinDir }))
+          : [-1, 1].map(side => ({ baseAngle: side > 0 ? 0 : Math.PI, side }));
+
+        armConfigs.forEach(({ baseAngle, side }) => {
+          const sway = this.mode === "tornado" ? 0.16 : 0.58;
+          const shoulderAng = baseAngle + side * (Math.sin(w) * sway + Math.cos(w * 0.5) * 0.14);
+          const bend1 = side * (Math.sin(w * 1.35 - 0.7) * (this.mode === "tornado" ? 0.24 : 0.52));
+          const bend2 = side * (Math.sin(w * 1.35 - 1.4) * (this.mode === "tornado" ? 0.22 : 0.48));
+          const bend3 = side * (Math.sin(w * 1.35 - 2.1) * (this.mode === "tornado" ? 0.18 : 0.42));
 
           // Small shoulder connector ball
           const sx = bx + Math.cos(shoulderAng) * (baseR * 1.22 * extend);
