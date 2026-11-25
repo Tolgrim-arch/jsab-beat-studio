@@ -41,29 +41,23 @@ export const AttackFactory = {
       draw(ctx) {
         ctx.save();
         ctx.lineCap = "butt";
+        const beamW = Math.max(38, this.width * 1.45);
         if (!this.isActive()) {
-          // JSAB Full-width translucent pink telegraph + shrinking white center line
+          // Stage 1: Low-opacity solid red/pink telegraph (no white center line)
           const p = Utils.clamp(this.age / this.leadTime, 0, 1);
-          ctx.strokeStyle = `rgba(255, 30, 110, ${0.14 + p * 0.22})`;
-          ctx.lineWidth = this.width;
-          ctx.beginPath(); ctx.moveTo(this.x1, this.y1); ctx.lineTo(this.x2, this.y2); ctx.stroke();
-
-          ctx.strokeStyle = `rgba(255, 255, 255, ${0.4 + p * 0.6})`;
-          ctx.lineWidth = Math.max(1.5, (1 - p) * 6);
+          ctx.fillStyle = dangerCol();
+          ctx.strokeStyle = dangerCol();
+          ctx.globalAlpha = 0.16 + p * 0.16;
+          ctx.lineWidth = beamW;
           ctx.beginPath(); ctx.moveTo(this.x1, this.y1); ctx.lineTo(this.x2, this.y2); ctx.stroke();
         } else {
           const t = (this.age - this.leadTime) / this.activeTime;
-          const w = this.width * (1 - t * 0.55);
           const flash = isWhiteFlash(this.age, this.leadTime);
+          // Stage 2: Solid pure white on impact -> Stage 3: Solid red/pink fading out
           ctx.strokeStyle = flash ? COLORS.white : dangerCol();
-          ctx.lineWidth = w;
+          ctx.globalAlpha = flash ? 1 : Utils.clamp(1 - t * 0.75, 0.15, 1);
+          ctx.lineWidth = beamW * (1 - t * 0.35);
           ctx.beginPath(); ctx.moveTo(this.x1, this.y1); ctx.lineTo(this.x2, this.y2); ctx.stroke();
-
-          if (!flash && w > 10) {
-            ctx.strokeStyle = COLORS.white;
-            ctx.lineWidth = w * 0.22;
-            ctx.stroke();
-          }
         }
         ctx.restore();
       }
