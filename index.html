@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v46 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v47 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -24,7 +24,7 @@
         <h1 class="font-display text-sm sm:text-base font-bold tracking-wider uppercase flex items-center gap-2">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">v46 • MODULAR</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">v47 • MODULAR</span>
         </h1>
       </div>
     </div>
@@ -166,6 +166,14 @@
             <label for="bossGifInput" class="flex-1 text-center py-1.5 rounded-lg bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/40 text-[#00F0FF] text-[10px] font-semibold cursor-pointer">Subir GIF</label>
             <input id="bossGifInput" type="file" accept=".gif,image/gif" class="hidden" />
             <button id="btnClearBossPng" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[10px] text-slate-300 cursor-pointer">✕</button>
+          </div>
+
+          <div class="pt-1 space-y-1.5">
+            <div class="flex gap-1.5">
+              <input id="tenorSearchInput" type="text" placeholder="Buscar GIF en Tenor..." class="flex-1 min-w-0 bg-[#090b1a] border border-slate-700/80 focus:border-[#00F0FF] outline-none rounded px-2 py-1 text-[10px] text-slate-200 placeholder:text-slate-500" />
+              <button id="btnTenorSearch" type="button" class="px-2.5 py-1 rounded bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/40 text-[10px] font-semibold text-[#00F0FF] cursor-pointer shrink-0">Buscar</button>
+            </div>
+            <div id="tenorResultsGrid" class="hidden grid grid-cols-4 gap-1.5 max-h-40 overflow-y-auto p-1 rounded-lg bg-[#090b1a] border border-slate-800/80"></div>
           </div>
           <div class="flex items-center justify-between text-slate-300">
             <span>MARCO PNG:</span>
@@ -341,6 +349,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=46"></script>
+  <script type="module" src="src/main.js?v=47"></script>
 </body>
 </html>

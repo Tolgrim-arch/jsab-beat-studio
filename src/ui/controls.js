@@ -53,6 +53,7 @@ function mountBossImage(src, onReady) {
   if (!el) {
     el = document.createElement("img");
     el.id = "hiddenBossGifHost";
+    el.crossOrigin = "anonymous";
     el.style.cssText = "position:fixed;left:0;top:0;width:4px;height:4px;opacity:0.01;pointer-events:none;z-index:-1;";
     document.body.appendChild(el);
   }
@@ -74,7 +75,7 @@ function loadPrefs() {
       Object.assign(state.customBoss, data.customBoss);
       if (data.customBoss.dataUrl) {
         mountBossImage(data.customBoss.dataUrl);
-        if (data.customBoss.dataUrl.startsWith("data:image/gif")) {
+        if (data.customBoss.dataUrl.startsWith("data:image/gif") || data.customBoss.dataUrl.includes(".gif")) {
           fetch(data.customBoss.dataUrl)
             .then(r => r.arrayBuffer())
             .then(decodeAnimatedGif)
@@ -315,6 +316,79 @@ export function initStudioControls(showToast) {
     if (gifInput) gifInput.value = "";
     savePrefs();
     showToast("Jefe restaurado a modo Procedural", "info");
+  });
+
+  // 2b. Tenor GIF Search & Instant Boss Application
+  const tenorInput = document.getElementById("tenorSearchInput");
+  const tenorBtn = document.getElementById("btnTenorSearch");
+  const tenorGrid = document.getElementById("tenorResultsGrid");
+
+  const applyRemoteGif = async (gifUrl, label = "Tenor GIF") => {
+    try {
+      showToast(`Cargando ${label}...`, "info");
+      state.customBoss.gifFrames = null;
+      state.customBoss.dataUrl = gifUrl;
+      savePrefs();
+      mountBossImage(gifUrl);
+
+      const res = await fetch(gifUrl);
+      const buf = await res.arrayBuffer();
+      const frames = await decodeAnimatedGif(buf);
+      if (frames) {
+        state.customBoss.gifFrames = frames;
+        showToast(`GIF animado listo (${frames.length} frames)`, "success");
+      } else {
+        showToast(`GIF aplicado: ${label}`, "success");
+      }
+    } catch {
+      showToast("No se pudo descargar el GIF", "error");
+    }
+  };
+
+  const searchTenor = async () => {
+    const q = tenorInput?.value?.trim();
+    if (!q || !tenorGrid) return;
+    tenorGrid.classList.remove("hidden");
+    tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-slate-400 py-2">Buscando en Tenor...</div>`;
+    try {
+      const url = `https://g.tenor.com/v1/search?q=${encodeURIComponent(q)}&key=LIVDSRZULELA&limit=12&media_filter=minimal`;
+      const res = await fetch(url);
+      const data = await res.json();
+      const results = data?.results || [];
+      tenorGrid.innerHTML = "";
+      if (!results.length) {
+        tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-slate-500 py-2">Sin resultados</div>`;
+        return;
+      }
+      results.forEach((item) => {
+        const media = item.media?.[0];
+        const previewUrl = media?.tinygif?.url || media?.gif?.url;
+        const fullUrl = media?.gif?.url || previewUrl;
+        if (!previewUrl) return;
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "aspect-square rounded overflow-hidden border border-slate-800 hover:border-[#00F0FF] bg-slate-900 cursor-pointer transition";
+        btn.title = item.content_description || "Usar como jefe";
+        const img = document.createElement("img");
+        img.src = previewUrl;
+        img.alt = item.content_description || "GIF";
+        img.className = "w-full h-full object-cover";
+        img.loading = "lazy";
+        btn.appendChild(img);
+        btn.addEventListener("click", () => applyRemoteGif(fullUrl, item.content_description || "Tenor GIF"));
+        tenorGrid.appendChild(btn);
+      });
+    } catch {
+      tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-[#FF1F71] py-2">Error al conectar con Tenor</div>`;
+    }
+  };
+
+  tenorBtn?.addEventListener("click", searchTenor);
+  tenorInput?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      searchTenor();
+    }
   });
 
   const selects = [
