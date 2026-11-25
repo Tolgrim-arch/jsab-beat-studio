@@ -26,19 +26,20 @@ async function decodeAnimatedGif(arrayBuffer) {
   try {
     const decoder = new ImageDecoder({ data: new Uint8Array(arrayBuffer), type: "image/gif" });
     await decoder.tracks.ready;
-    await decoder.completed;
-    const track = decoder.tracks.selectedTrack;
-    const count = track.frameCount || 1;
-    if (count <= 1) return null;
     const frames = [];
-    for (let i = 0; i < count; i++) {
-      const res = await decoder.decode({ frameIndex: i });
+    for (let i = 0; i < 300; i++) {
+      let res;
+      try {
+        res = await decoder.decode({ frameIndex: i });
+      } catch {
+        break; // Reached end of GIF frames
+      }
       const bitmap = await createImageBitmap(res.image);
       const durSec = Math.max(0.02, (res.image.duration || 80000) / 1_000_000);
       res.image.close();
       frames.push({ bitmap, dur: durSec });
     }
-    return frames;
+    return frames.length > 1 ? frames : null;
   } catch {
     return null;
   }
@@ -49,7 +50,6 @@ function mountBossImage(src, onReady) {
   if (!el) {
     el = document.createElement("img");
     el.id = "hiddenBossGifHost";
-    // Keep inside viewport at 0.01 opacity so browser never pauses GIF decoding
     el.style.cssText = "position:fixed;left:0;top:0;width:4px;height:4px;opacity:0.01;pointer-events:none;z-index:-1;";
     document.body.appendChild(el);
   }
@@ -122,25 +122,34 @@ export function initStudioControls(showToast) {
   const gifInput = document.getElementById("bossGifInput");
   const btnClearPng = document.getElementById("btnClearBossPng");
 
-  const handleImageUpload = async (file) => {
+  const handleImageUpload = (file) => {
     if (!file) return;
     state.customBoss.gifFrames = null;
-    if (file.type === "image/gif" || file.name.toLowerCase().endsWith(".gif")) {
-      const ab = await file.arrayBuffer();
-      const frames = await decodeAnimatedGif(ab);
-      if (frames) state.customBoss.gifFrames = frames;
-    }
+
+    // 1. Immediately mount image so Boss updates right away
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = reader.result;
       mountBossImage(dataUrl, () => {
         state.customBoss.dataUrl = dataUrl.length < 2_500_000 ? dataUrl : null;
         savePrefs();
-        const fCount = state.customBoss.gifFrames ? ` (${state.customBoss.gifFrames.length} frames)` : "";
-        showToast(`Enemigo cargado: ${file.name}${fCount}`, "success");
+        showToast(`Enemigo cargado: ${file.name}`, "success");
       });
     };
     reader.readAsDataURL(file);
+
+    // 2. Decode animated GIF frames in background
+    if (file.type === "image/gif" || file.name.toLowerCase().endsWith(".gif")) {
+      file.arrayBuffer()
+        .then(decodeAnimatedGif)
+        .then(frames => {
+          if (frames) {
+            state.customBoss.gifFrames = frames;
+            showToast(`GIF animado listo (${frames.length} frames)`, "success");
+          }
+        })
+        .catch(() => {});
+    }
   };
 
   pngInput?.addEventListener("change", (e) => handleImageUpload(e.target.files[0]));
