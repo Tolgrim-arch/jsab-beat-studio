@@ -434,7 +434,7 @@ function updateSimulation(dt) {
     b.blinkTimer = b.isBlinking ? 0.11 : (2.2 + Math.random() * 2.8);
   }
 
-  b.r = b.baseR * pInfo.scale * (1 + bass * 0.22 + b.pulse * 0.18);
+  b.r = Utils.clamp(b.baseR * pInfo.scale * (1 + bass * 0.22 + b.pulse * 0.18), 32, 105);
 
   if (!b.trail) b.trail = [];
   const tx = Number.isFinite(b.targetX) ? b.targetX : W * 0.5;
