@@ -196,15 +196,15 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
     }
 
     case "LYCANTHROPY_VINES": {
-      // 8 rising floor spikes + 6 falling gravity orbs
-      const count = 8;
+      const sides = ["bottom", "top", "left", "right"];
+      const side = sides[ev.step % 4];
+      const isHoriz = side === "left" || side === "right";
+      const span = isHoriz ? H : W;
+      const maxD = (isHoriz ? W : H) * 0.34;
+      const count = 5 + Math.floor(ev.phase / 2);
       for (let k = 0; k < count; k++) {
-        const sx = (W / (count + 1)) * (k + 1) + (ev.step % 2 === 0 ? 22 : -22);
-        state.entities.push(AttackFactory.lycanthropySpike(sx, H, H * (0.34 + ((k * 0.17 + ev.seed) % 0.25)), 42, lt, 0.42));
-      }
-      for (let k = 0; k < 6; k++) {
-        const sx = W * (0.08 + k * 0.16) + (ev.seed - 0.5) * 50;
-        state.entities.push(AttackFactory.bullet(sx, -10, (ev.seed - 0.5) * 110, 160, 10, "circle", 420 * spdMul));
+        const pos = (span / (count + 1)) * (k + 1) + (ev.step % 2 === 0 ? 20 : -20);
+        state.entities.push(AttackFactory.lycanthropySpike(pos, maxD * (0.75 + ((k * 0.17 + ev.seed) % 0.4)), 76, lt, 0.42, side));
       }
       break;
     }

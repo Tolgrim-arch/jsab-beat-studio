@@ -243,9 +243,9 @@ export const AttackFactory = {
     };
   },
 
-  lycanthropySpike(x, baseY, maxH, width = 38, leadTime = 0.5, activeTime = 0.45) {
+  lycanthropySpike(pos, maxH, width = 78, leadTime = 0.5, activeTime = 0.45, side = "bottom") {
     return {
-      type: "lycanthropySpike", x, baseY, maxH, width, leadTime, activeTime,
+      type: "lycanthropySpike", pos, maxH, width, leadTime, activeTime, side,
       age: 0, dead: false,
       update(dt) {
         this.age += dt;
@@ -253,34 +253,41 @@ export const AttackFactory = {
       },
       isActive() { return this.age >= this.leadTime; },
       _curH() {
-        if (!this.isActive()) return this.maxH * 0.08;
+        if (!this.isActive()) return this.maxH * 0.06;
         const t = (this.age - this.leadTime) / this.activeTime;
         return this.maxH * (t < 0.2 ? t / 0.2 : 1 - (t - 0.2) / 0.8);
       },
+      _rect(W, H, h) {
+        if (this.side === "top") return { x: this.pos - this.width / 2, y: 0, w: this.width, h, r: [0, 0, this.width / 2, this.width / 2] };
+        if (this.side === "left") return { x: 0, y: this.pos - this.width / 2, w: h, h: this.width, r: [0, this.width / 2, this.width / 2, 0] };
+        if (this.side === "right") return { x: W - h, y: this.pos - this.width / 2, w: h, h: this.width, r: [this.width / 2, 0, 0, this.width / 2] };
+        return { x: this.pos - this.width / 2, y: H - h, w: this.width, h, r: [this.width / 2, this.width / 2, 0, 0] };
+      },
       getDanger(px, py) {
-        if (Math.abs(px - this.x) < this.width * 0.85 && py > this.baseY - this.maxH - 25) {
-          return 140 * (this.isActive() ? 1.1 : 0.75);
+        const rc = this._rect(state.width, state.height, this.maxH + 25);
+        if (px >= rc.x - 16 && px <= rc.x + rc.w + 16 && py >= rc.y - 16 && py <= rc.y + rc.h + 16) {
+          return 145 * (this.isActive() ? 1.15 : 0.75);
         }
         return 0;
       },
       checkCollision(px, py, r) {
         if (!this.isActive()) return false;
-        const h = this._curH();
-        return Math.abs(px - this.x) < (this.width * 0.42 + r) && py > this.baseY - h;
+        const rc = this._rect(state.width, state.height, this._curH());
+        return px + r > rc.x && px - r < rc.x + rc.w && py + r > rc.y && py - r < rc.y + rc.h;
       },
-      draw(ctx) {
-        const h = this._curH();
+      draw(ctx, W, H) {
         ctx.save();
         if (!this.isActive()) {
+          const warn = this._rect(W, H, this.maxH);
           ctx.fillStyle = "rgba(255, 30, 110, 0.16)";
-          ctx.fillRect(this.x - this.width / 2, this.baseY - this.maxH, this.width, this.maxH);
+          ctx.beginPath();
+          ctx.roundRect(warn.x, warn.y, warn.w, warn.h, warn.r);
+          ctx.fill();
         }
+        const rc = this._rect(W, H, this._curH());
         ctx.fillStyle = isWhiteFlash(this.age, this.leadTime) ? COLORS.white : dangerCol();
         ctx.beginPath();
-        ctx.moveTo(this.x - this.width / 2, this.baseY);
-        ctx.lineTo(this.x, this.baseY - h);
-        ctx.lineTo(this.x + this.width / 2, this.baseY);
-        ctx.closePath();
+        ctx.roundRect(rc.x, rc.y, rc.w, rc.h, rc.r);
         ctx.fill();
         ctx.restore();
       }
