@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v21 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v22 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles/main.css" />
 </head>
-<body class="min-h-screen flex flex-col bg-[#060714] text-slate-100 select-none">
+<body class="min-h-screen lg:h-screen lg:overflow-hidden flex flex-col bg-[#060714] text-slate-100 select-none">
 
   <!-- TOP HEADER -->
   <header class="h-14 border-b border-slate-800/80 bg-[#090b1d]/90 backdrop-blur-md px-4 lg:px-6 flex items-center justify-between shrink-0 z-20">
@@ -24,7 +24,7 @@
         <h1 class="font-display text-sm sm:text-base font-bold tracking-wider uppercase flex items-center gap-2">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">v21 • MODULAR</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded bg-[#FF1F71]/20 text-[#FF1F71] border border-[#FF1F71]/40">v22 • MODULAR</span>
         </h1>
       </div>
     </div>
@@ -162,8 +162,8 @@
       </div>
     </aside>
 
-    <section class="flex-1 flex flex-col min-w-0 bg-[#060714]">
-      <div id="stageContainer" class="flex-1 p-3 sm:p-5 min-h-[320px]">
+    <section class="flex-1 flex flex-col min-w-0 min-h-0 bg-[#060714]">
+      <div id="stageContainer" class="flex-1 p-3 sm:p-5 min-h-0">
         <canvas id="gameCanvas" width="1280" height="720"></canvas>
 
         <div id="emptyOverlay" class="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -211,6 +211,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=21"></script>
+  <script type="module" src="src/main.js?v=22"></script>
 </body>
 </html>
