@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v61 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v62 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -24,7 +24,7 @@
         <h1 class="font-display text-xs sm:text-base font-bold tracking-wider uppercase flex items-center gap-2 truncate">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v61 • STUDIO PRO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v62 • STUDIO PRO</span>
         </h1>
       </div>
     </div>
@@ -360,6 +360,10 @@
               <span>⚡ Modo TikTok / Phonk Edit</span>
               <input id="togglePhonk" type="checkbox" class="accent-[#FF1F71] w-4 h-4 rounded cursor-pointer" />
             </label>
+            <label class="flex items-center justify-between px-3 py-2 rounded-xl bg-purple-500/12 border border-purple-500/35 text-[11px] font-semibold text-purple-300 cursor-pointer">
+              <span>🌸 Modo Bullet Hell (Touhou)</span>
+              <input id="toggleTouhou" type="checkbox" class="accent-purple-400 w-4 h-4 rounded cursor-pointer" />
+            </label>
 
             <div>
               <div class="flex justify-between mb-1"><span class="text-slate-300">OFFSET BEATS</span><span id="valSync" class="text-[#00F0FF]">0ms</span></div>
@@ -495,6 +499,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=61"></script>
+  <script type="module" src="src/main.js?v=62"></script>
 </body>
 </html>

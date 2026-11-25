@@ -716,6 +716,23 @@ export const AttackFactory = {
           ctx.restore();
           return;
         }
+        if (this.shape === "rice" || this.shape === "touhouOrb") {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.rot);
+          ctx.fillStyle = dangerCol();
+          ctx.beginPath();
+          if (this.shape === "rice") ctx.ellipse(0, 0, pr * 1.45, pr * 0.72, 0, 0, Math.PI * 2);
+          else ctx.arc(0, 0, pr * 1.1, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = COLORS.white;
+          ctx.beginPath();
+          if (this.shape === "rice") ctx.ellipse(0, 0, pr * 0.9, pr * 0.38, 0, 0, Math.PI * 2);
+          else ctx.arc(0, 0, pr * 0.62, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          return;
+        }
         if (this.shape === "diamond") Utils.drawPolygon(ctx, this.x, this.y, 4, pr * 1.25, this.rot);
         else if (this.shape === "triangle") Utils.drawPolygon(ctx, this.x, this.y, 3, pr * 1.35, this.rot);
         else { ctx.beginPath(); ctx.arc(this.x, this.y, pr, 0, Math.PI * 2); }
@@ -1091,5 +1108,51 @@ export const AttackFactory = {
         ctx.restore();
       }
     };
+  },
+
+  danmakuSpiral(arms = 5, speed = 215, spinRate = 1.9, duration = 3.2, bulletR = 6) {
+    return {
+      type: "danmakuSpiral", arms, speed, spinRate, duration, bulletR,
+      age: 0, fireTimer: 0, angle: Math.random() * Math.PI * 2, dead: false,
+      update(dt) {
+        this.age += dt;
+        this.angle += this.spinRate * dt * Math.sin(this.age * 1.1 + 0.6);
+        this.fireTimer += dt;
+        const interval = 0.085;
+        while (this.fireTimer >= interval && this.age < this.duration - 0.2) {
+          this.fireTimer -= interval;
+          const bx = state.blixer.x, by = state.blixer.y;
+          for (let k = 0; k < this.arms; k++) {
+            const a = this.angle + (Math.PI * 2 * k) / this.arms;
+            const shape = k % 2 === 0 ? "rice" : "touhouOrb";
+            state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * this.speed, Math.sin(a) * this.speed, this.bulletR, shape));
+          }
+        }
+        if (this.age >= this.duration) this.dead = true;
+      },
+      getDanger() { return 0; },
+      checkCollision() { return false; },
+      draw() {}
+    };
+  },
+
+  danmakuFlower(cx, cy, count = 22, layers = 2, speed = 195) {
+    for (let l = 0; l < layers; l++) {
+      const spd = speed + l * 65;
+      const offset = l * (Math.PI / count);
+      const shape = l % 2 === 0 ? "touhouOrb" : "rice";
+      for (let k = 0; k < count; k++) {
+        const a = offset + (Math.PI * 2 * k) / count;
+        state.entities.push(AttackFactory.bullet(cx, cy, Math.cos(a) * spd, Math.sin(a) * spd, 6, shape));
+      }
+    }
+  },
+
+  danmakuAimedFan(cx, cy, tx, ty, ways = 7, spread = 1.05, speed = 265) {
+    const base = Math.atan2(ty - cy, tx - cx);
+    for (let k = 0; k < ways; k++) {
+      const a = base + (k - (ways - 1) / 2) * (spread / Math.max(1, ways - 1));
+      state.entities.push(AttackFactory.bullet(cx, cy, Math.cos(a) * speed, Math.sin(a) * speed, 6, "rice"));
+    }
   }
 };

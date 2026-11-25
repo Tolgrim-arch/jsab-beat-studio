@@ -633,6 +633,16 @@ export function initStudioControls(showToast) {
     });
   }
 
+  const touhouEl = document.getElementById("toggleTouhou");
+  if (touhouEl) {
+    touhouEl.checked = !!state.settings.touhouMode;
+    touhouEl.addEventListener("change", () => {
+      state.settings.touhouMode = touhouEl.checked;
+      savePrefs();
+      showToast(touhouEl.checked ? "🌸 Modo Bullet Hell (Touhou) ACTIVADO" : "Modo Touhou desactivado", "info");
+    });
+  }
+
   // Reset boss thumb on clear
   btnClearPng?.addEventListener("click", () => {
     const thumb = document.getElementById("bossPreviewThumb");

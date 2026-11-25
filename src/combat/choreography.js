@@ -1,11 +1,12 @@
 import { PHASES } from "../config.js";
 import { Utils } from "../utils.js";
 import { state, spawnParticles } from "../state.js";
-import { AttackFactory } from "./attacks.js?v=56";
+import { AttackFactory } from "./attacks.js?v=62";
 
 export const ATTACK_CATALOG = [
   { id: "DROP_EXPLOSION",    icon: "💥", name: "Explosión Drop",       desc: "Onda de choque, 4 láseres en cruz, anillo de diamantes y Mega-Rayo." },
   { id: "MEGA_MOUTH_BEAM",   icon: "⚡", name: "Mega-Rayo Annihilate", desc: "Haz gigante horizontal o vertical con burbujas hirvientes y agujeros negros." },
+  { id: "TOUHOU_DANMAKU",    icon: "🌸", name: "Bullet Hell Touhou",   desc: "Espirales Danmaku de múltiples brazos, anillos en flor y abanicos dirigidos." },
   { id: "CLOCKWORK_LASERS",  icon: "🌀", name: "Tornado 4 Brazos",     desc: "El jefe al centro gira 4 brazos de engranajes como tornado + láseres radiales." },
   { id: "CLOSE_TO_ME_ORBS",  icon: "🦾", name: "Brazos 8 Púas",        desc: "2 brazos articulados con palma hueca, rayos giratorios y bombas de pulso." },
   { id: "LYCANTHROPY_VINES", icon: "🌋", name: "Suite Lycanthropy",    desc: "Olas de lava, gusano de engranajes gigante, jaula dentada y fuente de esporas." },
@@ -324,6 +325,18 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
       break;
     }
 
+    case "TOUHOU_DANMAKU": {
+      if (ev.step === 0 && !state.entities.some(e => e.type === "danmakuSpiral")) {
+        state.entities.push(AttackFactory.danmakuSpiral(4 + ev.phase, 195 * spdMul, (ev.phase % 2 === 0 ? 1 : -1) * 2.1, Math.max(2.8, state.analysis.beatDur * 3.8), 6));
+      }
+      if (ev.step % 2 === 0) {
+        AttackFactory.danmakuFlower(bx, by, 18 + ev.phase * 4, 2, 175 * spdMul);
+      } else {
+        AttackFactory.danmakuAimedFan(bx, by, cx, cy, 5 + ev.phase, 1.0, 250 * spdMul);
+      }
+      break;
+    }
+
     default: {
       // BREAKDOWN_PULSE: Clean shockwave + 8-dot ring
       state.entities.push(AttackFactory.shockwave(bx, by, 380, len * 0.9, 18));
@@ -332,6 +345,16 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
         state.entities.push(AttackFactory.bullet(bx, by, Math.cos(a) * 240, Math.sin(a) * 240, 7, "circle"));
       }
       break;
+    }
+  }
+
+  // Global Bullet Hell (Touhou) Mode overlay
+  if (state.settings?.touhouMode && activeSetpiece !== "TOUHOU_DANMAKU") {
+    if (ev.step === 0 && !state.entities.some(e => e.type === "danmakuSpiral")) {
+      state.entities.push(AttackFactory.danmakuSpiral(4 + ev.phase, 185 * spdMul, (ev.phase % 2 === 0 ? 1 : -1) * 1.9, Math.max(2.4, state.analysis.beatDur * 3.5), 5.5));
+    }
+    if (ev.step === 2) {
+      AttackFactory.danmakuAimedFan(bx, by, cx, cy, 5 + ev.phase, 0.95, 240 * spdMul);
     }
   }
 }

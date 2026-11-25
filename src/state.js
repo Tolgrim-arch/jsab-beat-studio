@@ -46,7 +46,8 @@ export const state = {
     zoomMul: 1.0,
     eqAlpha: 0.14,
     impactFlashMul: 0.55,
-    phonkMode: false
+    phonkMode: false,
+    touhouMode: false
   },
   velocityTimer: 0,
   rgbSplit: 0,
