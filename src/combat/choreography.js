@@ -1,7 +1,7 @@
 import { PHASES } from "../config.js";
 import { Utils } from "../utils.js";
 import { state, spawnParticles } from "../state.js";
-import { AttackFactory } from "./attacks.js?v=52";
+import { AttackFactory } from "./attacks.js?v=55";
 
 export const ATTACK_CATALOG = [
   { id: "DROP_EXPLOSION",    icon: "💥", name: "Explosión Drop",       desc: "Onda de choque, 4 láseres en cruz, anillo de diamantes y Mega-Rayo." },
@@ -79,7 +79,7 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
   const cx = state.cyan.x, cy = state.cyan.y;
   const spdMul = PHASES[ev.phase - 1].speedMul * (state.settings?.attackSpeed ?? 1);
   const lt = ev.leadTime;
-  const danger = state.analysis?.dna?.palette?.danger || "#FF1E6E";
+  const danger = (state.customColors?.enabled ? state.customColors.danger : state.analysis?.dna?.palette?.danger) || "#FF1E6E";
 
   // Filter disabled attacks (fallback to any enabled attack, or skip if all disabled)
   const disabled = state.disabledAttacks || {};

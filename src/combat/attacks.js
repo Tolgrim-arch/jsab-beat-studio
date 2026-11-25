@@ -242,7 +242,8 @@ export const AttackFactory = {
         ctx.save();
         if (!this.isActive()) {
           const p = this.age / this.leadTime;
-          ctx.strokeStyle = `rgba(255, 30, 110, ${0.15 + p * 0.25})`;
+          ctx.strokeStyle = dangerCol();
+          ctx.globalAlpha = 0.15 + p * 0.25;
           ctx.lineWidth = this.width;
           ctx.beginPath(); ctx.moveTo(this.cx, this.cy); ctx.lineTo(end.x, end.y); ctx.stroke();
         } else {
@@ -278,10 +279,12 @@ export const AttackFactory = {
         ctx.save();
         if (!this.isActive()) {
           const p = this.age / this.leadTime;
-          ctx.fillStyle = `rgba(255, 30, 110, ${0.08 + p * 0.18})`;
-          ctx.strokeStyle = `rgba(255, 30, 110, ${0.4 + p * 0.5})`;
+          ctx.fillStyle = dangerCol();
+          ctx.strokeStyle = dangerCol();
           ctx.lineWidth = 2;
+          ctx.globalAlpha = 0.08 + p * 0.18;
           ctx.fillRect(this.x + 3, this.y + 3, this.w - 6, this.h - 6);
+          ctx.globalAlpha = 0.4 + p * 0.5;
           ctx.strokeRect(this.x + 3, this.y + 3, this.w - 6, this.h - 6);
         } else {
           const a = 1 - (this.age - this.leadTime) / this.activeTime;
@@ -336,11 +339,13 @@ export const AttackFactory = {
         const rc = this._rect(W, H);
         ctx.save();
         if (!this.isActive()) {
-          ctx.fillStyle = "rgba(255, 30, 110, 0.14)";
+          ctx.fillStyle = dangerCol();
+          ctx.globalAlpha = 0.14;
           if (this.side === "left") ctx.fillRect(0, 0, this.depth, H);
           else if (this.side === "right") ctx.fillRect(W - this.depth, 0, this.depth, H);
           else if (this.side === "top") ctx.fillRect(0, 0, W, this.depth);
           else ctx.fillRect(0, H - this.depth, W, this.depth);
+          ctx.globalAlpha = 1;
         }
         ctx.fillStyle = isWhiteFlash(this.age, this.leadTime) ? COLORS.white : dangerCol();
         ctx.fillRect(rc.x, rc.y, rc.w, rc.h);
@@ -376,8 +381,10 @@ export const AttackFactory = {
         ctx.save();
         ctx.translate(this.x, this.y);
         if (!this.impacted) {
-          ctx.fillStyle = `rgba(255, 30, 110, ${0.12 + p * 0.2})`;
+          ctx.fillStyle = dangerCol();
+          ctx.globalAlpha = 0.12 + p * 0.2;
           ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fill();
+          ctx.globalAlpha = 1;
           ctx.strokeStyle = dangerCol();
           ctx.lineWidth = 3;
           ctx.beginPath(); ctx.arc(0, 0, this.radius * (1.4 - p * 0.4), 0, Math.PI * 2); ctx.stroke();
@@ -427,10 +434,12 @@ export const AttackFactory = {
         ctx.save();
         if (!this.isActive()) {
           const warn = this._rect(W, H, this.maxH);
-          ctx.fillStyle = "rgba(255, 30, 110, 0.16)";
+          ctx.fillStyle = dangerCol();
+          ctx.globalAlpha = 0.16;
           ctx.beginPath();
           ctx.roundRect(warn.x, warn.y, warn.w, warn.h, warn.r);
           ctx.fill();
+          ctx.globalAlpha = 1;
         }
         const rc = this._rect(W, H, this._curH());
         ctx.fillStyle = isWhiteFlash(this.age, this.leadTime) ? COLORS.white : dangerCol();
