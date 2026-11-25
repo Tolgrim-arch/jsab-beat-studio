@@ -673,6 +673,26 @@ export const AttackFactory = {
       draw(ctx) {
         const pr = this.r * (1 + (state.beatPulse || 0) * 0.28);
         ctx.fillStyle = this.age < 0.08 ? COLORS.white : dangerCol();
+        if (this.shape === "gear8") {
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.age * 3.2);
+          for (let i = 0; i < 8; i++) {
+            const a = (Math.PI * 2 * i) / 8;
+            ctx.save();
+            ctx.rotate(a);
+            ctx.beginPath();
+            ctx.moveTo(pr * 1.35, 0);
+            ctx.lineTo(pr * 0.72, -pr * 0.28);
+            ctx.lineTo(pr * 0.72, pr * 0.28);
+            ctx.closePath();
+            ctx.fill();
+            ctx.restore();
+          }
+          ctx.beginPath(); ctx.arc(0, 0, pr * 0.85, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+          return;
+        }
         if (this.shape === "diamond") Utils.drawPolygon(ctx, this.x, this.y, 4, pr * 1.25, this.rot);
         else if (this.shape === "triangle") Utils.drawPolygon(ctx, this.x, this.y, 3, pr * 1.35, this.rot);
         else { ctx.beginPath(); ctx.arc(this.x, this.y, pr, 0, Math.PI * 2); }
@@ -827,6 +847,225 @@ export const AttackFactory = {
             drawSpikedGear(ctx, s.x, s.y, s.r, s.rot, col, s.kind === "palm");
           }
         }
+      }
+    };
+  },
+
+  lavaWaveFloor(duration = 4.6, pattern = "doubleCrest") {
+    return {
+      type: "lavaWaveFloor", duration, pattern, age: 0, dead: false,
+      update(dt) {
+        this.age += dt;
+        if (this.age >= this.duration) this.dead = true;
+      },
+      _heightAt(nx, t) {
+        const H = state.height;
+        const env = Math.min(Utils.clamp(t / 0.4, 0, 1), Utils.clamp((this.duration - t) / 0.4, 0, 1));
+        if (env <= 0.01) return 0;
+        const beatBoost = (state.beatPulse || 0) * 18;
+        let wave = 0;
+        if (this.pattern === "doubleCrest") {
+          // Two giant crests on left & right, valley in the middle (wooow.PNG)
+          const left = Math.exp(-Math.pow((nx - 0.19) / 0.16, 2));
+          const right = Math.exp(-Math.pow((nx - 0.81) / 0.16, 2));
+          wave = H * (0.14 + 0.38 * Math.max(left, right) + 0.03 * Math.sin(nx * 14 + t * 5));
+        } else if (this.pattern === "traveling") {
+          // Rolling lava waves moving across the screen (ytyty.PNG)
+          wave = H * (0.16 + 0.16 * (0.5 + 0.5 * Math.sin(nx * 7.5 - t * 3.8)) + 0.06 * Math.sin(nx * 16 + t * 4.5));
+        } else {
+          // Stadium valley
+          const edge = Math.abs(nx * 2 - 1);
+          wave = H * (0.14 + 0.28 * edge * edge + 0.04 * Math.sin(nx * 12 + t * 4));
+        }
+        return (wave + beatBoost) * env;
+      },
+      getDanger(px, py, tAhead) {
+        const fa = this.age + tAhead;
+        if (fa >= this.duration) return 0;
+        const W = state.width, H = state.height;
+        const topY = H - this._heightAt(Utils.clamp(px / W, 0, 1), fa);
+        const dist = topY - py;
+        if (dist < 62) return Utils.clamp((1 - dist / 62) * 185, 40, 210);
+        return 0;
+      },
+      checkCollision(px, py, r) {
+        const W = state.width, H = state.height;
+        const topY = H - this._heightAt(Utils.clamp(px / W, 0, 1), this.age);
+        return py + r > topY + 6;
+      },
+      draw(ctx) {
+        const W = state.width, H = state.height;
+        const bars = 76;
+        const bw = W / bars;
+        ctx.save();
+        ctx.fillStyle = this.age < 0.08 ? COLORS.white : dangerCol();
+        for (let i = 0; i < bars; i++) {
+          const nx = (i + 0.5) / bars;
+          const h = this._heightAt(nx, this.age);
+          if (h < 2) continue;
+          const x = i * bw;
+          const y = H - h;
+          const rad = Math.min(bw * 0.48, 8);
+          ctx.beginPath();
+          ctx.roundRect(x + 0.5, y, Math.max(2, bw - 1), h + 10, [rad, rad, 0, 0]);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+    };
+  },
+
+  gearWormArc(dir = 1, duration = 2.6) {
+    const drawGear8 = (ctx, x, y, r, rot, col) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+      ctx.fillStyle = col;
+      for (let i = 0; i < 8; i++) {
+        const a = (Math.PI * 2 * i) / 8;
+        ctx.save();
+        ctx.rotate(a);
+        ctx.beginPath();
+        ctx.moveTo(r * 1.24, 0);
+        ctx.lineTo(r * 0.72, -r * 0.25);
+        ctx.lineTo(r * 0.72, r * 0.25);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.88, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+    return {
+      type: "gearWormArc", dir, duration, age: 0, dead: false, splashed: false,
+      update(dt) {
+        this.age += dt;
+        if (!this.splashed && this.age > 0.12) {
+          this.splashed = true;
+          const sx = this.dir > 0 ? state.width * 0.18 : state.width * 0.82;
+          spawnParticles(sx, state.height * 0.86, dangerCol(), 16, 120, 340);
+        }
+        if (this.age >= this.duration) this.dead = true;
+      },
+      _segmentsAt(t) {
+        const W = state.width, H = state.height;
+        const segs = [];
+        const count = 9;
+        for (let i = 0; i < count; i++) {
+          const u = (t - i * 0.11) / (this.duration - count * 0.11);
+          if (u < -0.05 || u > 1.05) continue;
+          const xNorm = this.dir > 0 ? (0.14 + u * 0.72) : (0.86 - u * 0.72);
+          const x = W * xNorm;
+          const arch = Math.sin(Utils.clamp(u, 0, 1) * Math.PI);
+          const y = H * (0.94 - arch * 0.84);
+          segs.push({ x, y, r: 44, rot: t * 2.6 * this.dir + i * 0.45 });
+        }
+        return segs;
+      },
+      getDanger(px, py, tAhead) {
+        const fa = this.age + tAhead;
+        if (fa >= this.duration) return 0;
+        const segs = this._segmentsAt(fa);
+        let maxD = 0;
+        for (let i = 0; i < segs.length; i++) {
+          const s = segs[i];
+          const safe = s.r * 1.2 + 34;
+          const d = Math.hypot(px - s.x, py - s.y);
+          if (d < safe) maxD = Math.max(maxD, (1 - d / safe) * 170);
+        }
+        return maxD;
+      },
+      checkCollision(px, py, r) {
+        const segs = this._segmentsAt(this.age);
+        for (let i = 0; i < segs.length; i++) {
+          if (Math.hypot(px - segs[i].x, py - segs[i].y) < (segs[i].r * 0.85 + r)) return true;
+        }
+        return false;
+      },
+      draw(ctx) {
+        const segs = this._segmentsAt(this.age);
+        const col = this.age < 0.08 ? COLORS.white : dangerCol();
+        for (let i = segs.length - 1; i >= 0; i--) {
+          drawGear8(ctx, segs[i].x, segs[i].y, segs[i].r, segs[i].rot, col);
+        }
+      }
+    };
+  },
+
+  sawtoothCage(duration = 4.4, depth = 72) {
+    return {
+      type: "sawtoothCage", duration, depth, age: 0, dead: false,
+      update(dt) {
+        this.age += dt;
+        if (this.age >= this.duration) this.dead = true;
+      },
+      _curDepth(t) {
+        const env = Math.min(Utils.clamp(t / 0.35, 0, 1), Utils.clamp((this.duration - t) / 0.35, 0, 1));
+        return this.depth * env;
+      },
+      getDanger(px, py, tAhead) {
+        const fa = this.age + tAhead;
+        if (fa >= this.duration) return 0;
+        const d = this._curDepth(fa);
+        const W = state.width;
+        const safe = d + 34;
+        let maxD = 0;
+        if (py < safe) maxD = Math.max(maxD, (1 - py / safe) * 165);
+        if (px < safe) maxD = Math.max(maxD, (1 - px / safe) * 165);
+        if (W - px < safe) maxD = Math.max(maxD, (1 - (W - px) / safe) * 165);
+        return maxD;
+      },
+      checkCollision(px, py, r) {
+        const d = this._curDepth(this.age) * 0.78;
+        if (d < 8) return false;
+        const W = state.width;
+        return py - r < d || px - r < d || px + r > W - d;
+      },
+      draw(ctx) {
+        const W = state.width, H = state.height;
+        const d = this._curDepth(this.age);
+        if (d < 2) return;
+        const col = this.age < 0.08 ? COLORS.white : dangerCol();
+        ctx.save();
+        ctx.fillStyle = col;
+
+        // Top sawtooth teeth
+        const topCount = 14;
+        const tw = W / topCount;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        for (let i = 0; i < topCount; i++) {
+          ctx.lineTo(i * tw + tw * 0.5, d);
+          ctx.lineTo((i + 1) * tw, 0);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // Left sawtooth teeth
+        const sideCount = 8;
+        const sh = H / sideCount;
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        for (let i = 0; i < sideCount; i++) {
+          ctx.lineTo(d, i * sh + sh * 0.5);
+          ctx.lineTo(0, (i + 1) * sh);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        // Right sawtooth teeth
+        ctx.beginPath();
+        ctx.moveTo(W, 0);
+        for (let i = 0; i < sideCount; i++) {
+          ctx.lineTo(W - d, i * sh + sh * 0.5);
+          ctx.lineTo(W, (i + 1) * sh);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
       }
     };
   }

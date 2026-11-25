@@ -1,7 +1,7 @@
 import { PHASES } from "../config.js";
 import { Utils } from "../utils.js";
 import { state, spawnParticles } from "../state.js";
-import { AttackFactory } from "./attacks.js?v=49";
+import { AttackFactory } from "./attacks.js?v=52";
 
 export function buildChoreographySchedule() {
   const { analysis, duration } = state;
@@ -212,40 +212,38 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
     }
 
     case "LYCANTHROPY_VINES": {
-      const mode = ev.phase % 3;
-      if (mode === 0) {
-        // V-Valley Stadium Wave (like rgwgw.PNG!)
-        const count = 9;
-        for (let k = 0; k < count; k++) {
-          const norm = Math.abs((k / (count - 1)) * 2 - 1); // 1 at edges, 0 at center
-          const pos = (W / count) * (k + 0.5);
-          state.entities.push(AttackFactory.lycanthropySpike(pos, H * (0.12 + norm * 0.34), W / count + 6, lt, 0.42, "bottom"));
+      const dur = Math.max(4.0, state.analysis.beatDur * 4.4);
+      if (ev.step === 0) {
+        if (!state.entities.some(e => e.type === "lavaWaveFloor")) {
+          const pat = ev.phase % 2 === 0 ? "doubleCrest" : "traveling";
+          state.entities.push(AttackFactory.lavaWaveFloor(dur, pat));
         }
-      } else if (mode === 1) {
-        // Traveling Sine Wave from top or bottom
-        const side = ev.step % 2 === 0 ? "bottom" : "top";
-        const count = 8;
-        for (let k = 0; k < count; k++) {
-          const wave = 0.5 + 0.5 * Math.sin(k * 0.8 + ev.step * 1.4);
-          const pos = (W / count) * (k + 0.5);
-          state.entities.push(AttackFactory.lycanthropySpike(pos, H * (0.14 + wave * 0.28), W / count + 4, lt, 0.4, side));
+        if (ev.phase >= 2 && !state.entities.some(e => e.type === "sawtoothCage")) {
+          state.entities.push(AttackFactory.sawtoothCage(dur, 66));
         }
-      } else {
-        // Symmetric Dual Lateral Pincer (3 left + 3 right closing in cleanly)
-        const count = 6;
-        for (let k = 0; k < count; k++) {
-          const pos = (H / count) * (k + 0.5);
-          const d = W * (0.26 + ((k + ev.step) % 2) * 0.1);
-          state.entities.push(AttackFactory.lycanthropySpike(pos, d, H / count + 4, lt, 0.42, k % 2 === 0 ? "left" : "right"));
+        state.entities.push(AttackFactory.gearWormArc(ev.phase % 2 === 0 ? 1 : -1, 2.5));
+      }
+      // Symmetrical spore fountain arcs erupting from bottom center (jgjhg.PNG)
+      if (ev.step === 1 || ev.step === 3) {
+        const fx = W * 0.5, fy = H * 0.72;
+        for (let k = 0; k < 10; k++) {
+          const frac = (k / 9) * 2 - 1; // -1 to 1
+          const vx = frac * 340 * spdMul;
+          const vy = -(380 + (1 - Math.abs(frac)) * 180) * spdMul;
+          state.entities.push(AttackFactory.bullet(fx, fy, vx, vy, 7, "circle", 520 * spdMul));
         }
       }
       break;
     }
 
     case "ORB_RAIN": {
-      for (let k = 0; k < 9; k++) {
-        const sx = W * (0.05 + k * 0.11) + (ev.seed - 0.5) * 45;
-        state.entities.push(AttackFactory.bullet(sx, -10, (ev.seed - 0.5) * 90, 180 + (k % 3) * 60, 10, "circle", 440 * spdMul));
+      if (ev.step === 0 && !state.entities.some(e => e.type === "lavaWaveFloor")) {
+        state.entities.push(AttackFactory.lavaWaveFloor(Math.max(3.6, state.analysis.beatDur * 4.0), "valley"));
+      }
+      for (let k = 0; k < 8; k++) {
+        const sx = W * (0.08 + k * 0.12) + (ev.seed - 0.5) * 40;
+        const shape = k % 2 === 0 ? "gear8" : "circle";
+        state.entities.push(AttackFactory.bullet(sx, -12, (ev.seed - 0.5) * 80, 175 + (k % 3) * 55, shape === "gear8" ? 13 : 9, shape, 410 * spdMul));
       }
       break;
     }
