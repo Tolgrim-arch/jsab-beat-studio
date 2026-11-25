@@ -24,7 +24,7 @@ export function drawProceduralBoss(ctx) {
       ctx.globalAlpha = tr.alpha * 0.45;
       ctx.fillStyle = danger;
       ctx.beginPath();
-      ctx.arc(tr.x, tr.y, tr.r * 0.9, 0, Math.PI * 2);
+      ctx.arc(tr.x, tr.y, Math.min(tr.r * 0.9, 95), 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }

@@ -410,9 +410,9 @@ export const AttackFactory = {
       draw(ctx) {
         const alpha = Utils.clamp(1 - this.r / this.maxR, 0.15, 1);
         ctx.save();
-        ctx.strokeStyle = this.age < 0.055 ? COLORS.white : dangerCol();
+        ctx.strokeStyle = this.age < 0.08 ? COLORS.white : dangerCol();
         ctx.globalAlpha = alpha;
-        ctx.lineWidth = this.thickness * alpha;
+        ctx.lineWidth = Utils.clamp(this.thickness * alpha, 2, 26);
         ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); ctx.stroke();
         ctx.restore();
       }
