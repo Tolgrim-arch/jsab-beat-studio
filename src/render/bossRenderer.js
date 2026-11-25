@@ -63,9 +63,10 @@ export function drawProceduralBoss(ctx) {
   ctx.save();
   const jx = b.jitter ? (Math.random() - 0.5) * b.jitter : 0;
   const jy = b.jitter ? (Math.random() - 0.5) * b.jitter : 0;
+  const userScale = state.settings?.bossScale ?? 1;
   ctx.translate(b.x + jx, b.y + jy);
   ctx.rotate(b.tilt || 0);
-  ctx.scale(b.scaleX || 1, b.scaleY || 1);
+  ctx.scale((b.scaleX || 1) * userScale, (b.scaleY || 1) * userScale);
 
   // Detached floating pink triangles around boss (respects spikesMode & adapts to square vs circular frame!)
   const spikesMode = cb.spikesMode || "phase3";
@@ -76,18 +77,17 @@ export function drawProceduralBoss(ctx) {
     ctx.save();
     ctx.fillStyle = flash ? COLORS.white : danger;
     if (isSquareFrame) {
-      // Distribute spikes neatly along all 4 sides of the square frame!
       const perSide = Math.max(1, Math.round(spikes / 4));
       const s = b.r * (1.22 + b.pulse * 0.14);
       const sides = [
-        { nx: 0, ny: -1, rot: -Math.PI / 2 }, // top
-        { nx: 1, ny: 0,  rot: 0 },            // right
-        { nx: 0, ny: 1,  rot: Math.PI / 2 },  // bottom
-        { nx: -1, ny: 0, rot: Math.PI }       // left
+        { nx: 0, ny: -1, rot: -Math.PI / 2 },
+        { nx: 1, ny: 0,  rot: 0 },
+        { nx: 0, ny: 1,  rot: Math.PI / 2 },
+        { nx: -1, ny: 0, rot: Math.PI }
       ];
       sides.forEach(({ nx, ny, rot }) => {
         for (let i = 0; i < perSide; i++) {
-          const t = ((i + 0.5) / perSide) * 2 - 1; // -1..1 along edge
+          const t = ((i + 0.5) / perSide) * 2 - 1;
           const px = nx !== 0 ? nx * s : t * b.r * 0.9;
           const py = ny !== 0 ? ny * s : t * b.r * 0.9;
           ctx.save();
@@ -122,31 +122,37 @@ export function drawProceduralBoss(ctx) {
     ctx.restore();
   }
 
-  // Custom PNG Boss Mode (inherits squash-and-stretch, tilt, jitter, and beat white/danger flash!)
+  // Helper to trace PNG frame path (DRY)
+  const traceFramePath = (frame, s) => {
+    ctx.beginPath();
+    if (frame === "circle") ctx.arc(0, 0, s, 0, Math.PI * 2);
+    else if (frame === "square") ctx.roundRect(-s, -s, s * 2, s * 2, 18);
+    else if (frame === "hexagon") Utils.drawPolygon(ctx, 0, 0, 6, s * 1.12, 0);
+    else if (frame === "triangle") Utils.drawPolygon(ctx, 0, 0, 3, s * 1.32, -Math.PI / 2);
+  };
+
+  // Custom PNG Boss Mode
   if (cb.img) {
     const frame = cb.frame || "circle";
     const fw = cb.frameWidth ?? 6;
     const fInt = cb.flashIntensity ?? 0.72;
     const s = b.r * 1.15;
     ctx.save();
-    ctx.beginPath();
-    if (frame === "circle") {
-      ctx.arc(0, 0, s, 0, Math.PI * 2);
-    } else if (frame === "square") {
-      ctx.roundRect(-s, -s, s * 2, s * 2, 18);
+    if (frame !== "none") {
+      traceFramePath(frame, s);
+      ctx.clip();
     }
-    if (frame !== "none") ctx.clip();
 
-    ctx.drawImage(cb.img, -s, -s, s * 2, s * 2);
+    ctx.drawImage(cb.img, -s * 1.25, -s * 1.25, s * 2.5, s * 2.5);
 
     if (fInt > 0.01) {
       if (flash) {
         ctx.fillStyle = `rgba(255, 255, 255, ${fInt})`;
-        ctx.fillRect(-s, -s, s * 2, s * 2);
+        ctx.fillRect(-s * 1.4, -s * 1.4, s * 2.8, s * 2.8);
       } else if (b.pulse > 0.35) {
         ctx.fillStyle = danger;
         ctx.globalAlpha = (b.pulse - 0.35) * 0.55 * fInt;
-        ctx.fillRect(-s, -s, s * 2, s * 2);
+        ctx.fillRect(-s * 1.4, -s * 1.4, s * 2.8, s * 2.8);
         ctx.globalAlpha = 1;
       }
     }
@@ -156,9 +162,7 @@ export function drawProceduralBoss(ctx) {
       ctx.save();
       ctx.strokeStyle = flash ? COLORS.white : danger;
       ctx.lineWidth = fw;
-      ctx.beginPath();
-      if (frame === "circle") ctx.arc(0, 0, s, 0, Math.PI * 2);
-      else ctx.roundRect(-s, -s, s * 2, s * 2, 18);
+      traceFramePath(frame, s);
       ctx.stroke();
       ctx.restore();
     }
