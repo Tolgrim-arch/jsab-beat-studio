@@ -4,6 +4,7 @@ import { state, spawnParticles } from "../state.js";
 
 const dangerCol = () => (state.customColors?.enabled ? state.customColors.danger : state.analysis?.dna?.palette?.danger) || "#FF1E6E";
 const palePink = "#FFC2DC";
+const tel = () => state.audioTelemetry || { sub: 0, bass: 0, lowMid: 0, mid: 0, high: 0, brightness: 0, tension: 0 };
 
 // JSAB signature: adjustable smooth white flash for the first 80ms of an attack/impact
 function flashMixAlpha(age, leadTime = 0, dur = 0.08) {
@@ -143,7 +144,8 @@ export const AttackFactory = {
           const t = Utils.clamp(activeAge / this.activeTime, 0, 1);
           const isFlash = activeAge < 0.095;
           const taper = t > 0.72 ? Utils.clamp(1 - (t - 0.72) / 0.28, 0.05, 1) : 1;
-          const curThick = this.thickness * (isFlash ? 1.08 : taper);
+          const subBoost = 1 + tel().sub * 0.28;
+          const curThick = this.thickness * (isFlash ? 1.08 : taper) * subBoost;
           const half = curThick * 0.5;
 
           // Clip to beam rect so boiling circles stay razor-sharp inside the beam
@@ -717,18 +719,19 @@ export const AttackFactory = {
           return;
         }
         if (this.shape === "rice" || this.shape === "touhouOrb") {
+          const bBoost = 1 + tel().brightness * 0.25 + tel().high * 0.15;
           ctx.save();
           ctx.translate(this.x, this.y);
           ctx.rotate(this.rot);
           ctx.fillStyle = dangerCol();
           ctx.beginPath();
-          if (this.shape === "rice") ctx.ellipse(0, 0, pr * 1.45, pr * 0.72, 0, 0, Math.PI * 2);
-          else ctx.arc(0, 0, pr * 1.1, 0, Math.PI * 2);
+          if (this.shape === "rice") ctx.ellipse(0, 0, pr * 1.45 * bBoost, pr * 0.72 * bBoost, 0, 0, Math.PI * 2);
+          else ctx.arc(0, 0, pr * 1.1 * bBoost, 0, Math.PI * 2);
           ctx.fill();
           ctx.fillStyle = COLORS.white;
           ctx.beginPath();
-          if (this.shape === "rice") ctx.ellipse(0, 0, pr * 0.9, pr * 0.38, 0, 0, Math.PI * 2);
-          else ctx.arc(0, 0, pr * 0.62, 0, Math.PI * 2);
+          if (this.shape === "rice") ctx.ellipse(0, 0, pr * 0.92 * bBoost, pr * 0.4 * bBoost, 0, 0, Math.PI * 2);
+          else ctx.arc(0, 0, pr * 0.65 * bBoost, 0, Math.PI * 2);
           ctx.fill();
           ctx.restore();
           return;
@@ -902,7 +905,7 @@ export const AttackFactory = {
         const H = state.height;
         const env = Math.min(Utils.clamp(t / 0.4, 0, 1), Utils.clamp((this.duration - t) / 0.4, 0, 1));
         if (env <= 0.01) return 0;
-        const beatBoost = (state.beatPulse || 0) * 18;
+        const beatBoost = (state.beatPulse || 0) * 18 + tel().sub * 42;
         let wave = 0;
         if (this.pattern === "doubleCrest") {
           // Two giant crests on left & right, valley in the middle (wooow.PNG)
@@ -1043,7 +1046,7 @@ export const AttackFactory = {
       },
       _curDepth(t) {
         const env = Math.min(Utils.clamp(t / 0.35, 0, 1), Utils.clamp((this.duration - t) / 0.35, 0, 1));
-        return this.depth * env;
+        return this.depth * (0.85 + tel().lowMid * 0.35) * env;
       },
       getDanger(px, py, tAhead) {
         const fa = this.age + tAhead;
@@ -1116,9 +1119,10 @@ export const AttackFactory = {
       age: 0, fireTimer: 0, angle: Math.random() * Math.PI * 2, dead: false,
       update(dt) {
         this.age += dt;
-        this.angle += this.spinRate * dt * Math.sin(this.age * 1.1 + 0.6);
+        const tData = tel();
+        this.angle += this.spinRate * (1 + tData.tension * 0.55) * dt * Math.sin(this.age * 1.1 + 0.6);
         this.fireTimer += dt;
-        const interval = 0.085;
+        const interval = Math.max(0.055, 0.095 - tData.high * 0.032);
         while (this.fireTimer >= interval && this.age < this.duration - 0.2) {
           this.fireTimer -= interval;
           const bx = state.blixer.x, by = state.blixer.y;

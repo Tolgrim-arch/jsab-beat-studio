@@ -29,6 +29,7 @@ export const state = {
   beatPulse: 0,
   flashAlpha: 0,
   bgPulse: 0,
+  audioTelemetry: { sub: 0, bass: 0, lowMid: 0, mid: 0, high: 0, brightness: 0, tension: 0 },
   customColors: {
     enabled: false,
     bg: "#040D14",

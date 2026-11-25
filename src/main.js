@@ -2,7 +2,7 @@ import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
 import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=64";
-import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=63";
+import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=66";
 import { updateCyanAI } from "./combat/cyanAI.js";
 import { renderFrame, drawTimeline } from "./render/renderer.js?v=65";
 import { initStudioControls } from "./ui/controls.js?v=65";
@@ -396,6 +396,8 @@ function updateSimulation(dt) {
     const bright = Math.min(1, (mid * 0.45 + high * 0.95) / Math.max(0.05, sub + bass + lowMid + mid + high));
     const tension = Math.min(1, Math.abs(bass - (state.livePrevBass || 0)) * 2.8 + high * 0.65);
 
+    state.audioTelemetry = { sub, bass, lowMid, mid, high, brightness: bright, tension };
+
     if (dom.barSub) dom.barSub.style.width = `${Math.min(100, sub * 115)}%`;
     dom.barBass.style.width = `${Math.min(100, bass * 115)}%`;
     if (dom.barLowMid) dom.barLowMid.style.width = `${Math.min(100, lowMid * 115)}%`;
@@ -439,6 +441,15 @@ function updateSimulation(dt) {
     const idx = Utils.clamp(Math.floor(t * state.analysis.fps), 0, state.analysis.frames.length - 1);
     const fr = state.analysis.frames[idx];
     bass = fr.bass; mid = fr.mid; high = fr.high;
+    state.audioTelemetry = {
+      sub: fr.sub || 0,
+      bass: fr.bass || 0,
+      lowMid: fr.lowMid || 0,
+      mid: fr.mid || 0,
+      high: fr.high || 0,
+      brightness: fr.brightness || 0,
+      tension: fr.tension || 0
+    };
     if (dom.barSub) dom.barSub.style.width = `${Math.min(100, (fr.sub || 0) * 90)}%`;
     dom.barBass.style.width = `${Math.min(100, bass * 90)}%`;
     if (dom.barLowMid) dom.barLowMid.style.width = `${Math.min(100, (fr.lowMid || 0) * 90)}%`;
