@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v57 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v58 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -24,7 +24,7 @@
         <h1 class="font-display text-xs sm:text-base font-bold tracking-wider uppercase flex items-center gap-2 truncate">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v57 • STUDIO PRO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v58 • STUDIO PRO</span>
         </h1>
       </div>
     </div>
@@ -224,9 +224,11 @@
               <div class="flex gap-1.5">
                 <input id="tenorSearchInput" type="text" placeholder="Buscar en GIPHY o pegar URL .gif..." class="flex-1 min-w-0 bg-[#070917] border border-slate-700/80 focus:border-[#00F0FF] outline-none rounded-lg px-2.5 py-1.5 text-[10px] text-slate-200 placeholder:text-slate-500" />
                 <button id="btnTenorSearch" type="button" class="px-2.5 py-1.5 rounded-lg bg-[#00F0FF]/15 hover:bg-[#00F0FF]/25 border border-[#00F0FF]/40 text-[10px] font-semibold text-[#00F0FF] cursor-pointer shrink-0">Buscar</button>
+                <button id="btnGiphyFavs" type="button" title="Ver GIFs favoritos" class="px-2 py-1.5 rounded-lg bg-[#FFD166]/12 hover:bg-[#FFD166]/25 border border-[#FFD166]/40 text-[10px] font-semibold text-[#FFD166] cursor-pointer shrink-0">★ <span id="giphyFavCount">0</span></button>
               </div>
+              <div id="giphyHistoryChips" class="flex flex-wrap gap-1"></div>
               <input id="giphyApiKeyInput" type="password" placeholder="GIPHY API Key (developers.giphy.com)" class="w-full bg-[#070917] border border-slate-800/80 focus:border-[#00F0FF] outline-none rounded-lg px-2.5 py-1 text-[9px] text-slate-300 placeholder:text-slate-500" />
-              <div id="tenorResultsGrid" class="hidden grid grid-cols-4 gap-1.5 max-h-40 overflow-y-auto p-1.5 rounded-lg bg-[#070917] border border-slate-800/80"></div>
+              <div id="tenorResultsGrid" class="hidden grid grid-cols-4 gap-1.5 max-h-44 overflow-y-auto p-1.5 rounded-lg bg-[#070917] border border-slate-800/80"></div>
             </div>
           </div>
 
@@ -458,6 +460,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=57"></script>
+  <script type="module" src="src/main.js?v=58"></script>
 </body>
 </html>

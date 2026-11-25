@@ -329,12 +329,25 @@ export function initStudioControls(showToast) {
     showToast("Jefe restaurado a modo Procedural", "info");
   });
 
-  // 2b. GIPHY Search + Direct GIF URL & Instant Boss Application
+  // 2b. GIPHY Search + Saved Searches + Star Favorites + Direct GIF URL
   const tenorInput = document.getElementById("tenorSearchInput");
   const tenorBtn = document.getElementById("btnTenorSearch");
   const tenorGrid = document.getElementById("tenorResultsGrid");
   const giphyKeyInput = document.getElementById("giphyApiKeyInput");
+  const historyChipsEl = document.getElementById("giphyHistoryChips");
+  const favBtn = document.getElementById("btnGiphyFavs");
+  const favCountEl = document.getElementById("giphyFavCount");
   const GIPHY_KEY_STORAGE = "jsab_giphy_api_key_v1";
+  const GIPHY_HIST_STORAGE = "jsab_giphy_history_v1";
+  const GIPHY_FAVS_STORAGE = "jsab_giphy_favorites_v1";
+
+  let giphyHistory = [];
+  let giphyFavs = [];
+  try { giphyHistory = JSON.parse(localStorage.getItem(GIPHY_HIST_STORAGE) || "[]"); } catch { giphyHistory = []; }
+  try { giphyFavs = JSON.parse(localStorage.getItem(GIPHY_FAVS_STORAGE) || "[]"); } catch { giphyFavs = []; }
+
+  const saveHistory = () => { try { localStorage.setItem(GIPHY_HIST_STORAGE, JSON.stringify(giphyHistory)); } catch {} };
+  const saveFavs = () => { try { localStorage.setItem(GIPHY_FAVS_STORAGE, JSON.stringify(giphyFavs)); } catch {} };
 
   if (giphyKeyInput) {
     try { giphyKeyInput.value = localStorage.getItem(GIPHY_KEY_STORAGE) || ""; } catch {}
@@ -365,8 +378,106 @@ export function initStudioControls(showToast) {
     }
   };
 
+  const updateFavCount = () => {
+    if (favCountEl) favCountEl.textContent = String(giphyFavs.length);
+  };
+
+  const renderGifCard = (previewUrl, fullUrl, title, onUnfav) => {
+    const isFav = giphyFavs.some(f => f.fullUrl === fullUrl);
+    const wrap = document.createElement("div");
+    wrap.className = "relative aspect-square rounded overflow-hidden border border-slate-800 hover:border-[#00F0FF] bg-slate-900 transition group";
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "w-full h-full cursor-pointer block";
+    btn.title = title || "Usar como jefe";
+    const img = document.createElement("img");
+    img.src = previewUrl;
+    img.alt = title || "GIF";
+    img.className = "w-full h-full object-cover";
+    img.loading = "lazy";
+    btn.appendChild(img);
+    btn.addEventListener("click", () => applyRemoteGif(fullUrl, title || "GIPHY GIF"));
+
+    const starBtn = document.createElement("button");
+    starBtn.type = "button";
+    starBtn.className = `absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[11px] leading-none cursor-pointer transition ${
+      isFav ? "bg-[#070917]/85 text-[#FFD166]" : "bg-[#070917]/70 text-slate-300 opacity-80 group-hover:opacity-100 hover:text-[#FFD166]"
+    }`;
+    starBtn.title = isFav ? "Quitar de favoritos" : "Guardar en favoritos";
+    starBtn.textContent = isFav ? "★" : "☆";
+    starBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const idx = giphyFavs.findIndex(f => f.fullUrl === fullUrl);
+      if (idx >= 0) {
+        giphyFavs.splice(idx, 1);
+        starBtn.textContent = "☆";
+        starBtn.className = "absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[11px] leading-none cursor-pointer transition bg-[#070917]/70 text-slate-300 opacity-80 group-hover:opacity-100 hover:text-[#FFD166]";
+        showToast("Eliminado de favoritos", "info");
+        if (onUnfav) onUnfav();
+      } else {
+        giphyFavs.unshift({ previewUrl, fullUrl, title: title || "GIF" });
+        starBtn.textContent = "★";
+        starBtn.className = "absolute top-0.5 right-0.5 w-5 h-5 rounded-full flex items-center justify-center text-[11px] leading-none cursor-pointer transition bg-[#070917]/85 text-[#FFD166]";
+        showToast("Guardado en favoritos ★", "success");
+      }
+      saveFavs();
+      updateFavCount();
+    });
+
+    wrap.appendChild(btn);
+    wrap.appendChild(starBtn);
+    return wrap;
+  };
+
+  const renderFavoritesGrid = () => {
+    if (!tenorGrid) return;
+    tenorGrid.classList.remove("hidden");
+    tenorGrid.innerHTML = "";
+    if (!giphyFavs.length) {
+      tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-slate-500 py-2">Aún no tienes GIFs favoritos. Toca ★ en cualquier GIF.</div>`;
+      return;
+    }
+    giphyFavs.forEach((fav) => {
+      tenorGrid.appendChild(renderGifCard(fav.previewUrl, fav.fullUrl, fav.title, renderFavoritesGrid));
+    });
+  };
+
   let giphyOffset = 0;
   let giphyLastQuery = "";
+
+  const renderHistoryChips = () => {
+    if (!historyChipsEl) return;
+    historyChipsEl.innerHTML = "";
+    giphyHistory.forEach((term) => {
+      const chip = document.createElement("div");
+      chip.className = "inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#070917] border border-slate-700/80 text-[10px] text-slate-300";
+
+      const qBtn = document.createElement("button");
+      qBtn.type = "button";
+      qBtn.className = "hover:text-[#00F0FF] cursor-pointer";
+      qBtn.textContent = term;
+      qBtn.addEventListener("click", () => {
+        if (tenorInput) tenorInput.value = term;
+        searchTenor(false);
+      });
+
+      const delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "text-slate-500 hover:text-[#FF1F71] cursor-pointer leading-none";
+      delBtn.title = "Borrar búsqueda";
+      delBtn.textContent = "✕";
+      delBtn.addEventListener("click", () => {
+        giphyHistory = giphyHistory.filter(t => t !== term);
+        saveHistory();
+        renderHistoryChips();
+      });
+
+      chip.appendChild(qBtn);
+      chip.appendChild(delBtn);
+      historyChipsEl.appendChild(chip);
+    });
+  };
 
   const searchTenor = async (loadMore = false) => {
     const q = tenorInput?.value?.trim();
@@ -389,6 +500,9 @@ export function initStudioControls(showToast) {
     if (!loadMore || q !== giphyLastQuery) {
       giphyOffset = 0;
       giphyLastQuery = q;
+      giphyHistory = [q, ...giphyHistory.filter(t => t.toLowerCase() !== q.toLowerCase())].slice(0, 12);
+      saveHistory();
+      renderHistoryChips();
       tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-slate-400 py-2">Buscando en GIPHY...</div>`;
     } else {
       tenorGrid.querySelector(".giphy-load-more")?.remove();
@@ -413,18 +527,7 @@ export function initStudioControls(showToast) {
         const previewUrl = item.images?.fixed_width_small?.url || item.images?.preview_gif?.url;
         const fullUrl = item.images?.downsized_medium?.url || item.images?.original?.url || previewUrl;
         if (!previewUrl) return;
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "aspect-square rounded overflow-hidden border border-slate-800 hover:border-[#00F0FF] bg-slate-900 cursor-pointer transition";
-        btn.title = item.title || "Usar como jefe";
-        const img = document.createElement("img");
-        img.src = previewUrl;
-        img.alt = item.title || "GIF";
-        img.className = "w-full h-full object-cover";
-        img.loading = "lazy";
-        btn.appendChild(img);
-        btn.addEventListener("click", () => applyRemoteGif(fullUrl, item.title || "GIPHY GIF"));
-        tenorGrid.appendChild(btn);
+        tenorGrid.appendChild(renderGifCard(previewUrl, fullUrl, item.title || "GIPHY GIF"));
       });
 
       giphyOffset += results.length;
@@ -443,12 +546,15 @@ export function initStudioControls(showToast) {
   };
 
   tenorBtn?.addEventListener("click", () => searchTenor(false));
+  favBtn?.addEventListener("click", renderFavoritesGrid);
   tenorInput?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       searchTenor(false);
     }
   });
+  updateFavCount();
+  renderHistoryChips();
 
   const selects = [
     ["bossFrameSelect", "frame"],
