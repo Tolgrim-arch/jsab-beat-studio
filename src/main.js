@@ -312,14 +312,14 @@ function updateSimulation(dt) {
     dom.barMid.style.width = `${Math.min(100, mid * 90)}%`;
     dom.barHigh.style.width = `${Math.min(100, high * 90)}%`;
 
-    if (fr.kickOnset > 0.45) {
+    if (state.phonkCooldown > 0) state.phonkCooldown -= dt;
+    if (fr.kickOnset > 0.48 && (state.phonkCooldown || 0) <= 0) {
       if (state.settings?.phonkMode) {
-        state.zoomPunch = Math.max(state.zoomPunch, 0.068);
-        state.camTilt = (state.whipDir || 1) * 0.042;
-        state.whipDir = -(state.whipDir || 1);
-        state.velocityTimer = 0.055;
-        state.rgbSplit = 1.0;
-        state.shake = Math.max(state.shake, 11);
+        state.phonkCooldown = 0.18;
+        state.zoomPunch = Math.max(state.zoomPunch, 0.055);
+        state.velocityTimer = 0.045;
+        state.rgbSplit = 0.9;
+        state.shake = Math.max(state.shake, 9);
       } else {
         state.zoomPunch = Math.max(state.zoomPunch, 0.022);
       }

@@ -85,10 +85,9 @@ export function renderFrame(ctx) {
   ctx.save();
 
   const zoom = (state.zoomPunch || 0) * (state.settings?.zoomMul ?? 1);
-  if (zoom > 0.001 || Math.abs(state.camTilt || 0) > 0.0005) {
+  if (zoom > 0.001) {
     const z = 1 + zoom;
     ctx.translate(W / 2, H / 2);
-    ctx.rotate(state.camTilt || 0);
     ctx.scale(z, z);
     ctx.translate(-W / 2, -H / 2);
   }
