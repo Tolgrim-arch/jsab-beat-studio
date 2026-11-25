@@ -354,7 +354,10 @@ export function initStudioControls(showToast) {
     }
   };
 
-  const searchTenor = async () => {
+  let giphyOffset = 0;
+  let giphyLastQuery = "";
+
+  const searchTenor = async (loadMore = false) => {
     const q = tenorInput?.value?.trim();
     if (!q || !tenorGrid) return;
 
@@ -372,9 +375,17 @@ export function initStudioControls(showToast) {
       return;
     }
 
-    tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-slate-400 py-2">Buscando en GIPHY...</div>`;
+    if (!loadMore || q !== giphyLastQuery) {
+      giphyOffset = 0;
+      giphyLastQuery = q;
+      tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-slate-400 py-2">Buscando en GIPHY...</div>`;
+    } else {
+      tenorGrid.querySelector(".giphy-load-more")?.remove();
+    }
+
     try {
-      const url = `https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(apiKey)}&q=${encodeURIComponent(q)}&limit=12&rating=pg-13`;
+      const limit = 20;
+      const url = `https://api.giphy.com/v1/gifs/search?api_key=${encodeURIComponent(apiKey)}&q=${encodeURIComponent(q)}&limit=${limit}&offset=${giphyOffset}&rating=pg-13`;
       const res = await fetch(url);
       const data = await res.json();
       if (!res.ok || data?.meta?.status >= 400) {
@@ -382,8 +393,8 @@ export function initStudioControls(showToast) {
         return;
       }
       const results = data?.data || [];
-      tenorGrid.innerHTML = "";
-      if (!results.length) {
+      if (!loadMore) tenorGrid.innerHTML = "";
+      if (!results.length && !loadMore) {
         tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-slate-500 py-2">Sin resultados</div>`;
         return;
       }
@@ -404,16 +415,27 @@ export function initStudioControls(showToast) {
         btn.addEventListener("click", () => applyRemoteGif(fullUrl, item.title || "GIPHY GIF"));
         tenorGrid.appendChild(btn);
       });
+
+      giphyOffset += results.length;
+      const total = data?.pagination?.total_count ?? 0;
+      if (results.length === limit && giphyOffset < total) {
+        const moreBtn = document.createElement("button");
+        moreBtn.type = "button";
+        moreBtn.className = "giphy-load-more col-span-4 py-1.5 mt-1 rounded bg-slate-800 hover:bg-slate-700 text-[10px] font-semibold text-[#00F0FF] cursor-pointer";
+        moreBtn.textContent = "Cargar más GIFs";
+        moreBtn.addEventListener("click", () => searchTenor(true));
+        tenorGrid.appendChild(moreBtn);
+      }
     } catch {
-      tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-[#FF1F71] py-2">Error al conectar con GIPHY</div>`;
+      if (!loadMore) tenorGrid.innerHTML = `<div class="col-span-4 text-center text-[10px] text-[#FF1F71] py-2">Error al conectar con GIPHY</div>`;
     }
   };
 
-  tenorBtn?.addEventListener("click", searchTenor);
+  tenorBtn?.addEventListener("click", () => searchTenor(false));
   tenorInput?.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      searchTenor();
+      searchTenor(false);
     }
   });
 
