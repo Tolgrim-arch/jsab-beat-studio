@@ -40,12 +40,13 @@ export function drawProceduralBoss(ctx) {
       ctx.fillStyle = flash ? COLORS.white : danger;
       if (bossCfg.limbStyle === "floating_triangles") {
         Utils.drawPolygon(ctx, 0, 0, 3, b.r * 0.48, side > 0 ? 0 : Math.PI);
+        ctx.fill();
       } else if (bossCfg.limbStyle === "orbit_cannons") {
         ctx.fillRect(-b.r * 0.28, -b.r * 0.28, b.r * 0.56, b.r * 0.56);
       } else {
         Utils.drawPolygon(ctx, 0, 0, 5, b.r * 0.45, 0.3);
+        ctx.fill();
       }
-      ctx.fill();
       ctx.restore();
     });
   }
