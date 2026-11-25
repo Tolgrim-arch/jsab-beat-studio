@@ -525,6 +525,27 @@ function mainLoop(now) {
   requestAnimationFrame(mainLoop);
 }
 
+// Color Pickers
+const colorBgEl = document.getElementById("colorBg");
+const colorDangerEl = document.getElementById("colorDanger");
+const colorCyanEl = document.getElementById("colorCyan");
+const btnResetColors = document.getElementById("btnResetColors");
+
+function applyCustomColors() {
+  state.customColors.enabled = true;
+  state.customColors.bg = colorBgEl.value;
+  state.customColors.danger = colorDangerEl.value;
+  state.customColors.cyan = colorCyanEl.value;
+}
+[colorBgEl, colorDangerEl, colorCyanEl].forEach(el => el?.addEventListener("input", applyCustomColors));
+btnResetColors?.addEventListener("click", () => {
+  state.customColors.enabled = false;
+  colorBgEl.value = "#040D14";
+  colorDangerEl.value = state.analysis?.dna?.palette?.danger || "#FF1E6E";
+  colorCyanEl.value = "#00F0FF";
+  showToast("Colores restaurados a Auto ADN", "info");
+});
+
 const resizeTimeline = () => {
   dom.timelineCanvas.width = dom.timelineWrapper.clientWidth || 400;
   dom.timelineCanvas.height = dom.timelineWrapper.clientHeight || 40;

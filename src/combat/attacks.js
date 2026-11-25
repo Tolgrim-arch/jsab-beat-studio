@@ -2,12 +2,12 @@ import { COLORS } from "../config.js";
 import { Utils } from "../utils.js";
 import { state, spawnParticles } from "../state.js";
 
-const dangerCol = () => state.analysis?.dna?.palette?.danger || "#FF1E6E";
+const dangerCol = () => (state.customColors?.enabled ? state.customColors.danger : state.analysis?.dna?.palette?.danger) || "#FF1E6E";
 const palePink = "#FFC2DC";
 
-// JSAB signature: pure white flash for the first 55ms of an impact
-function isWhiteFlash(age, leadTime) {
-  return age >= leadTime && (age - leadTime) < 0.055;
+// JSAB signature: pure white flash for the first 80ms of an attack/impact
+function isWhiteFlash(age, leadTime = 0) {
+  return age >= leadTime && (age - leadTime) < 0.08;
 }
 
 export const AttackFactory = {
@@ -518,10 +518,11 @@ export const AttackFactory = {
       },
       checkCollision(px, py, pr) { return Math.hypot(px - this.x, py - this.y) < (this.r * 0.85 + pr); },
       draw(ctx) {
-        ctx.fillStyle = this.age < 0.05 ? COLORS.white : dangerCol();
-        if (this.shape === "diamond") Utils.drawPolygon(ctx, this.x, this.y, 4, this.r * 1.25, this.rot);
-        else if (this.shape === "triangle") Utils.drawPolygon(ctx, this.x, this.y, 3, this.r * 1.35, this.rot);
-        else { ctx.beginPath(); ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2); }
+        const pr = this.r * (1 + (state.beatPulse || 0) * 0.28);
+        ctx.fillStyle = this.age < 0.08 ? COLORS.white : dangerCol();
+        if (this.shape === "diamond") Utils.drawPolygon(ctx, this.x, this.y, 4, pr * 1.25, this.rot);
+        else if (this.shape === "triangle") Utils.drawPolygon(ctx, this.x, this.y, 3, pr * 1.35, this.rot);
+        else { ctx.beginPath(); ctx.arc(this.x, this.y, pr, 0, Math.PI * 2); }
         ctx.fill();
       }
     };

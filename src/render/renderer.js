@@ -3,26 +3,34 @@ import { Utils } from "../utils.js";
 import { state } from "../state.js";
 import { drawProceduralBoss } from "./bossRenderer.js";
 
+function getCyanColor() {
+  return state.customColors?.enabled ? state.customColors.cyan : COLORS.cyan;
+}
+
+function getDangerColor() {
+  return (state.customColors?.enabled ? state.customColors.danger : state.analysis?.dna?.palette?.danger) || "#FF1E6E";
+}
+
 function drawBiomeBackground(ctx, W, H) {
-  // Crisp JSAB deep dark teal/black canvas
-  ctx.fillStyle = "#040D14";
+  ctx.fillStyle = state.customColors?.enabled ? state.customColors.bg : "#040D14";
   ctx.fillRect(0, 0, W, H);
 
-  // Subtle bottom cyan-teal equalizer wave (just like reference Twitter.jfif)
+  const cyanCol = getCyanColor();
   const bars = 36;
   const bw = W / bars;
-  ctx.fillStyle = "rgba(0, 240, 255, 0.14)";
+  ctx.save();
+  ctx.fillStyle = cyanCol;
+  ctx.globalAlpha = 0.14;
   for (let i = 0; i < bars; i++) {
     const wave = 0.4 + 0.6 * Math.sin(state.currentTime * 4 + i * 0.45);
     const bh = (24 + state.bgPulse * 70) * wave;
     ctx.fillRect(i * bw, H - bh, bw - 2, bh);
   }
+  ctx.restore();
 
-  // Living pulsing pink border spikes during Phase 2+ / Drops
   if (state.phase >= 2) {
-    const danger = state.analysis?.dna?.palette?.danger || "#FF1E6E";
     const borderH = 10 + state.bgPulse * 18;
-    ctx.fillStyle = danger;
+    ctx.fillStyle = getDangerColor();
     ctx.fillRect(0, 0, W, borderH * 0.5);
     ctx.fillRect(0, H - borderH * 0.5, W, borderH * 0.5);
   }
@@ -30,14 +38,18 @@ function drawBiomeBackground(ctx, W, H) {
 
 function drawCyan(ctx) {
   const c = state.cyan;
+  const cyanCol = getCyanColor();
 
-  // Crisp stepped ghost squares on dash/movement
+  // Crisp 40% max-opacity squares left behind ONLY while moving
   for (const tr of c.trail) {
-    ctx.fillStyle = `rgba(0, 240, 255, ${tr.alpha * 0.5})`;
-    ctx.fillRect(tr.x - c.r * 0.85, tr.y - c.r * 0.85, c.r * 1.7, c.r * 1.7);
+    ctx.save();
+    ctx.globalAlpha = Math.min(0.4, tr.alpha);
+    ctx.fillStyle = cyanCol;
+    const sz = tr.size || c.r * 0.75;
+    ctx.fillRect(tr.x - sz, tr.y - sz, sz * 2, sz * 2);
+    ctx.restore();
   }
 
-  // Expanding white/cyan dash ring
   if (c.dashTimer > 0) {
     const p = 1 - c.dashTimer / 0.17;
     ctx.save();
@@ -53,7 +65,7 @@ function drawCyan(ctx) {
   ctx.translate(c.x, c.y);
   ctx.rotate(c.rot);
   ctx.scale(c.squash, 2 - c.squash);
-  ctx.fillStyle = c.dashTimer > 0 ? COLORS.white : COLORS.cyan;
+  ctx.fillStyle = c.dashTimer > 0 ? COLORS.white : cyanCol;
   ctx.fillRect(-c.r, -c.r, c.r * 2, c.r * 2);
   ctx.restore();
 }
@@ -62,9 +74,10 @@ export function renderFrame(ctx) {
   const W = state.width, H = state.height;
   ctx.save();
 
-  if (state.zoomPunch > 0.001) {
+  if (state.zoomPunch > 0.001 || Math.abs(state.camTilt || 0) > 0.0005) {
     const z = 1 + state.zoomPunch;
     ctx.translate(W / 2, H / 2);
+    ctx.rotate(state.camTilt || 0);
     ctx.scale(z, z);
     ctx.translate(-W / 2, -H / 2);
   }

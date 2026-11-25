@@ -24,8 +24,17 @@ export const state = {
   activeSetpiece: "INTRO",
   shake: 0,
   zoomPunch: 0,
+  camTilt: 0,
+  hitstopTimer: 0,
+  beatPulse: 0,
   flashAlpha: 0,
   bgPulse: 0,
+  customColors: {
+    enabled: false,
+    bg: "#040D14",
+    danger: "#FF1E6E",
+    cyan: "#00F0FF"
+  },
   entities: [],
   particles: [],
   blixer: {

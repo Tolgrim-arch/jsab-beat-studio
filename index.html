@@ -125,6 +125,27 @@
 
       <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5 space-y-2.5">
         <div class="flex items-center justify-between">
+          <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Colores Personalizados</span>
+          <button id="btnResetColors" class="text-[10px] font-mono-tech text-[#00F0FF] hover:underline cursor-pointer">Auto ADN</button>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-[10px] font-mono-tech text-slate-300">
+          <label class="flex flex-col items-center gap-1 cursor-pointer">
+            <input id="colorBg" type="color" value="#040D14" class="w-8 h-6 rounded bg-transparent border border-slate-700 cursor-pointer" />
+            <span>Fondo</span>
+          </label>
+          <label class="flex flex-col items-center gap-1 cursor-pointer">
+            <input id="colorDanger" type="color" value="#FF1E6E" class="w-8 h-6 rounded bg-transparent border border-slate-700 cursor-pointer" />
+            <span>Ataques</span>
+          </label>
+          <label class="flex flex-col items-center gap-1 cursor-pointer">
+            <input id="colorCyan" type="color" value="#00F0FF" class="w-8 h-6 rounded bg-transparent border border-slate-700 cursor-pointer" />
+            <span>Cian</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="rounded-xl bg-[#121530] border border-slate-800/90 p-3.5 space-y-2.5">
+        <div class="flex items-center justify-between">
           <span class="text-[11px] font-mono-tech uppercase tracking-wider text-slate-400">Exportar Video</span>
           <span class="text-[10px] font-mono-tech text-slate-400">WebM 60fps</span>
         </div>
@@ -190,6 +211,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=11"></script>
+  <script type="module" src="src/main.js?v=12"></script>
 </body>
 </html>

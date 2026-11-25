@@ -2,7 +2,7 @@ import { COLORS } from "../config.js";
 import { Utils } from "../utils.js";
 import { state } from "../state.js";
 
-const getDanger = () => state.analysis?.dna?.palette?.danger || "#FF1E6E";
+const getDanger = () => (state.customColors?.enabled ? state.customColors.danger : state.analysis?.dna?.palette?.danger) || "#FF1E6E";
 
 /**
  * Draws the procedural JSAB Boss inspired directly by the official JSAB Boss silhouettes
@@ -56,15 +56,6 @@ export function drawProceduralBoss(ctx) {
   ctx.translate(b.x + jx, b.y + jy);
   ctx.rotate(b.tilt || 0);
   ctx.scale(b.scaleX || 1, b.scaleY || 1);
-
-  // Close-Call Annoyed '!' pop when Cyan dashes right past the boss!
-  if (b.annoyedTimer > 0) {
-    ctx.save();
-    ctx.fillStyle = COLORS.white;
-    ctx.font = "900 28px Orbitron, sans-serif";
-    ctx.fillText("!", b.r * 1.15, -b.r * 0.95);
-    ctx.restore();
-  }
 
   // Detached floating pink triangles around boss (like Annihilate reference!)
   if (bossCfg.shape === "titan" || state.phase >= 3) {

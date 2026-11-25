@@ -71,8 +71,10 @@ export function updateCyanAI(dt) {
   c.y = Utils.clamp(c.y + c.vy * dt, 24, H - 24);
   c.rot = Math.atan2(c.vy, c.vx);
 
-  if (Math.hypot(c.vx, c.vy) > 35) c.trail.push({ x: c.x, y: c.y, alpha: 0.6 });
-  if (c.trail.length > 14) c.trail.shift();
-  for (const tr of c.trail) tr.alpha -= dt * 2.4;
-  c.trail = c.trail.filter(tr => tr.alpha > 0);
+  if (Math.hypot(c.vx, c.vy) > 55) {
+    c.trail.push({ x: c.x, y: c.y, alpha: 0.4, size: c.r * (0.65 + Math.random() * 0.35) });
+  }
+  if (c.trail.length > 10) c.trail.shift();
+  for (const tr of c.trail) tr.alpha -= dt * 2.8;
+  c.trail = c.trail.filter(tr => tr.alpha > 0.02);
 }
