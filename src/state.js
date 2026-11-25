@@ -55,8 +55,11 @@ export const state = {
     frame: "circle",      // "none" | "circle" | "square"
     frameWidth: 6,        // 0 to 16 px
     spikesMode: "phase3", // "always" | "phase3" | "never"
+    spikesShape: "auto",  // "auto" | "circle" | "square" | "hexagon" | "triangle"
+    spikesLayer: "behind",// "behind" | "above"
     spikeCount: 12,       // 4 to 20
     handsShape: "auto",   // "auto" | "square" | "circle" | "triangle" | "claws" | "none"
+    handsLayer: "behind", // "behind" | "above"
     flashIntensity: 0.72  // 0 to 1
   },
   entities: [],

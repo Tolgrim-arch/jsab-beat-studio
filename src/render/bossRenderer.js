@@ -32,9 +32,11 @@ export function drawProceduralBoss(ctx) {
 
   const cb = state.customBoss || {};
   const handsShape = cb.handsShape || "auto";
+  const handsLayer = cb.handsLayer || "behind";
+  const spikesLayer = cb.spikesLayer || "behind";
 
-  // Articulated Limbs in Phase 2+ (or hidden if handsShape === "none")
-  if (state.phase >= 2 && handsShape !== "none") {
+  const drawHands = () => {
+    if (state.phase < 2 || handsShape === "none") return;
     [b.leftHand, b.rightHand].forEach((h, idx) => {
       const side = idx === 0 ? -1 : 1;
       ctx.save();
@@ -58,7 +60,9 @@ export function drawProceduralBoss(ctx) {
       }
       ctx.restore();
     });
-  }
+  };
+
+  if (handsLayer !== "above") drawHands();
 
   ctx.save();
   const jx = b.jitter ? (Math.random() - 0.5) * b.jitter : 0;
@@ -68,40 +72,54 @@ export function drawProceduralBoss(ctx) {
   ctx.rotate(b.tilt || 0);
   ctx.scale((b.scaleX || 1) * userScale, (b.scaleY || 1) * userScale);
 
-  // Detached floating pink triangles around boss (respects spikesMode & adapts to square vs circular frame!)
+  // Detached floating pink triangles around boss (respects spikesMode, spikesShape & spikesLayer)
   const spikesMode = cb.spikesMode || "phase3";
   const showSpikes = spikesMode === "always" || (spikesMode === "phase3" && (bossCfg.shape === "titan" || state.phase >= 3));
-  if (showSpikes) {
+  const drawSpikes = () => {
+    if (!showSpikes) return;
     const spikes = cb.spikeCount || (bossCfg.spikeCount + 4);
-    const isSquareFrame = cb.img && cb.frame === "square";
+    let shape = cb.spikesShape || "auto";
+    if (shape === "auto") {
+      if (cb.img && (cb.frame === "square" || cb.frame === "hexagon" || cb.frame === "triangle")) shape = cb.frame;
+      else shape = "circle";
+    }
     ctx.save();
     ctx.fillStyle = flash ? COLORS.white : danger;
-    if (isSquareFrame) {
-      const perSide = Math.max(1, Math.round(spikes / 4));
-      const s = b.r * (1.22 + b.pulse * 0.14);
-      const sides = [
-        { nx: 0, ny: -1, rot: -Math.PI / 2 },
-        { nx: 1, ny: 0,  rot: 0 },
-        { nx: 0, ny: 1,  rot: Math.PI / 2 },
-        { nx: -1, ny: 0, rot: Math.PI }
-      ];
-      sides.forEach(({ nx, ny, rot }) => {
+
+    const drawPolygonSpikes = (sidesCount, radiusMul, rotOffset) => {
+      const perSide = Math.max(1, Math.round(spikes / sidesCount));
+      const rad = b.r * (radiusMul + b.pulse * 0.16);
+      ctx.rotate(b.rot * 0.32);
+      for (let sideIdx = 0; sideIdx < sidesCount; sideIdx++) {
+        const a0 = rotOffset + (Math.PI * 2 * sideIdx) / sidesCount;
+        const a1 = rotOffset + (Math.PI * 2 * (sideIdx + 1)) / sidesCount;
+        const x0 = Math.cos(a0) * rad, y0 = Math.sin(a0) * rad;
+        const x1 = Math.cos(a1) * rad, y1 = Math.sin(a1) * rad;
+        const outAngle = (a0 + a1) * 0.5;
         for (let i = 0; i < perSide; i++) {
-          const t = ((i + 0.5) / perSide) * 2 - 1;
-          const px = nx !== 0 ? nx * s : t * b.r * 0.9;
-          const py = ny !== 0 ? ny * s : t * b.r * 0.9;
+          const u = (i + 0.5) / perSide;
+          const px = x0 + (x1 - x0) * u;
+          const py = y0 + (y1 - y0) * u;
           ctx.save();
           ctx.translate(px, py);
-          ctx.rotate(rot);
+          ctx.rotate(outAngle);
           ctx.beginPath();
-          ctx.moveTo(b.r * 0.24, 0);
-          ctx.lineTo(-b.r * 0.1, -b.r * 0.14);
-          ctx.lineTo(-b.r * 0.1, b.r * 0.14);
+          ctx.moveTo(b.r * 0.25, 0);
+          ctx.lineTo(-b.r * 0.11, -b.r * 0.14);
+          ctx.lineTo(-b.r * 0.11, b.r * 0.14);
           ctx.closePath();
           ctx.fill();
           ctx.restore();
         }
-      });
+      }
+    };
+
+    if (shape === "square") {
+      drawPolygonSpikes(4, 1.55, Math.PI / 4);
+    } else if (shape === "hexagon") {
+      drawPolygonSpikes(6, 1.32, 0);
+    } else if (shape === "triangle") {
+      drawPolygonSpikes(3, 1.65, -Math.PI / 2);
     } else {
       ctx.rotate(b.rot * 0.45);
       for (let i = 0; i < spikes; i++) {
@@ -120,7 +138,9 @@ export function drawProceduralBoss(ctx) {
       }
     }
     ctx.restore();
-  }
+  };
+
+  if (spikesLayer !== "above") drawSpikes();
 
   // Helper to trace PNG frame path (DRY)
   const traceFramePath = (frame, s) => {
@@ -199,7 +219,9 @@ export function drawProceduralBoss(ctx) {
       ctx.stroke();
       ctx.restore();
     }
+    if (spikesLayer === "above") drawSpikes();
     ctx.restore();
+    if (handsLayer === "above") drawHands();
     return;
   }
 
@@ -345,5 +367,7 @@ export function drawProceduralBoss(ctx) {
     }
   }
 
+  if (spikesLayer === "above") drawSpikes();
   ctx.restore();
+  if (handsLayer === "above") drawHands();
 }

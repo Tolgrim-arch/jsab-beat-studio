@@ -11,8 +11,11 @@ function savePrefs() {
         frame: state.customBoss.frame,
         frameWidth: state.customBoss.frameWidth,
         spikesMode: state.customBoss.spikesMode,
+        spikesShape: state.customBoss.spikesShape,
+        spikesLayer: state.customBoss.spikesLayer,
         spikeCount: state.customBoss.spikeCount,
         handsShape: state.customBoss.handsShape,
+        handsLayer: state.customBoss.handsLayer,
         flashIntensity: state.customBoss.flashIntensity,
         dataUrl: state.customBoss.dataUrl || null
       }
@@ -317,7 +320,10 @@ export function initStudioControls(showToast) {
   const selects = [
     ["bossFrameSelect", "frame"],
     ["bossSpikesSelect", "spikesMode"],
-    ["bossHandsSelect", "handsShape"]
+    ["bossSpikesShapeSelect", "spikesShape"],
+    ["bossSpikesLayerSelect", "spikesLayer"],
+    ["bossHandsSelect", "handsShape"],
+    ["bossHandsLayerSelect", "handsLayer"]
   ];
   selects.forEach(([id, key]) => {
     const el = document.getElementById(id);
