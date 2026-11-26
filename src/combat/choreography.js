@@ -55,7 +55,7 @@ export function buildChoreographySchedule() {
   const INSTANT_SETPIECES = new Set([
     "BARRACUDA_SWARM", "ORB_RAIN", "WAVE_CORRIDOR",
     "SAWBLADE_GAUNTLET", "MANDALA_BLOOM", "BREAKDOWN_PULSE", "SYNCOPATED_BURST",
-    "SUBDIVISION_SPARK", "PRE_DROP_SILENCE"
+    "SUBDIVISION_SPARK", "PRE_DROP_SILENCE", "CALM_UNISON_PULSE"
   ]);
 
   // Schedule Pre-Drop Dramatic Silences (Fakeout Breath)
@@ -75,6 +75,33 @@ export function buildChoreographySchedule() {
       localBeatDur: beatDur,
       setpiece: "PRE_DROP_SILENCE",
       section: "PRE_DROP",
+      motifId: "A",
+      subdivision: "1/1",
+      seed: rng()
+    });
+  }
+
+  // Schedule Sustained Saturation Blasts (Brazilian Phonk / distorted 808 walls)
+  for (const sb of (analysis.saturationBlasts || [])) {
+    if (sb.start < 0.3 || sb.start > duration - 1.5) continue;
+    const ltSat = Math.min(0.32, beatDur * 0.55);
+    schedule.push({
+      spawnTime: Math.max(0.02, sb.start - ltSat),
+      impactTime: sb.start,
+      leadTime: ltSat,
+      phase: 3,
+      step: 0,
+      beatInBar: 0,
+      beatsPerBar,
+      barIndex: Math.floor(sb.start / (beatDur * beatsPerBar)),
+      accentLevel: "SATURATION",
+      accentWeight: 1.0,
+      saturation: sb.intensity,
+      sustainDuration: Utils.clamp(sb.duration, 0.35, 2.8),
+      localBpm: bpm,
+      localBeatDur: beatDur,
+      setpiece: "SATURATION_BLAST",
+      section: "DROP",
       motifId: "A",
       subdivision: "1/1",
       seed: rng()
@@ -142,13 +169,14 @@ export function buildChoreographySchedule() {
       const beatInBar = Number.isFinite(b.beatInBar) && b.beatInBar >= 0 ? b.beatInBar : 0;
       const accentLevel = b.accentLevel || (beatInBar === 0 ? "DOWNBEAT" : "WEAK");
       const accentWeight = b.accentWeight ?? (accentLevel === "DOWNBEAT" ? 1.0 : accentLevel === "SECONDARY" ? 0.78 : 0.48);
+      const isCalmUnison = !!b.isCalmUnison || ((sec.type === "INTRO" || sec.type === "BREAKDOWN") && (b.saturation || 0) < 0.32);
 
-      // Keep weak beats cleaner in calm sections so strong accents stand out
-      if (accentLevel === "WEAK" && (sec.type === "INTRO" || sec.type === "BREAKDOWN") && b.rms < 0.28) continue;
+      // In calm / unison passages, NEVER spam weak beats or subdivisions — only breathe on the downbeat!
+      if (isCalmUnison && accentLevel !== "DOWNBEAT") continue;
 
-      const chosenSetpiece = b.isSubdivision
-        ? "SUBDIVISION_SPARK"
-        : (b.isSyncopated ? "SYNCOPATED_BURST" : setpiece);
+      const chosenSetpiece = isCalmUnison
+        ? "CALM_UNISON_PULSE"
+        : (b.isSubdivision ? "SUBDIVISION_SPARK" : (b.isSyncopated ? "SYNCOPATED_BURST" : setpiece));
       const isInstant = INSTANT_SETPIECES.has(chosenSetpiece);
       const leadMul = accentLevel === "DOWNBEAT" ? 0.90 : accentLevel === "SECONDARY" ? 0.78 : 0.62;
       const leadTime = isInstant ? 0 : Math.min(0.56, localBeatDur * leadMul);
@@ -166,6 +194,8 @@ export function buildChoreographySchedule() {
         subdivision: b.subdivision || "1/1",
         sustainDuration: b.sustainDuration || Math.min(0.35, localBeatDur * 0.6),
         pitchHeight: b.pitchHeight ?? 0.5,
+        saturation: b.saturation || 0,
+        isCalmUnison,
         accentLevel,
         accentWeight,
         localBpm,
@@ -206,6 +236,54 @@ export function spawnSetpieceEvent(ev, domSetpieceEl) {
     return;
   }
   state.isPreDropSilence = false;
+
+  // Handle Calm / Unison passages: clean, restrained single pulse (NO random spam!)
+  if (ev.setpiece === "CALM_UNISON_PULSE") {
+    state.activeSetpiece = "CALM_UNISON_PULSE";
+    state.activeArtifactLayers = 1;
+    state.noiseLevel = Math.min(state.noiseLevel || 0.15, 0.22);
+    if (domSetpieceEl) domSetpieceEl.textContent = "CALM UNISON";
+    b.pulse = Math.max(b.pulse, 0.62);
+    b.targetX = W * 0.5;
+    b.targetY = H * 0.24;
+    const lenCalm = Math.max(W, H) * 1.1;
+    state.entities.push(AttackFactory.shockwave(b.x, b.y, 320, lenCalm, 14));
+    for (let k = 0; k < 5; k++) {
+      const a = (Math.PI * 2 * k) / 5 + ev.seed * Math.PI;
+      state.entities.push(AttackFactory.bullet(b.x, b.y, Math.cos(a) * 190, Math.sin(a) * 190, 6.5, "circle"));
+    }
+    return;
+  }
+
+  // Handle Sustained Saturation Blasts (Brazilian Phonk / distorted 808 walls): held MegaBeam + hydraulic clamp + heavy overdrive!
+  if (ev.setpiece === "SATURATION_BLAST") {
+    state.activeSetpiece = "SATURATION_OVERDRIVE";
+    state.activeArtifactLayers = 4;
+    state.noiseLevel = Math.max(0.88, ev.saturation || 0.9);
+    if (domSetpieceEl) domSetpieceEl.textContent = "SATURATION OVERDRIVE";
+    const satDur = Utils.clamp(ev.sustainDuration || 0.9, 0.35, 2.8);
+    const isHoriz = ev.seed > 0.5;
+    const thick = (isHoriz ? H : W) * 0.28;
+    const targetPos = isHoriz ? H * 0.5 : W * 0.5;
+    const beam = AttackFactory.megaBeam(isHoriz ? "y" : "x", targetPos, thick, ev.leadTime, satDur);
+    beam.impactTime = ev.impactTime;
+    beam.spawnClock = ev.impactTime - ev.leadTime;
+    state.entities.push(beam);
+
+    // Side hydraulic clamps holding for the saturated duration
+    const p1 = AttackFactory.hydraulicPiston(isHoriz ? "top" : "left", (isHoriz ? H : W) * 0.18, ev.leadTime, satDur);
+    const p2 = AttackFactory.hydraulicPiston(isHoriz ? "bottom" : "right", (isHoriz ? H : W) * 0.18, ev.leadTime, satDur);
+    p1.impactTime = p2.impactTime = ev.impactTime;
+    p1.spawnClock = p2.spawnClock = ev.impactTime - ev.leadTime;
+    state.entities.push(p1, p2);
+
+    state.shake = Math.max(state.shake, 18);
+    state.zoomPunch = Math.max(state.zoomPunch, 0.065);
+    state.rgbSplit = Math.max(state.rgbSplit || 0, 1.0);
+    b.mood = "frenzy";
+    b.pulse = 1.0;
+    return;
+  }
 
   // Handle Lightweight Subdivision Micro-Projectiles (1/2, 1/3 triplets, 1/4 sixteenths)
   if (ev.setpiece === "SUBDIVISION_SPARK") {

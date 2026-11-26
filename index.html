@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>JSAB Beat Studio v78 — Motor Coreográfico Reactivo</title>
+  <title>JSAB Beat Studio v79 — Motor Coreográfico Reactivo</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Orbitron:wght@600;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles/main.css?v=78" />
+  <link rel="stylesheet" href="styles/main.css?v=79" />
 </head>
 <body class="h-[100dvh] overflow-hidden flex flex-col bg-[#050611] text-slate-100 select-none">
 
@@ -24,7 +24,7 @@
         <h1 class="font-display text-xs sm:text-base font-bold tracking-wider uppercase flex items-center gap-2 truncate">
           <span class="text-[#00F0FF] text-glow-cyan">JSAB</span>
           <span class="text-white">BEAT STUDIO</span>
-          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v78 • RHYTHM PRO</span>
+          <span class="hidden md:inline-block text-[10px] font-mono-tech px-2 py-0.5 rounded-full bg-[#FF1F71]/15 text-[#FF1F71] border border-[#FF1F71]/40">v79 • PHONK SYNC</span>
         </h1>
       </div>
     </div>
@@ -208,6 +208,12 @@
                   <span class="w-14 text-slate-400">RUIDO</span>
                   <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
                     <div id="barNoise" class="h-full bg-amber-400 w-0 transition-all duration-75 rounded-full"></div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 text-[10px] font-mono-tech">
+                  <span class="w-14 text-slate-400">SATUR.</span>
+                  <div class="flex-1 h-1.5 bg-[#070917] rounded-full overflow-hidden">
+                    <div id="barSaturation" class="h-full bg-[#FF1F71] w-0 transition-all duration-75 rounded-full"></div>
                   </div>
                 </div>
                 <div class="flex items-center gap-2 text-[10px] font-mono-tech">
@@ -876,6 +882,6 @@
 
   <div id="toastContainer" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
-  <script type="module" src="src/main.js?v=78"></script>
+  <script type="module" src="src/main.js?v=79"></script>
 </body>
 </html>

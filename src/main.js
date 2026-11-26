@@ -1,8 +1,8 @@
 import { ASPECT_PRESETS, COLORS, PHASES } from "./config.js";
 import { Utils } from "./utils.js";
 import { state, spawnParticles, resetWorldEntities } from "./state.js";
-import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=78";
-import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=78";
+import { ensureAudioContext, generateDemoTrack, analyzeAudioBuffer } from "./audio/analyzer.js?v=79";
+import { buildChoreographySchedule, spawnSetpieceEvent, ATTACK_CATALOG } from "./combat/choreography.js?v=79";
 import { updateCyanAI } from "./combat/cyanAI.js?v=74";
 import { renderFrame, drawTimeline } from "./render/renderer.js?v=78";
 import { initStudioControls } from "./ui/controls.js?v=78";
@@ -40,6 +40,7 @@ const dom = {
   barEnergy: document.getElementById("barEnergy"),
   barPunch: document.getElementById("barPunch"),
   barNoise: document.getElementById("barNoise"),
+  barSaturation: document.getElementById("barSaturation"),
   barCrunch: document.getElementById("barCrunch"),
   barBright: document.getElementById("barBright"),
   barTension: document.getElementById("barTension"),
@@ -557,12 +558,21 @@ function updateSimulation(dt) {
     if (dom.barLowMid) dom.barLowMid.style.width = `${Math.min(100, (fr.lowMid || 0) * 90)}%`;
     dom.barMid.style.width = `${Math.min(100, mid * 90)}%`;
     dom.barHigh.style.width = `${Math.min(100, high * 90)}%`;
+    const satLive = fr.saturation || 0;
     if (dom.barEnergy) dom.barEnergy.style.width = `${Math.min(100, (fr.rms || 0) * 95)}%`;
     if (dom.barPunch) dom.barPunch.style.width = `${Math.min(100, punchLive * 100)}%`;
     if (dom.barNoise) dom.barNoise.style.width = `${Math.min(100, noiseLive * 100)}%`;
+    if (dom.barSaturation) dom.barSaturation.style.width = `${Math.min(100, satLive * 105)}%`;
     if (dom.barCrunch) dom.barCrunch.style.width = `${Math.min(100, (fr.zcr || 0) * 95)}%`;
     if (dom.barBright) dom.barBright.style.width = `${Math.min(100, (fr.brightness || 0) * 90)}%`;
     if (dom.barTension) dom.barTension.style.width = `${Math.min(100, (fr.tension || 0) * 90)}%`;
+
+    // Continuous visual overdrive while a saturated distorted sound is held!
+    if (satLive >= 0.62) {
+      state.shake = Math.max(state.shake, 5 + satLive * 9);
+      state.rgbSplit = Math.max(state.rgbSplit || 0, satLive * 0.85);
+      state.bgPulse = Math.max(state.bgPulse, satLive * 0.85);
+    }
 
     if (state.phonkCooldown > 0) state.phonkCooldown -= dt;
     if (fr.kickOnset > 0.45 && (state.phonkCooldown || 0) <= 0) {

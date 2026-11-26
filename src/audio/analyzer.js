@@ -89,11 +89,14 @@ export function analyzeAudioBuffer(audioBuffer) {
     const start = f * hop;
     const end = Math.min(start + hop, ch0.length);
     let sumSq = 0, subSq = 0, bassSq = 0, lowMidSq = 0, midSq = 0, highSq = 0;
-    let zc = 0, prevS = 0;
+    let zc = 0, prevS = 0, peakAbs = 0, clipped = 0;
     const count = Math.max(1, end - start);
 
     for (let i = start; i < end; i++) {
       const s = 0.5 * (ch0[i] + ch1[i]);
+      const absS = Math.abs(s);
+      if (absS > peakAbs) peakAbs = absS;
+      if (absS >= 0.88) clipped++;
       if (i > start && ((s >= 0 && prevS < 0) || (s < 0 && prevS >= 0))) zc++;
       prevS = s;
 
@@ -120,12 +123,20 @@ export function analyzeAudioBuffer(audioBuffer) {
     }
 
     const rms = Math.sqrt(sumSq / count);
+    const rawRms = rms;
     const sub = Math.sqrt(subSq / count);
     const bass = Math.sqrt(bassSq / count);
     const lowMid = Math.sqrt(lowMidSq / count);
     const mid = Math.sqrt(midSq / count);
     const high = Math.sqrt(highSq / count);
     const zcr = zc / count;
+
+    // True saturation / brickwall distortion metric (NOT erased by p97 normalization!)
+    const clipRatio = clipped / count;
+    const crest = peakAbs / Math.max(0.005, rawRms); // Brickwalled Phonk: ~1.15-1.9, clean: 3.0-6.0
+    const brickwall = rawRms > 0.18 ? Utils.clamp((2.35 - crest) / 1.15, 0, 1) : 0;
+    const loudPressure = Utils.clamp((rawRms - 0.22) / 0.42, 0, 1);
+    const saturation = Utils.clamp(clipRatio * 3.8 + brickwall * 0.58 + loudPressure * 0.35, 0, 1);
 
     // Multi-band spectral flux (half-wave rectified positive energy derivatives)
     const kickOnset = Math.max(0, bass - prevBass);
@@ -142,7 +153,11 @@ export function analyzeAudioBuffer(audioBuffer) {
     const melodicTot = Math.max(0.0001, lowMid + mid + high);
     const pitchHeight = Utils.clamp((lowMid * 0.15 + mid * 0.55 + high * 1.0) / melodicTot, 0, 1);
     const tension = zcr * 0.55 + (snareOnset + highOnset) * 0.45;
-    frames[f] = { t: f / fps, rms, sub, bass, lowMid, mid, high, zcr, brightness, pitchHeight, tension, kickOnset, snareOnset, highOnset, onset: flux };
+    frames[f] = {
+      t: f / fps, rms, rawRms, saturation, clipRatio,
+      sub, bass, lowMid, mid, high, zcr, brightness, pitchHeight, tension,
+      kickOnset, snareOnset, highOnset, onset: flux
+    };
   }
 
   const normBand = (key) => {
@@ -492,9 +507,36 @@ export function analyzeAudioBuffer(audioBuffer) {
     }
   }
 
+  // Detect Sustained Saturation Blasts (e.g. Brazilian Phonk distorted 808/cowbell walls >= 0.22s)
+  const saturationBlasts = [];
+  let satStart = -1;
+  for (let f = 0; f < frames.length; f++) {
+    const isSat = (frames[f].saturation || 0) >= 0.62;
+    if (isSat && satStart === -1) {
+      satStart = f;
+    } else if ((!isSat || f === frames.length - 1) && satStart !== -1) {
+      const durSat = (f - satStart) / fps;
+      if (durSat >= 0.22) {
+        const peakSat = Math.max(...frames.slice(satStart, f).map(x => x.saturation || 0));
+        saturationBlasts.push({ start: satStart / fps, end: f / fps, duration: durSat, intensity: peakSat });
+      }
+      satStart = -1;
+    }
+  }
+
+  // Tag every beat with true saturation & calm-unison flag (so calm parts stop spamming!)
+  const avgRawRms = frames.reduce((s, f) => s + (f.rawRms || f.rms), 0) / Math.max(1, frames.length);
+  for (const b of beats) {
+    const fIdx = Utils.clamp(Math.floor(b.t * fps), 0, frames.length - 1);
+    const fr = frames[fIdx];
+    b.saturation = fr.saturation || 0;
+    b.rawRms = fr.rawRms || fr.rms;
+    b.isCalmUnison = (b.rawRms < avgRawRms * 0.68 && b.saturation < 0.28) || (b.rms < 0.34 && b.saturation < 0.22);
+  }
+
   const meter = { beatsPerBar: bestMeter.beatsPerBar, label: bestMeter.label, downbeatOffset: bestMeter.downbeatOffset };
   const baseAnalysis = {
-    frames, fps, bpm, beatDur, tempoCurve, meter, bestOffset, beats, sections, preDropSilences, archetype,
+    frames, fps, bpm, beatDur, tempoCurve, meter, bestOffset, beats, sections, preDropSilences, saturationBlasts, archetype,
     profile: { avgBass, avgHigh, avgRms, avgZcr, avgBright, dynamicRange, genre }
   };
   baseAnalysis.dna = generateSongDNA(baseAnalysis, duration);
